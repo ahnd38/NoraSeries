@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+	http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+    <modelVersion>4.0.0</modelVersion>
+	
+	<properties>
+		<java.source.version>1.8</java.source.version>
+		<java.target.version>1.8</java.target.version>
+	</properties>
+	
+	<groupId>org.jp.illg.nora</groupId>
+	<artifactId>NoraSeries</artifactId>
+	<version>1.0</version>
+	<packaging>pom</packaging>
+	
+	<profiles>
+		<profile>
+			<id>common-module</id>
+			
+			<activation>
+				<property>
+					<name>!skipdefault</name>
+				</property>
+			</activation>
+			
+			<modules>
+				<module>src/NoraCommon</module>
+				<module>src/NoraVRClient</module>
+			</modules> 
+		</profile>
+		
+		<profile>
+			<id>noragateway-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/NoraGateway</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraGateway</module>
+			</modules> 
+		</profile>
+
+		<profile>
+			<id>noradstarproxygateway-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/NoraDStarProxyGateway</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraDStarProxyGateway</module>
+			</modules> 
+		</profile>
+
+		<profile>
+			<id>noravexternalconnector-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/NoraExternalConnector</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraExternalConnector</module>
+			</modules> 
+		</profile>
+
+		<profile>
+			<id>noraveremoteclient-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/NoraVRRemoteClient</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraVRRemoteClient</module>
+			</modules> 
+		</profile>
+
+		<profile>
+			<id>ircddbserver-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/ircDDBServer</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/ircDDBServer</module>
+			</modules> 
+		</profile>
+
+		<profile>
+			<id>kdkapi-module</id>
+			
+			<activation>
+				<file>
+					<exists>src/KdkAPI</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/KdkAPI</module>
+			</modules> 
+		</profile>
+		
+		<profile>
+			<id>for_administrator_NoraHelper</id>
+			
+			<activation>
+				<file>
+					<exists>src/NoraHelper</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraHelper</module>
+			</modules> 
+		</profile>
+		
+		<profile>
+			<id>for_administrator_NoraUpdater</id>
+			
+			<activation>
+				<file>
+					<exists>./src/NoraUpdater</exists>
+				</file>
+			</activation>
+			
+			<modules>				
+				<module>src/NoraUpdater</module>
+			</modules> 
+		</profile>
+	</profiles>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>

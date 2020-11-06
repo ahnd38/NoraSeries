@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<link rel="stylesheet" href="./css/bootstrap.min.css">
+		<link rel="stylesheet" href="./css/animate.css">
+		<link rel="stylesheet" href="./css/bootnavbar.css">
+		<link rel="stylesheet" href="./css/nora_dashboard.css">
+
+		<script type="text/javascript" src="./js/lib/moment.min.js"></script>
+		<script type="text/javascript" src="./js/lib/lodash.min.js"></script>
+		<script type="text/javascript" src="./js/lib/jquery-3.4.1.min.js"></script>
+		<script type="text/javascript" src="./js/lib/jquery.loadTemplate.min.js"></script>
+		<script type="text/javascript" src="./js/lib/popper.min.js"></script>
+		<script type="text/javascript" src="./js/lib/bootstrap.min.js"></script>
+		<script type="text/javascript" src="./js/lib/bootnavbar.js" ></script>
+		<script type="text/javascript" src="./js/lib/socket.io.slim.js"></script>
+		<script type="text/javascript" src="./js/lib/loglevel.min.js"></script>
+		<script type="text/javascript" src="./js/lib/i18next.min.js"></script>
+		<script type="text/javascript" src="./js/lib/jquery-i18next.min.js"></script>
+		<script type="text/javascript" src="./js/lib/i18nextXHRBackend.min.js"></script>
+		<script type="text/javascript" src="./js/lib/store.everything.min.js"></script>
+		<script type="text/javascript" src="./js/lib/jquery.validate.min.js"></script>
+		<script type="text/javascript" src="./js/lib/additional-methods.min.js"></script>
+		<script type="text/javascript" src="./js/lib/sha.js"></script>
+		<script type="text/javascript" src="./js/lib/ace/ace.js" charset="utf-8"></script>
+		<script type="text/javascript" src="./js/lib/ace/ext-language_tools.js" charset="utf-8"></script>
+
+		<script type="text/javascript" src="./js/lib/utils.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/lib/jquery_utils.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/lib/kdkapi.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/lib/nora_utils.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/lib/noraapi.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/config.js?v=w36levR594VSIh3m"></script>
+
+		<script type="text/javascript" src="./js/nora_dashboard/logconsole.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/topmessage.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/home.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/dstarnow.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/gateway.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/repeater.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/modem.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/reflector.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/routing.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/config.js?v=w36levR594VSIh3m"></script>
+		<script type="text/javascript" src="./js/nora_dashboard/nora_dashboard.js?v=w36levR594VSIh3m"></script>
+
+		<script src="https://kit.fontawesome.com/9d4fe9e090.js" crossorigin="anonymous"></script>
+
+		<title>Nora dashboard</title>
+	</head>
+	<body>
+		
+		<div class="container_fluid">
+			<div style="display: none;" id="top_menu">
+				<div class="d-flex flex-row-reverse">
+					<div class="card flex-row top-menu-area">
+						<div class="p-2 flex-column">
+							<a class="d-flex justify-content-center" href="#" style="font-size: 24px; color: #428bca;" id="top_menu_user_icon">
+								<i class="fas fa-user-circle"></i>
+							</a>
+							<span class=" d-flex justify-content-center text-white " id="top_menu_user_name"></span>
+						</div>
+						<div class="p-2 flex-column">
+							<a class="d-flex justify-content-center" href="#" style="font-size: 24px; color: #428bca;" id="top_menu_group_icon">
+								<i class="fas fa-users"></i>
+							</a>
+							<span class=" d-flex justify-content-center text-white " id="top_menu_group_name"></span>
+						</div>
+						<div class="p-2 flex-column">
+							<a class="d-flex justify-content-center" href="#" style="font-size: 24px; color: #428bca;" id="top_menu_logout_icon">
+								<i class="fas fa-sign-out-alt"></i>
+							</a>
+							<span class=" d-flex justify-content-center text-white ">Logout</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+			<div class="h-100 mt-5" id="login_contents"></div>
+			<div class="mt-3" id="main_contents"></div>
+
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark mt-4" id="footer_navbar">
+				<div class="dropdown">
+					<button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-i18n="dashboard.footer_navbar.button_language_title">
+					</button>
+					<div id="language_selector" class="dropdown-menu">
+					</div>
+				</div>
+
+				<button type="button" class="btn btn-secondary ml-2" data-toggle="modal" data-target="#licenseModal" data-i18n="dashboard.footer_navbar.button_license_title">
+				</button>
+			</nav>
+		</div>
+
+		<div class="modal fade" id="modal_popup" tabindex="-1" role="dialog" data-keyboard="false" data-backdrop="static">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content bg-dark">
+					<div class="modal-header">
+						<h3 class="text-white" id="modal_popup_header"></h3>
+					</div>
+					<div class="modal-body">
+						<div class="align-items-center">
+							<div class="spinner-border text-primary ml-auto" role="status" id="modal_popup_spinner"></div>
+							<strong class="text-white ml-2" id="modal_popup_message"></strong>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal" id="modal_popup_close">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!--
+			Templates
+		-->
+		<script type="text/html" id="template_LoginContents">
+			<div class="h-100 d-flex justify-content-center">
+				<div class="card login-area">
+					<div class="card-header">
+						<h3>Nora Login</h3>
+						<div class="d-flex justify-content-end">
+							<img class="login-area-logo" src="./img/img_standby.png" />
+						</div>
+					</div>
+					<div class="card-body">
+						<form>
+							<div class="input-group form-group" id="login_serveraddress" style="display: none;">
+								<div class="input-group-prepend">
+									<i class="d-flex align-items-center fas fa-server"></i>
+									<span class="input-group-text">ServerAddress</span>
+								</div>
+								<input type="text" class="form-control" id="login_serveraddress_input" placeholder="ex. localhost:3000/nora">
+							</div>
+							<div class="input-group form-group">
+								<div class="input-group-prepend">
+									<i class="d-flex align-items-center fas fa-user-circle"></i>
+									<span class="input-group-text">Username</span>
+								</div>
+								<input type="text" class="form-control" id="login_username_input" placeholder="username">
+							</div>
+							<div class="input-group form-group">
+								<div class="input-group-prepend">
+									<i class="d-flex align-items-center fas fa-key"></i>
+									<span class="input-group-text">Password</span>
+								</div>
+								<input type="password" class="form-control" id="login_password_input" placeholder="password">
+							</div>
+							<div>
+								<div class="d-flex align-items-center remember">
+									<input type="checkbox" id="login_guestlogin_checkbox">Guest Login
+								</div>
+								<div class="d-flex align-items-center remember">
+									<input type="checkbox" id="login_rememberme_checkbox">Remember Me
+								</div>
+							</div>
+							<div class="form-group">
+								<input type="button" value="Login" class="btn float-right login_btn" id="login_btn">
+							</div>
+						</form>
+					</div>
+					<div class="card-footer">
+						<div class="d-flex justify-content-center links">
+							<a href="https://k-dk.net/kdk/" target="_blank">Presented by JQ1ZYC</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_MainContents">
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="main_navbar">
+				<a id="main_navbar_brand" class="navbar-brand" href="#home" data-i18n="dashboard.navbar.init_connecting"></a>
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarText">
+					<ul id="navItems" class="navbar-nav mr-auto">
+						<li id="main_navbar_item_home" class="nav-item">
+							<a id="main_navbar_item_home_link" class="nav-link" href="#home" data-i18n="dashboard.navbar.menu_home"></a>
+						</li>
+
+						<li id="main_navbar_item_gateway" class="nav-item">
+							<a id="main_navbar_item_gateway_link" class="nav-link" data-i18n="dashboard.navbar.menu_gateway"></a>
+						</li>
+
+						<li id="main_navbar_item_repeaters" class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+								aria-haspopup="true" aria-expanded="false" data-i18n="dashboard.navbar.menu_repeaters">
+							</a>
+							<ul class="dropdown-menu" id="main_navbar_item_repeaters_ul">
+							</ul>
+						</li>
+
+						<li id="main_navbar_item_reflectors" class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+								aria-haspopup="true" aria-expanded="false" data-i18n="dashboard.navbar.menu_reflectors">
+							</a>
+							<ul class="dropdown-menu" id="main_navbar_item_reflectors_ul">
+							</ul>
+						</li>
+
+						<li id="main_navbar_item_routingservices" class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+								aria-haspopup="true" aria-expanded="false" data-i18n="dashboard.navbar.menu_routingservices">
+							</a>
+							<ul class="dropdown-menu" id="main_navbar_item_routingservices_ul">
+							</ul>
+						</li>
+
+						<li id="main_navbar_item_config" class="nav-item" style="display: none;">
+							<a id="main_navbar_item_config_link" class="nav-link" href="#config" data-i18n="dashboard.navbar.menu_config"></a>
+						</li>
+					</ul>
+					<span id="main_navbar_text" class="navbar-text text-right">
+					</span>
+				</div>
+			</nav>
+
+			<nav aria-label="breadcrumb">
+				<ol id="breadcrumb" class="breadcrumb bg-secondary">
+				</ol>
+			</nav>
+
+			<div id="maintab" class="tab-content p-3">
+				<div id="maintab_home" class="tab-pane active">
+					<div class="row">
+						<div class="col-sm-12 col-lg-2">
+							<h4 class="text-white" data-i18n="home.title_version"></h4>
+							<div class="mb-2 card bg-dark text-white text-center rounded">
+								<div class="card-body">
+									<p class="card-text" id="home.application_info"></p>
+								</div>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.title_uptime"></h4>
+							<div class="mb-2 card bg-dark text-white text-center">
+								<div class="card-body">
+									<h3 class="card-text" id="home.application_uptime"></h3>
+								</div>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.cpuload.title"></h4>
+							<div class="mb-2 card bg-dark text-white text-center rounded">
+								<div class="card-body">
+									<h5 class="card-header" data-i18n="home.cpuload.application"></h5>
+									<h3 class="card-text" id="home.cpu_load.app"></h3>
+									<h5 class="card-header" data-i18n="home.cpuload.system"></h5>
+									<h3 class="card-text" id="home.cpu_load.sys"></h3>
+								</div>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.viewers.title"></h4>
+							<div class="mb-2 card bg-dark text-white text-center rounded">
+								<div class="card-body">
+									<h3 class="card-text" id="home.viewers.current_viewers"></h3>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-12 col-lg-10">
+							<h4 class="text-white" data-i18n="home.gateway.title"></h4>
+							<div class="table-responsive">
+								<table class="mb-4 table table-sm table-striped table-dark text-white table-hover rounded">
+									<thead>
+										<tr>
+											<th scope="col" data-i18n="home.gateway.gatewaycallsign"></th>
+											<th scope="col" data-i18n="home.gateway.proxygateway"></th>
+											<th scope="col" data-i18n="home.gateway.lastheard"></th>
+											<th scope="col" data-i18n="home.gateway.scope"></th>
+											<th scope="col" data-i18n="home.gateway.name"></th>
+											<th scope="col" data-i18n="home.gateway.location"></th>
+											<th scope="col" data-i18n="home.gateway.description"></th>
+											<th scope="col" data-i18n="home.gateway.url"></th>
+										</tr>
+									</thead>
+									<tbody id="home.gateway_overview">
+									</tbody>
+								</table>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.repeaters.title"></h4>
+							<div class="table-responsive">
+								<table class="mb-4 table table-sm table-striped table-dark text-white table-hover rounded">
+									<thead>
+										<tr>
+											<th scope="col" data-i18n="home.repeaters.repeatercallsign"></th>
+											<th scope="col" data-i18n="home.repeaters.type"></th>
+											<th scope="col" data-i18n="home.repeaters.routingservice"></th>
+											<th scope="col" data-i18n="home.repeaters.linkedreflector"></th>
+											<th scope="col" data-i18n="home.repeaters.lastheard"></th>
+											<th scope="col" data-i18n="home.repeaters.scope"></th>
+											<th scope="col" data-i18n="home.repeaters.name"></th>
+											<th scope="col" data-i18n="home.repeaters.location"></th>
+											<th scope="col" data-i18n="home.repeaters.description"></th>
+											<th scope="col" data-i18n="home.repeaters.url"></th>
+										</tr>
+									</thead>
+									<tbody id="home.repeater_overview">
+									</tbody>
+								</table>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.reflectors.title"></h4>
+							<div class="table-responsive">
+								<table class="mb-4 table table-sm table-striped table-dark text-white table-hover rounded">
+									<thead>
+										<tr>
+											<th scope="col" data-i18n="home.reflectors.reflectortype"></th>
+											<th scope="col" data-i18n="home.reflectors.status"></th>
+											<th scope="col" data-i18n="home.reflectors.incominglink"></th>
+											<th scope="col" data-i18n="home.reflectors.incominglink_count"></th>
+											<th scope="col" data-i18n="home.reflectors.outgoinglink"></th>
+											<th scope="col" data-i18n="home.reflectors.outgoinglink_count"></th>
+										</tr>
+									</thead>
+									<tbody id="home.reflector_overview">
+									</tbody>
+								</table>
+							</div>
+
+							<h4 class="text-white" data-i18n="home.routingservices.title"></h4>
+							<div class="table-responsive">
+								<table class="mb-4 table table-sm table-striped table-dark text-white table-hover rounded">
+									<thead>
+										<tr>
+											<th scope="col" data-i18n="home.routingservices.type"></th>
+											<th scope="col" data-i18n="home.routingservices.status"></th>
+											<th scope="col" data-i18n="home.routingservices.serveraddress"></th>
+										</tr>
+									</thead>
+									<tbody id="home.routing_overview">
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="tab-pane" id="maintab_config">
+					<div class="d-flex flex-row">
+						<div class="config-menu d-flex flex-column" id="config_menu">
+							<a class="config-menu-item d-flex align-items-center" tabid="configtab_configfile_edit" href="#">
+								<i class="fas fa-sticky-note"></i>
+								<span data-i18n="config.menu.config_file_edit"></span>
+							</a>
+							<a class="config-menu-item" tabid="configtab_authuserlistfile_edit" href="#">
+								<i class="fas fa-clipboard"></i>
+								<span data-i18n="config.menu.auth_user_list_file_edit"></span>
+							</a>
+							<a class="config-menu-item" tabid="configtab_system_utilities" href="#">
+								<i class="fas fa-tools"></i>
+								<span data-i18n="config.menu.system_utilities"></span>
+							</a>
+						</div>
+						<div class="flex-fill config-contents">
+							<div class="tab-content" id="config_content">
+								<div class="tab-pane active" id="configtab_configfile_edit">
+									<h3 data-i18n="config.config_file_edit.title"></h3>
+									<div class="config-editor" id="config-configfile-edit-editor"></div>
+									<div class="input-group form-group mt-1">
+										<input type="button" value="Save" class="form-control config-edit-save-btn" id="config_configfile_edit_save_btn">
+									</div>
+								</div>
+								<div class="tab-pane" id="configtab_authuserlistfile_edit">
+									<h3 data-i18n="config.auth_user_list_file_edit.title"></h3>
+									<div class="config-editor" id="config-authuserlistfile-edit-editor"></div>
+									<div class="input-group form-group mt-1">
+										<input type="button" value="Save" class="form-control config-edit-save-btn" id="config_authuserlistfile_edit_save_btn">
+									</div>
+								</div>
+								<div class="tab-pane" id="configtab_system_utilities">
+									<h3 data-i18n="config.system_utilities.title"></h3>
+
+									<div class="card m-3 system-utilities-item">
+										<h5 class="card-title" data-i18n="config.system_utilities.application_reboot.title"></h5>
+										<p class="card-text" data-i18n="config.system_utilities.application_reboot.description"></p>
+										<a href="#" class="btn btn-primary" id="config_sysutil_app_reboot_btn">Execute</a>
+									</div>
+
+									<div class="card m-3 system-utilities-item">
+										<h5 class="card-title" data-i18n="config.system_utilities.application_update.title"></h5>
+										<p class="card-text" data-i18n="config.system_utilities.application_update.description"></p>
+										<a href="#" class="btn btn-primary" id="config_sysutil_app_update_btn">Execute</a>
+									</div>
+
+									<div class="card m-3 system-utilities-item">
+										<h5 class="card-title" data-i18n="config.system_utilities.system_reboot.title"></h5>
+										<p class="card-text" data-i18n="config.system_utilities.system_reboot.description"></p>
+										<a href="#" class="btn btn-primary" id="config_sysutil_sys_reboot_btn">Execute</a>
+									</div>
+
+									<div class="card m-3 system-utilities-item">
+										<h5 class="card-title" data-i18n="config.system_utilities.system_shutdown.title"></h5>
+										<p class="card-text" data-i18n="config.system_utilities.system_shutdown.description"></p>
+										<a href="#" class="btn btn-primary" id="config_sysutil_sys_shutdown_btn">Execute</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col d-flex align-items-end">
+					<h4 id="dstarnow_title" class="text-white" data-i18n="dstarnow.title"></h4>
+				</div>
+				<div class="col">
+					<form class="float-right text-white">
+						<h5>Filter</h5>
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="check_dstarnow_japantrust" checked>
+							<label class="form-check-label" for="check_dstarnow_japantrust">JapanTrust</label>
+						</div>
+						<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="check_dstarnow_openquad" checked>
+							<label class="form-check-label" for="check_dstarnow_openquad">ircDDB(openquad)</label>
+						</div>
+					</form>
+				</div>
+			</div>
+			<div class="table-responsive">
+				<table class="table table-sm table-striped table-dark text-white table-hover rounded">
+					<thead>
+						<tr>
+							<th scope="col" data-i18n="dstarnow.title_index"></th>
+							<th scope="col" data-i18n="dstarnow.title_time"></th>
+							<th scope="col" data-i18n="dstarnow.title_repeatername"></th>
+							<th scope="col" data-i18n="dstarnow.title_repeater1callsign"></th>
+							<th scope="col" data-i18n="dstarnow.title_repeater2callsign"></th>
+							<th scope="col" data-i18n="dstarnow.title_yourcallsign"></th>
+							<th scope="col" data-i18n="dstarnow.title_mycallsign"></th>
+							<th scope="col" data-i18n="dstarnow.title_myshortcallsign"></th>
+							<th scope="col" data-i18n="dstarnow.title_destination"></th>
+							<th scope="col" data-i18n="dstarnow.title_message"></th>
+							<th scope="col" data-i18n="dstarnow.title_routingnetwork"></th>
+							<th scope="col" data-i18n="dstarnow.title_position"></th>
+						</tr>
+					</thead>
+					<tbody id="dstarnow_heard_entries">
+					</tbody>
+				</table>
+			</div>
+			
+			<div id="log_console_area" style="display: none;">
+				<h4 id="log_console_title" data-i18n="dashboard.logconsole.title"></h4>
+				<div class="row ml-1">
+					<div class="col card bg-dark rounded" style="max-height:300px; overflow-y: auto;">
+						<div id="log_console" class="d-table card-body">
+						</div>
+					</div>
+					<div class="col-2 mx-auto d-none d-xl-block">
+						<img class="img-fluid mx-auto d-block" data-i18n="[src]dashboard.nora.img_src">
+						<p class="text-center text-white" data-i18n="dashboard.nora.img_message"></p>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_LogEntry">
+			<span class="d-table-cell text-monospace" data-class="levelClass" data-content="time" style="width:180px;"></span>
+			<span class="d-table-cell text-monospace" data-class="levelClass" data-content="level" style="width:60px;"></span>
+			<span class="d-table-cell text-monospace" data-class="levelClass" data-content="message"></span>
+		</script>
+
+		<script type="text/html" id="template_gateway">
+			<div data-template-bind='{"attribute":"contents-id","value":"contents_id"}'>
+				<h4 class="text-white" data-i18n="gateway.info.title"></h4>
+				<div class="col-sm-12 col-lg-12 mb-2 card bg-dark text-white text-center rounded">
+					<div class="card-body">
+						<div class="row">
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.callsign"></h5>
+								<p class="card-text"><b data-id="gateway_callsign_id"></b></p>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.scope"></h5>
+								<p class="card-text" data-id="scope_id"></p>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.name"></h5>
+								<p class="card-text" data-id="name_id"></p>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.position"></h5>
+								<a class="card-text" data-id="position_id" target="_blank"></a>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.location"></h5>
+								<p class="card-text" data-id="location_id"></p>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.description"></h5>
+								<p class="card-text" data-id="description_id"></p>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.url"></h5>
+								<a class="card-text text-white" data-id="url_id"></a>
+							</div>
+							<div class="col m-2">
+								<h5 class="card-title" data-i18n="gateway.info.proxygateway"></h5>
+								<p class="card-text" data-id="proxy_gateway_id"></p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<h4 class="text-white mt-4" data-i18n="gateway.lastheard.title"></h4>
+				<div class="table-responsive">
+					<table class="table table-sm table-striped table-dark text-white table-hover">
+						<thead>
+							<tr>
+								<th scope="col" data-i18n="gateway.lastheard.index"></th>
+								<th scope="col" data-i18n="gateway.lastheard.time"></th>
+								<th scope="col" data-i18n="gateway.lastheard.txtime"></th>
+								<th scope="col" data-i18n="gateway.lastheard.direction"></th>
+								<th scope="col" data-i18n="gateway.lastheard.repeater1callsign"></th>
+								<th scope="col" data-i18n="gateway.lastheard.repeater2callsign"></th>
+								<th scope="col" data-i18n="gateway.lastheard.yourcallsign"></th>
+								<th scope="col" data-i18n="gateway.lastheard.mycallsign"></th>
+								<th scope="col" data-i18n="gateway.lastheard.myshortcallsign"></th>
+								<th scope="col" data-i18n="gateway.lastheard.from"></th>
+								<th scope="col" data-i18n="gateway.lastheard.destination"></th>
+								<th scope="col" data-i18n="gateway.lastheard.message"></th>
+								<th scope="col" data-i18n="gateway.lastheard.position"></th>
+								<th scope="col" data-i18n="gateway.lastheard.protocol"></th>
+								<th class="text-center" scope="col" data-i18n="gateway.lastheard.packetdroprate"></th>
+								<th class="text-center" scope="col" data-i18n="gateway.lastheard.biterrorrate"></th>
+							</tr>
+						</thead>
+						<tbody data-id='lastheard_id'>
+						</tbody>
+					</table>
+				</div>
+
+				<h4 class="text-white mt-4" data-i18n="gateway.reflectorhostlist.title"></h4>
+				<button type="button" class="btn btn-primary" data-id="reflectorhosts_btn_show" data-i18n="gateway.reflectorhostlist.button_listview_title">
+				</button>
+				
+				<div class="modal fade" data-id="reflectorhosts_modal_id" tabindex="-1" role="dialog" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
+						<div class="modal-content bg-dark">
+							<div class="modal-header">
+								<h5 class="modal-title text-white" data-i18n="gateway.reflectorhostlist.modal.title">></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<div class="table-responsive" style="overflow-y: auto;">
+									<table class="table table-sm table-striped table-dark text-white table-hover">
+										<thead>
+											<tr>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.index"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.callsign"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.name"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.protocol"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.address"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.priority"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.updatetime"></th>
+												<th scope="col" data-i18n="gateway.reflectorhostlist.modal.datasource"></th>
+											</tr>
+										</thead>
+										<tbody data-id='reflectorhosts_id'>
+										</tbody>
+									</table>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal" data-i18n="gateway.reflectorhostlist.modal.button_close_title"></button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_repeater">
+			<div data-template-bind='{"attribute":"contents-id","value":"contents_id"}'>
+				<h4 class="text-white" data-i18n="repeaters.info.title"></h4>
+				<div class="row">
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.callsign"></h5>
+							<p class="card-text"><b data-id="repeater_callsign_id"></b></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.type"></h5>
+							<p class="card-text" data-id="repeater_type_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.routingservice"></h5>
+							<p class="card-text" data-id="routing_service_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-3 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.linkedreflector"></h5>
+							<p class="card-text font-weight-bold" data-id="linked_reflector_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.scope"></h5>
+							<p class="card-text" data-id="scope_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.name"></h5>
+							<p class="card-text" data-id="name_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.position"></h5>
+							<a class="card-text" data-id="position_id" target="_blank"></a>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-6 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.location"></h5>
+							<p class="card-text" data-id="location_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-3 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.frequency"></h5>
+							<p class="card-text" data-id="frequency_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-1 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.agl"></h5>
+							<p class="card-text" data-id="agl_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-4 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.description"></h5>
+							<p class="card-text" data-id="description_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-4 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.url"></h5>
+							<a class="card-text text-white" data-id="url_id"></a>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.allowdirect"></h5>
+							<p class="card-text" data-id="allow_direct_id"></p>
+						</div>
+					</div>
+					<div class="col-sm-12 col-lg-4 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="repeaters.info.auto_disconnect_reflector_g2"></h5>
+							<p class="card-text" data-id="auto_disconnect_reflector_g2_id"></p>
+						</div>
+					</div>
+				</div>
+
+				<div data-id="reflector_link_control_id" style="display: none;">
+					<h4 class="text-white mt-4" data-i18n="repeaters.reflector_link_control.title"></h4>
+					<div class="row">
+						<div class="col-sm-12 col-lg-2 card bg-dark text-white rounded">
+							<div class="card-body">
+								<form>
+									<div class="form-group">
+										<label class="text-white" data-template-bind='{"attribute":"for","value":"reflector_link_control_label_for"}' data-i18n="repeaters.reflector_link_control.callsign"></label>
+										<input type="text" class="form-control" data-id="reflector_link_control_reflector_callsign_id"
+											data-template-bind='{"attribute":"aria-describedby","value":"reflector_link_control_reflector_callsign_aria_descrided_by"}'
+											placeholder="Enter ReflectorCallsign"
+											maxlength="8" style="text-transform: uppercase"
+										>
+										<small data-id="reflector_link_control_reflector_callsign_help_id" class="form-text text-muted" data-i18n="repeaters.reflector_link_control.callsign_help"></small>
+										<button type="button" class="btn btn-primary" data-id="reflectorhosts_btn_show" data-i18n="repeaters.reflector_link_control.button_reflector_list_title">
+										</button>
+									</div>
+									<button data-id="reflector_link_control_link_id" type="button" class="btn btn-primary" data-i18n="repeaters.reflector_link_control.button_link_title"></button>
+									<button data-id="reflector_link_control_unlink_id" type="button" class="btn btn-primary" data-i18n="repeaters.reflector_link_control.button_unlink_title"></button>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="modal fade" data-id="reflectorhosts_modal_id" tabindex="-1" role="dialog" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
+						<div class="modal-content bg-dark">
+							<div class="modal-header">
+								<h5 class="modal-title text-white" data-i18n="repeaters.reflector_link_control.modal.title"></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<div class="input-group form-group">
+									<div class="input-group-prepend">
+										<i class="d-flex align-items-center fas fa-search"></i>
+										<span class="input-group-text">Search</span>
+									</div>
+									<input type="text" class="form-control" data-id="reflectorhosts_search_input_id" placeholder="Callsign or Name(JQ1ZYC..etc)">
+								</div>
+								<div class="table-responsive" style="overflow-y: auto;">
+									<table
+										class="table table-sm table-striped table-dark text-white table-hover">
+										<thead>
+											<tr>
+												<th scope="col"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.index"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.callsign"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.name"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.protocol"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.address"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.priority"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.updatetime"></th>
+												<th scope="col" data-i18n="repeaters.reflector_link_control.modal.datasource"></th>
+											</tr>
+										</thead>
+										<tbody data-id='reflectorhosts_id'>
+										</tbody>
+									</table>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-primary" data-dismiss="modal" data-id="reflectorhosts_select_btn_id">Select</button>
+								<button type="button" class="btn btn-secondary" data-dismiss="modal" data-i18n="repeaters.reflector_link_control.modal.button_close_title"></button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</script>
+
+		<script type="text/html" id="template_routing_service">
+			<div data-template-bind='{"attribute":"contents-id","value":"contents_id"}'>
+				<h4 class="text-white" data-i18n="routing_services.info.title"></h4>
+				<div class="row">
+					<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+						<div class="card-body">
+							<h5 class="card-title" data-i18n="routing_services.info.type"></h5>
+							<p class="card-text"><b data-id="routing_type_id"></b></p>
+						</div>
+					</div>
+				</div>
+				<div class="row" data-id="addtional_information_id"></div>
+
+				<h4 class="text-white mt-4" data-i18n="routing_services.info.servers.title"></h4>
+				<table class="table table-sm table-striped table-dark text-white table-hover">
+					<thead>
+						<tr>
+							<th scope="col" data-i18n="routing_services.info.servers.index"></th>
+							<th scope="col" data-i18n="routing_services.info.servers.address"></th>
+							<th scope="col" data-i18n="routing_services.info.servers.status"></th>
+						</tr>
+					</thead>
+					<tbody data-id='servers_id'>
+					</tbody>
+				</table>
+
+				<h4 class="text-white mt-4" data-i18n="routing_services.query.form.title"></h4>
+				<form data-id="query_form_id">
+					<div class="form-group row">
+						<label class="text-white font-weight-bold col-sm-2 col-md-2 col-xl-2 col-form-label" data-i18n="routing_services.query.form.mode.label"></label>
+						<select class="form-control-lg col-sm-10 col-md-4 col-xl-2" data-id="query_form_mode_id" name="queryMode">
+							<option value="user"data-i18n="routing_services.query.form.mode.option_user"></option>
+							<option value="repeater" data-i18n="routing_services.query.form.mode.option_repeater"></option>
+						</select>
+					</div>
+					<div class="form-group row">
+						<label class="text-white font-weight-bold  col-sm-2 col-md-2 col-xl-2 col-form-label" data-i18n="routing_services.query.form.query_callsign.label"></label>
+						<input class="form-control-lg col-sm-10 col-md-4 col-xl-2" type="text" placeholder="Query Callsign" data-id="query_form_callsign_id" name="queryCallsign">
+					</div>
+					<div class="form-group row">
+						<div class="col">
+							<button type="button" class="btn btn-primary" data-id="query_form_btn_id" data-toggle="modal" data-i18n="routing_services.query.form.execute_btn.label"></button>
+						</div>
+					</div>
+				</form>
+
+				<div class="modal fade" data-id="query_modal_id" tabindex="-1" role="dialog">
+					<div class="modal-dialog modal-dialog-centered" role="document">
+						<div class="modal-content bg-dark">
+							<div class="modal-header">
+								<h5 class="modal-title text-white" data-i18n="routing_services.query.modal.title"></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+								</button>
+							</div>
+							<div class="modal-body">
+								<div class="align-items-center" data-id="query_modal_spinner_id">
+									<div class="spinner-border text-primary ml-auto" role="status"></div>
+									<strong class="text-white ml-2">Executing...</strong>
+								</div>
+								<div data-id="query_modal_result_id"></div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal" data-i18n="routing_services.query.modal.button_close_title"></button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_routing_service_query_modal_result">
+			<div class="m-2 card text-center rounded text-white" data-class="class">
+				<div class="card-body">
+					<h5 class="card-title" data-content-text="title_text"></h5>
+					<p class="card-text"><b data-content-text="content_text"></b></p>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_routing_service_addtional_information">
+			<div class="col-sm-12 col-lg-2 m-2 card bg-dark text-white text-center rounded">
+				<div class="card-body">
+					<h5 class="card-title" data-content-text="title"></h5>
+					<p class="card-text"><b data-id="content_id"></b></p>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_routing_service_servers">
+			<th name="index" scope="row" data-content="index"></th>
+			<td name="status" data-content="status"></td>
+			<td name="address" data-content="address"></td>
+		</script>
+
+		<script type="text/html" id="template_gateway_lastheard_entry">
+			<th name="index" scope="row" data-content="index"></th>
+			<td name="time" data-content="time"></td>
+			<td name="txtime" data-content="txtime"></td>
+			<td name="dir" data-content="dir"></td>
+			<td name="rpt1" data-content="rpt1"></td>
+			<td name="rpt2" data-content="rpt2"></td>
+			<td name="your" data-content="your"></td>
+			<td name="myLong">
+				<a class="text-white font-weight-bold" data-href="myLongLink" data-content="myLong" target="_blank"></a>
+			</td>
+			<td name="myShort" data-content="myShort"></td>
+			<td name="from" data-content="from"></td>
+			<td name="dest" data-content="dest"></td>
+			<td name="message" data-content="message"></td>
+			<td name="pos">
+				<a class="text-white font-weight-bold" data-href="posLink" data-content="pos" target="_blank"></a>
+			</td>
+			<td name="proto" data-content="proto"></td>
+			<td class="text-center" name="packetdroprate" data-content="packetdroprate"></td>
+			<td class="text-center" name="biterrorrate" data-content="biterrorrate"></td>
+		</script>
+
+		<script type="text/html" id="template_AnalogModemPiGPIO">
+			<div class="row" data-template-bind='{"attribute":"contents-id","value":"contents_id"}'>
+				<div class="card col-sm m-3">
+					<div class="card-body">
+						<h4 class="card-title">Downlink</h4>
+						<div class="ml-2">
+							<div class="mt-3" style="height: 60px;">
+								<label>YourCallsign(Destination)</label>
+								<p><span data-content="downlink_yourcallsign" style="font-size:150%;font-weight:bold;"></span></p>
+							</div>
+							<div class="mt-3" style="height: 60px;">
+								<label>MyCallsign(From)</label>
+								<p><span data-content="downlink_mycallsign" style="font-size:150%;font-weight:bold;"></span></p>
+							</div>
+						</div>
+					</div>
+				</div>
+					
+				<div class="card col-sm m-3">
+					<div class="card-body">
+						<h4 class="card-title">Uplink</h4>
+						<div class="ml-2">
+							<div class="mt-3" style="height: 60px;">
+								<label>YourCallsign(Destination)</label>
+								<p><span data-content="uplink_yourcallsign" style="font-size:150%;font-weight:bold;"></span></p>
+							</div>
+							<div class="mt-3" style="height: 60px;">
+								<label>MyCallsign(From)</label>
+								<p><span data-content="uplink_mycallsign" style="font-size:150%;font-weight:bold;"></span></p>
+							</div>
+
+							<h5 class="card-title mt-5">Config</h5>
+							<form data-id="uplink_config_form_id">
+								<div class="checkbox">
+									<label>Use Gateway</label>
+									<input type="checkbox" data-id="uplink_config_usegateway_id" data-template-bind='{"attribute":"checked","value":"uplink_config_usegateway"}'>
+								</div>
+								
+								<div class="row">
+									<div class="form-group col-sm-6">
+										<label>YourCallsign(Destination)</label>
+										<input data-id="uplink_config_yourcallsign_id" data-value="uplink_config_yourcallsign" type="text" class="form-control">
+									</div>
+								
+									<div class="form-group col-sm-6">
+										<label>MyCallsign(From)</label>
+										<input data-id="uplink_config_mycallsign_id" data-value="uplink_config_mycallsign" type="text" class="form-control">
+									</div>
+								</div>
+				
+								<button data-id="uplink_config_update_button_id" type="submit" class="btn btn-outline-primary">Update</button>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_reflector">
+			<div data-template-bind='{"attribute":"contents-id","value":"contents_id"}'>
+				<div class="row">
+					<div class="col-sm-12 col-lg-2">
+						<h4 class="text-white" data-i18n="reflectors.type"></h4>
+						<div class="mb-2 card bg-dark text-white text-center rounded">
+							<div class="card-body">
+								<h4 class="card-text" data-content="reflector_type"></h4>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-sm-12 col-lg-10">
+						<div class="row">
+							<div class="col-sm-12 col-lg-12">
+								<h4 class="text-white" data-i18n="reflectors.connection_summary.title"></h4>
+								<div class="table-responsive" style="overflow-y: auto;">
+									<table class="table table-sm table-striped table-dark text-white table-hover">
+										<thead>
+											<tr>
+												<th scope="col" data-i18n="reflectors.connection_summary.index"></th>
+												<th scope="col" data-i18n="reflectors.connection_summary.direction"></th>
+												<th scope="col" data-i18n="reflectors.connection_summary.reflector_callsign"></th>
+												<th scope="col" data-i18n="reflectors.connection_summary.repeater_callsign"></th>
+												<th scope="col" data-i18n="reflectors.connection_summary.id"></th>
+											</tr>
+										</thead>
+										<tbody data-id='connections_summary_id'>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+							<div class="col-sm-12 col-lg-12 mt-4">
+								<h4 class="text-white" data-i18n="reflectors.connection_details.title"></h4>
+								<div class="row" data-id="connections_id">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_reflector_connection_summary_entry">
+			<th name="index" scope="row" data-content="index"></th>
+			<td name="direction" data-content="direction"></td>
+			<td name="reflectorCallsign" data-content="reflector_callsign"></td>
+			<td name="repeaterCallsign" data-content="repeater_callsign"></td>
+			<td name="id" data-content="id"></td>
+		</script>
+
+		<script type="text/html" id="template_reflector_connection">
+			<div class="col-sm-12 col-lg-4 mb-2 card bg-dark text-white text-center rounded">
+				<h4 class="card-header" data-content="title"></h4>
+				<div class="card-body">
+					<h5 class="card-title" data-i18n="reflectors.connection_details.id"></h5>
+					<p class="card-text" data-content="id"></p>
+					<h5 class="card-title" data-i18n="reflectors.connection_details.direction"></h5>
+					<p class="card-text" data-content="direction"></p>
+					<h5 class="card-title" data-i18n="reflectors.connection_details.reflector_callsign"></h5>
+					<p class="card-text" data-content="reflector_callsign"></p>
+					<h5 class="card-title" data-i18n="reflectors.connection_details.repeater_callsign"></h5>
+					<p class="card-text" data-content="repeater_callsign"></p>
+
+					<div data-id="extra_contents_id"></div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/html" id="template_dstarnow_heard_entry">
+			<th name="index" scope="row" data-content="index"></th>
+			<td name="time" data-content="time"></td>
+			<td name="repeaterName" data-content="rptName"></td>
+			<td name="rpt1" data-content="rpt1"></td>
+			<td name="rpt2" data-content="rpt2"></td>
+			<td name="your" data-content="your"></td>
+			<td name="myLong">
+				<a class="text-light font-weight-bold" data-href="myLongLink" data-content="myLong" target="_blank"></a>
+			</td>
+			<td name="myShort" data-content="myShort"></td>
+			<td name="networkDestination" data-content="networkDestination"></td>
+			<td name="message" data-content="message"></td>
+			<td name="routingNetwork" data-content="routingNetwork"></td>
+			<td name="position"><a class="text-light font-weight-bold" data-content="position" data-href="positionLink" target="_blank"></a></td>
+		</script>
+
+		<div class="modal fade" id="licenseModal" tabindex="-1" role="dialog"aria-hidden="true">
+			<div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" role="document">
+				<div class="modal-content bg-dark text-white">
+					<div class="modal-header">
+						<h5 class="modal-title" id="licenseModalTitle" data-i18n="dashboard.footer_navbar.license_modal.title"></h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div>
+							<h5>Bootstrap</h5>
+							<a href="https://getbootstrap.com/">https://getbootstrap.com/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2011-2018 Twitter, Inc.
+Copyright (c) 2011-2018 The Bootstrap Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>i18next</h5>
+							<a href="http://i18next.com/">http://i18next.com/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2017 i18next
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>i18next-xhr-backend</h5>
+							<a href="https://github.com/i18next/i18next-xhr-backend">https://github.com/i18next/i18next-xhr-backend</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2015 i18next
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>jquery-i18next</h5>
+							<a href="https://github.com/i18next/jquery-i18next">https://github.com/i18next/jquery-i18next</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2015 i18next
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>jquery-template</h5>
+							<a href="https://github.com/codepb/jquery-template">https://github.com/codepb/jquery-template</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2013 Paul Burgess and other contributors,
+http://codepb.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>jquery-validation</h5>
+							<a href="https://jqueryvalidation.org/">https://jqueryvalidation.org/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright Jörn Zaefferer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>jquery</h5>
+							<a href="https://jquery.com/">https://jquery.com/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright JS Foundation and other contributors, https://js.foundation/
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>store.js</h5>
+							<a href="https://github.com/marcuswestin/store.js/">https://github.com/marcuswestin/store.js/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2010-2017 Marcus Westin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>loglevel</h5>
+							<a href="https://github.com/pimterry/loglevel">https://github.com/pimterry/loglevel</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2013 Tim Perry
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>moment</h5>
+							<a href="https://momentjs.com/">https://momentjs.com/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) JS Foundation and other contributors
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>popper</h5>
+							<a href="https://popper.js.org/">https://popper.js.org/</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright © 2016 Federico Zivolo and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>socket.io-client</h5>
+							<a href="https://github.com/socketio/socket.io-client">https://github.com/socketio/socket.io-client</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License (MIT)
+
+Copyright (c) 2014 Guillermo Rauch
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>jsSHA</h5>
+							<a href="https://github.com/Caligatio/jsSHA">https://github.com/Caligatio/jsSHA</a>
+							<pre class="text-white" style="font-size:80%;">
+BSD 3-Clause "New" or "Revised" License
+
+Copyright (c) 2008-2020 Brian Turek, 1998-2009 Paul Johnston & Contributors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+	* Redistributions of source code must retain the above copyright notice, this
+	list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright notice,
+	this list of conditions and the following disclaimer in the documentation
+	and/or other materials provided with the distribution.
+	* Neither the name of the the copyright holder nor the names of its
+	contributors may be used to endorse or promote products derived from this
+	software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>Ace (Ajax.org Cloud9 Editor)</h5>
+							<a href="https://github.com/ajaxorg/ace">https://github.com/ajaxorg/ace</a>
+							<pre class="text-white" style="font-size:80%;">
+Copyright (c) 2010, Ajax.org B.V.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+	* Redistributions of source code must retain the above copyright
+		notice, this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright
+		notice, this list of conditions and the following disclaimer in the
+		documentation and/or other materials provided with the distribution.
+	* Neither the name of Ajax.org B.V. nor the
+		names of its contributors may be used to endorse or promote products
+		derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL AJAX.ORG B.V. BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+							</pre>
+						</div>
+
+						<div>
+							<h5>lodash</h5>
+							<a href="https://github.com/lodash/lodash">https://github.com/lodash/lodash</a>
+							<pre class="text-white" style="font-size:80%;">
+The MIT License
+
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
+
+The following license applies to all parts of this software except as
+documented below:
+
+====
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+====
+
+Copyright and related rights for sample code are waived via CC0. Sample
+code is defined as all source code displayed within the prose of the
+documentation.
+
+CC0: http://creativecommons.org/publicdomain/zero/1.0/
+
+====
+
+Files located in the node_modules and vendor directories are externally
+maintained libraries used by this software which have their own
+licenses; we recommend you read them, as their terms may differ from the
+terms above.
+							</pre>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal" data-i18n="dashboard.footer_navbar.license_modal.button_close_title"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="application/json" id="language_enUS_json">
+			{	
+				"home":{
+					"title_version" : "Version",
+					"title_uptime" : "Uptime",
+					"cpuload":{
+						"title" : "CPU Load",
+						"application" : "Application",
+						"system" : "System"
+					},
+					"viewers":{
+						"title" : "Current Viewers"
+					},
+					"gateway":{
+						"title" : "Gateway",
+						"gatewaycallsign" : "GatewayCallsign",
+						"proxygateway" : "ProxyGateway",
+						"lastheard" : "LastHeard",
+						"scope" : "Scope",
+						"name" : "Name",
+						"location" : "Location",
+						"description" : "Description",
+						"url" : "URL"
+					},
+					"repeaters":{
+						"title" : "Repeaters & Nodes",
+						"repeatercallsign" : "RepeaterCallsign",
+						"type" : "Type",
+						"routingservice" : "RoutingService",
+						"linkedreflector" : "LinkedReflector",
+						"lastheard" : "LastHeard",
+						"scope" : "Scope",
+						"name" : "Name",
+						"location" : "Location",
+						"description" : "Description",
+						"url" : "URL"
+					},
+					"reflectors":{
+						"title" : "Reflector Services",
+						"reflectortype" : "ReflectorType",
+						"status" : "Status",
+						"incominglink" : "IncomingLink(:Port)",
+						"incominglink_count" : "IncomingLink Count",
+						"outgoinglink" : "OutgoingLink",
+						"outgoinglink_count" : "OutgoingLink Count"
+					},
+					"routingservices":{
+						"title" : "Routing Services",
+						"type" : "Type",
+						"status" : "Status",
+						"serveraddress" : "ServerAddress(:Port)"
+					}
+				},
+				
+				"gateway":{
+					"info" : {
+						"title" : "Gateway Information",
+						"callsign" : "Callsign",
+						"scope" : "Scope",
+						"position" : "Position",
+						"location" : "Location",
+						"name" : "Name",
+						"description" : "Description",
+						"url" : "URL",
+						"proxygateway" : "ProxyGateway"
+					},
+					"lastheard" : {
+						"title" : "Last Heard",
+						"index" : "#",
+						"time" : "Time",
+						"txtime" : "TXTime",
+						"direction" : "Dir",
+						"repeater1callsign" : "RPT1",
+						"repeater2callsign" : "RPT2",
+						"yourcallsign" : "UR",
+						"mycallsign" : "MY",
+						"myshortcallsign" : "MY(Suffix)",
+						"from" : "From",
+						"destination" : "Dest",
+						"message" : "Message",
+						"latitude" : "Lat",
+						"longitude" : "Lon",
+						"position" : "GPS",
+						"protocol" : "Protocol",
+						"packetdroprate" : "PDR",
+						"biterrorrate" : "BER"
+					},
+					"reflectorhostlist":{
+						"title" : "Reflector Host List",
+						"button_listview_title" : "List View",
+						"modal":{
+							"title" : "Reflector Host List",
+							"index" : "#",
+							"callsign" : "Callsign",
+							"name" : "Name",
+							"protocol" : "Protocol",
+							"address" : "Address(:Port)",
+							"priority" : "Priority",
+							"updatetime" : "UpdateTime",
+							"datasource" : "DataSource",
+							"button_close_title" : "Close"
+						}
+					}
+				},
+				
+				"repeaters":{
+					"info":{
+						"title" : "Repeater Information",
+						"callsign" : "Callsign",
+						"type" : "Type",
+						"routingservice" : "Routing Service",
+						"linkedreflector" : "Linked Reflector",
+						"scope" : "Scope",
+						"name" : "Name",
+						"position" : "Position",
+						"location" : "Location",
+						"frequency" : "Frequency",
+						"agl" : "Agl",
+						"description" : "Descriprion",
+						"url" : "URL",
+						"allowdirect" : "Allow DIRECT",
+						"auto_disconnect_reflector_g2" : "Auto Disconnect Reflector @G2"
+					},
+					"reflector_link_control" : {
+						"title" : "Reflector Link Control",
+						"callsign" : "Reflector Callsign",
+						"callsign_help" : "Please input callsign with 8 characters.(e.g.:XLX380 B,JQ1ZYC B)",
+						"button_reflector_list_title" : "Reflector List",
+						"button_link_title" : "Link",
+						"button_unlink_title" : "Unlink",
+						"modal":{
+							"title" : "Reflector Host Selector",
+							"index" : "#",
+							"callsign" : "Callsign",
+							"name" : "Name",
+							"protocol" : "Protocol",
+							"address" : "Address(:Port)",
+							"priority" : "Priority",
+							"updatetime" : "UpdateTime",
+							"datasource" : "DataSource",
+							"button_close_title" : "Close"
+						}
+					}
+				},
+				
+				"routing_services" : {
+					"info":{
+						"title" : "Routing Service Information",
+						"type" : "Type",
+						"servers":{
+							"title" : "Servers",
+							"index":"#",
+							"status":"Status",
+							"address":"Address"
+						}
+					},
+					"query" : {
+						"form" :{
+							"title" : "User/Repeater Search",
+							"mode" :{
+								"label" : "Search Mode",
+								"option_user" : "User",
+								"option_repeater" : "Repeater"
+							},
+							"query_callsign":{
+								"label" : "Query Callsign",
+								"required" : "Please input user or repeater callsign."
+							},
+							"execute_btn" :{
+								"label" : "EXECUTE QUERY"
+							}
+						},
+						"modal" :{
+							"title" : "Query Result",
+							"button_close_title" : "Close"
+						}
+					}
+				},
+				
+				"reflectors" : {
+					"type" : "Reflector Type",
+					"connection_summary":{
+						"title" : "Connection Summary",
+						"index" : "#",
+						"direction" : "Direction",
+						"reflector_callsign" : "Reflector Callsign",
+						"repeater_callsign" : "Repeater Callsign",
+						"id" : "ID"
+					},
+					"connection_details":{
+						"title" : "Connections",
+						"id" : "ID",
+						"direction" : "Dir",
+						"reflector_callsign" : "Reflector Callsign",
+						"repeater_callsign" : "Repeater Callsign"
+					}
+				},
+
+				"config":{
+					"menu":{
+						"config_file_edit" : "ConfigFile Edit",
+						"auth_user_list_file_edit" : "AuthorizationUserListFile Edit",
+						"system_utilities" : "System Utilities"
+					},
+					"config_file_edit":{
+						"title" : "ConfigurationFile Edit"
+					},
+					"auth_user_list_file_edit":{
+						"title" : "AuthorizationUserListFile Edit"
+					},
+					"system_utilities":{
+						"title" : "System Utilities",
+						"application_reboot" :{
+							"title" : "Application Internal Reboot",
+							"description" : "Apply configuration and reboot application in application internal"
+						},
+						"application_update":{
+							"title" : "Application Update(Stable Release)",
+							"description" : "Update this application and system reboot"
+						},
+						"system_reboot":{
+							"title" : "System Reboot",
+							"description" : "Reboot this system"
+						},
+						"system_shutdown":{
+							"title" : "System Shutdown",
+							"description" : "Shutdown this system"
+						}
+					}
+				},
+				
+				"dashboard":{
+					"alert_version_too_old" : "This dashboard version is too old, please update.",
+					
+					"navbar":{
+						"init_connecting" : "Connecting ...",
+						"title_dashboard" : "Dashboard",
+						"menu_home" : "Home",
+						"menu_gateway" : "Gateway",
+						"menu_repeaters" : "Repeaters",
+						"menu_reflectors" : "Reflectors",
+						"menu_routingservices" : "RoutingServices",
+						"menu_config" : "Config"
+					},
+					
+					"nora":{
+						"img_message" : "Language : English(US)",
+						"img_src" : "./img/n1.png"
+					},
+					"logconsole":{
+						"title" : "Log Console"
+					},
+					
+					"footer_navbar":{
+						"button_language_title" : "Language Select",
+						"button_license_title" : "License",
+						"license_modal" : {
+							"title" : "OpenSourceLicense",
+							"button_close_title" : "Close"
+						}
+					}
+				},
+				
+				"dstarnow":{
+					"title" : "DSTAR Now",
+					"title_index" : "#",
+					"title_time" : "Time",
+					"title_repeatername" : "RepeaterName",
+					"title_repeater1callsign" : "RPT1",
+					"title_repeater2callsign" : "RPT2",
+					"title_yourcallsign" : "UR",
+					"title_mycallsign" : "MY",
+					"title_myshortcallsign" : "MY(Suffix)",
+					"title_destination" : "Destination",
+					"title_message" : "Message",
+					"title_routingnetwork" : "RoutingNetwork",
+					"title_position" : "Pos"
+				},
+				
+				"noraapi":{
+					"tm_connected" : "Connected to server",
+					"tm_connection_timeout" : "Connection timeout !",
+					"tm_connection_error" : "Connection error !",
+					"log_client_connected" : "Client has connected to the server !",
+					"log_client_disconnected" : "Client has disconnected, reloading ..."
+				},
+				
+				"kdkapi":{
+					"tm_connection_timeout" : "KdkAPI Connection timeout",
+					"tm_connection_error" : "KdkAPI Connection error"
+				},
+
+				"validator":{
+					"is_valid_callsign":{
+						"fail" : "Illegal callsign"
+					}
+				}
+			}			
+		</script>
+
+	</body>
+</html>

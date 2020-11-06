@@ -1,0 +1,298 @@
+{	
+	"home":{
+		"title_version" : "バージョン",
+		"title_uptime" : "稼働時間",
+		"cpuload":{
+			"title" : "CPU負荷状況",
+			"application" : "アプリケーション単体",
+			"system" : "システム全体"
+		},
+		"viewers":{
+			"title" : "閲覧者数"
+		},
+		"gateway":{
+			"title" : "ゲートウェイ",
+			"gatewaycallsign" : "ゲートウェイコールサイン",
+			"proxygateway" : "プロキシゲートウェイ",
+			"lastheard" : "最終アクセス履歴",
+			"scope" : "公開範囲",
+			"name" : "名称",
+			"location" : "設置場所",
+			"description" : "備考",
+			"url" : "URL"
+		},
+		"repeaters":{
+			"title" : "ノード(レピータ)一覧",
+			"repeatercallsign" : "レピータコールサイン",
+			"type" : "種別",
+			"routingservice" : "ルーティングサービス",
+			"linkedreflector" : "リンク中リフレクター",
+			"lastheard" : "最終アクセス履歴",
+			"scope" : "公開範囲",
+			"name" : "名称",
+			"location" : "設置場所",
+			"description" : "備考",
+			"url" : "URL"
+		},
+		"reflectors":{
+			"title" : "リフレクター接続サービス一覧",
+			"reflectortype" : "種別",
+			"status" : "ステータス",
+			"incominglink" : "IncomingLink(:Port)",
+			"incominglink_count" : "IncomingLink現接続数",
+			"outgoinglink" : "OutgoingLink",
+			"outgoinglink_count" : "OutgoingLink現接続数"
+		},
+		"routingservices":{
+			"title" : "ルーティングサービス一覧",
+			"type" : "種別",
+			"status" : "ステータス",
+			"serveraddress" : "サーバーアドレス(:ポート)"
+		}
+	},
+	
+	"gateway":{
+		"info" : {
+			"title" : "ゲートウェイ情報",
+			"callsign" : "コールサイン",
+			"scope" : "公開範囲",
+			"name" : "名称",
+			"position" : "設置位置",
+			"location" : "設置場所",
+			"description" : "備考",
+			"url" : "URL",
+			"proxygateway" : "プロキシゲートウェイ"
+		},
+		"lastheard" : {
+			"title" : "アクセス履歴",
+			"index" : "#",
+			"time" : "時間",
+			"txtime" : "送信時間",
+			"direction" : "接続方向",
+			"repeater1callsign" : "RPT1",
+			"repeater2callsign" : "RPT2",
+			"yourcallsign" : "UR",
+			"mycallsign" : "MY",
+			"myshortcallsign" : "MY(Suffix)",
+			"from" : "送信元",
+			"destination" : "送信先",
+			"message" : "ショートメッセージ",
+			"latitude" : "経度",
+			"longitude" : "緯度",
+			"position" : "GPS",
+			"protocol" : "プロトコル",
+			"packetdroprate" : "PDR",
+			"biterrorrate" : "BER"
+		},
+		"reflectorhostlist":{
+			"title" : "リフレクターホスト一覧",
+			"button_listview_title" : "リスト表示",
+			"modal":{
+				"title" : "リフレクターホスト一覧",
+				"index" : "#",
+				"callsign" : "コールサイン",
+				"name" : "名前",
+				"protocol" : "プロトコル",
+				"address" : "アドレス(:ポート)",
+				"priority" : "優先度",
+				"updatetime" : "更新時間",
+				"datasource" : "データ提供元",
+				"button_close_title" : "閉じる"
+			}
+		}
+	},
+	
+	"repeaters":{
+		"info":{
+			"title" : "ノード(レピータ)情報",
+			"callsign" : "コールサイン",
+			"type" : "種別",
+			"routingservice" : "ルーティングサービス",
+			"linkedreflector" : "リンク中リフレクター",
+			"scope" : "公開範囲",
+			"name" : "名称",
+			"position" : "設置位置",
+			"location" : "設置場所",
+			"frequency" : "周波数(MHz)",
+			"agl" : "アンテナ地上高",
+			"description" : "備考",
+			"url" : "URL",
+			"allowdirect" : "DIRECTコール許可",
+			"auto_disconnect_reflector_g2" : "ゲート超え時リフレクター自動切断"
+		},
+		"reflector_link_control" : {
+			"title" : "リフレクター接続制御",
+			"callsign" : "リフレクターコールサイン",
+			"callsign_help" : "コールサインは8文字で次のように記述して下さい(例：XLX380 B、JQ1ZYC B等)",
+			"button_reflector_list_title" : "リフレクターリスト",
+			"button_link_title" : "接続",
+			"button_unlink_title" : "切断",
+			"modal":{
+				"title" : "リフレクター接続先選択",
+				"index" : "#",
+				"callsign" : "コールサイン",
+				"name" : "名前",
+				"protocol" : "プロトコル",
+				"address" : "アドレス(:ポート)",
+				"priority" : "優先度",
+				"updatetime" : "更新時間",
+				"datasource" : "データ提供元",
+				"button_close_title" : "閉じる"
+			}
+		}
+	},
+	
+	"routing_services" : {
+		"info":{
+			"title" : "ルーティングサービス情報",
+			"type" : "種別",
+			"servers":{
+				"title" : "サーバー一覧",
+				"index":"#",
+				"status":"ステータス",
+				"address":"接続先"
+			}
+		},
+		"query" : {
+			"form" :{
+				"title" : "ユーザー・レピータ検索",
+				"mode" :{
+					"label" : "Search Mode",
+					"option_user" : "ユーザー",
+					"option_repeater" : "レピータ"
+				},
+				"query_callsign":{
+					"label" : "検索対象コールサイン",
+					"required" : "検索対象コールサインは必須です"
+				},
+				"execute_btn" :{
+					"label" : "検索実行"
+				}
+			},
+			"modal" :{
+				"title" : "Query Result",
+				"button_close_title" : "Close"
+			}
+		}
+	},
+	
+	"reflectors" : {
+		"type" : "種別",
+		"connection_summary":{
+			"title" : "接続先一覧",
+			"index" : "#",
+			"direction" : "接続方向",
+			"reflector_callsign" : "リフレクターコールサイン",
+			"repeater_callsign" : "レピータコールサイン",
+			"id" : "ID"
+		},
+		"connection_details":{
+			"title" : "接続詳細",
+			"id" : "ID",
+			"direction" : "接続方向",
+			"reflector_callsign" : "リフレクターコールサイン",
+			"repeater_callsign" : "レピータコールサイン"
+		}
+	},
+	
+	"config":{
+		"menu":{
+			"config_file_edit" : "設定ファイル編集",
+			"auth_user_list_file_edit" : "ログインユーザーリスト編集",
+			"system_utilities" : "システムユーティリティ"
+		},
+		"config_file_edit":{
+			"title" : "設定ファイル編集"
+		},
+		"auth_user_list_file_edit":{
+			"title" : "ログインユーザーリスト編集"
+		},
+		"system_utilities":{
+			"title" : "システムユーティリティ",
+			"application_reboot" :{
+				"title" : "アプリケーション内部再起動",
+				"description" : "設定を反映して、アプリケーション内部で再起動を行います"
+			},
+			"application_update":{
+				"title" : "アプリケーション更新(Stable安定版更新)",
+				"description" : "アプリケーションを更新し、システムの再起動を行います"
+			},
+			"system_reboot":{
+				"title" : "システム再起動",
+				"description" : "このシステムを再起動します"
+			},
+			"system_shutdown":{
+				"title" : "システムシャットダウン",
+				"description" : "このシステムをシャットダウンします"
+			}
+		}
+	},
+
+	"dashboard":{
+		"alert_version_too_old" : "ダッシュボードのバージョンが古すぎますので更新して下さい",
+		
+		"navbar":{
+			"init_connecting" : "接続中 ...",
+			"title_dashboard" : "ダッシュボード",
+			"menu_home" : "ホーム",
+			"menu_gateway" : "ゲートウェイ",
+			"menu_repeaters" : "ノード(レピータ)",
+			"menu_reflectors" : "リフレクタ",
+			"menu_routingservices" : "ルーティングサービス",
+			"menu_config" : "設定"
+		},
+		
+		"nora":{
+			"img_message" : "言語設定：日本語",
+			"img_src" : "./img/n1.png"
+		},
+		"logconsole":{
+			"title" : "ログ"
+		},
+		
+		"footer_navbar":{
+			"button_language_title" : "Language Select",
+			"button_license_title" : "ライセンス",
+			"license_modal" : {
+				"title" : "オープンソースライセンス一覧",
+				"button_close_title" : "閉じる"
+			}
+		}
+	},
+	
+	"dstarnow":{
+		"title" : "DSTAR Now",
+		"title_index" : "#",
+		"title_time" : "時刻",
+		"title_repeatername" : "レピータ名称",
+		"title_repeater1callsign" : "RPT1",
+		"title_repeater2callsign" : "RPT2",
+		"title_yourcallsign" : "UR",
+		"title_mycallsign" : "MY",
+		"title_myshortcallsign" : "MY(Suffix)",
+		"title_destination" : "宛先",
+		"title_message" : "ショートメッセージ",
+		"title_routingnetwork" : "ルーティングネットワーク",
+		"title_position" : "GPS位置情報"
+	},
+	
+	"noraapi":{
+		"tm_connected" : "サーバーに接続しました",
+		"tm_connection_timeout" : "サーバーとの接続がタイムアウトしました",
+		"tm_connection_error" : "サーバーとの接続中にエラーが発生しました",
+		"log_client_connected" : "サーバーに接続しました",
+		"log_client_disconnected" : "サーバーから切断されました。再読み込み中…"
+	},
+	
+	"kdkapi":{
+		"tm_connection_timeout" : "KdkAPIとの接続がタイムアウトしました",
+		"tm_connection_error" : "KdkAPIとの接続中にエラーが発生しました"
+	},
+
+	"validator":{
+		"is_valid_callsign":{
+			"fail" : "不正なコールサインです"
+		}
+	}
+}
+

@@ -1,0 +1,31 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+
+	<id>dist-release</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	
+	<includeBaseDirectory>false</includeBaseDirectory>
+
+	<files>
+		<file>
+			<source>${project.build.directory}/${project.app.name}_v${project.app.version}.jar</source>
+			<outputDirectory>${project.app.name}</outputDirectory>
+			<destName>${project.app.name}_${project.app.version}.jar</destName>
+		</file>
+	</files>
+
+	<fileSets>		
+		<fileSet>
+			<directory>release</directory>
+			<outputDirectory>${project.app.name}</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>../dashboard</directory>
+			<outputDirectory>${project.app.name}/dashboard</outputDirectory>
+		</fileSet>
+	</fileSets>
+
+</assembly>
