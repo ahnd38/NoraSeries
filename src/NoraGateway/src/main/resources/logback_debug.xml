@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration debug="true">
+
+	<appender name="notify"
+		class="org.jp.illg.util.logback.appender.NotifyAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS}, %-6p, %m%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<logger name="org.jp.illg.nora.NoraGateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.nora.gateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.nora.gateway.service.norausers.NoraUsersAPIService" level="INFO" />
+
+	<logger name="org.jp.illg.dstar.gateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.dstar.gateway.DStarGatewayBase" level="INFO" />
+	<logger name="org.jp.illg.dstar.gateway.DStarGatewayHelper" level="INFO" />
+	<logger name="org.jp.illg.dstar.gateway.DStarGatewayImpl" level="INFO" />
+	<logger name="org.jp.illg.dstar.gateway.tool.announce" level="INFO" />
+	<logger name="org.jp.illg.nora.gateway.service.norausers" level="INFO" />
+
+	<logger name="org.jp.illg.dstar.routing" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.dstar.routing.service.jptrust" level="INFO" />
+	<logger name="org.jp.illg.dstar.routing.service.jptrust.JpTrustLogTransporter" level="INFO" />
+	<logger name="org.jp.illg.dstar.routing.service.gltrust" level="INFO" />
+	<logger name="org.jp.illg.dstar.routing.service.ircDDB" level="INFO" />
+	<logger name="org.jp.illg.dstar.routing.service.ircDDB.db" level="INFO" />
+	<logger name="org.jp.illg.dstar.routing.RoutingServiceManager" level="INFO" />
+
+	<logger name="org.jp.illg.dstar.repeater" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.dstar.repeater.DStarRepeaterBase" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.internal.InternalRepeater" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.homeblew" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.modem.DStarRepeaterModemBase" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.modem.mmdvm" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.modem.icomap" level="INFO" />
+	<logger name="org.jp.illg.dstar.repeater.modem.noravr" level="INFO" />
+
+	<logger name ="org.jp.illg.dstar.service" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name ="org.jp.illg.dstar.g2route" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name ="org.jp.illg.dstar.reflector" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name ="org.jp.illg.dstar.reflector.protocol.dextra" level="DEBUG" />
+	<logger name ="org.jp.illg.dstar.reflector.protocol.jarllink" level="INFO" />
+	<logger name ="org.jp.illg.dstar.reflector.protocol.dcs" level="INFO" />
+	<logger name ="org.jp.illg.dstar.reflector.protocol.dplus" level="INFO" />
+
+	<logger name = "org.jp.illg.nora.vr" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name = "org.jp.illg.nora.vr.NoraVR" level="INFO" />
+	<logger name = "org.jp.illg.nora.vr.protocol.NoraVRProtocolProcessor" level="INFO" />
+
+	<logger name="org.jp.illg.dstar.remote.web" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.util.dvpacket" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.dstar.util.DataSegmentDecoder" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.util.socketio" level="INFO" >
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.util.socketio.SocketIO" level="DEBUG"  />
+	<logger name="org.jp.illg.util.socketio.napi" level="INFO"  />
+
+	<logger name="org.jp.illg.util.ambe.dv3k" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.util.ambe.dv3k.uart.DV3KUartController" level="INFO" />
+
+	<logger name="org.jp.illg.util.irc" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.util.thread" level="INFO" >
+		<appender-ref ref="notify" />
+	</logger>
+	<logger name="org.jp.illg.util.thread.ThreadBase" level="INFO" />
+
+
+	<root level="OFF">
+	</root>
+
+</Configuration>

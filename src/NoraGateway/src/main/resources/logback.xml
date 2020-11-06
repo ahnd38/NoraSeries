@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration debug="false">
+
+	<appender name="notify"
+		class="org.jp.illg.util.logback.appender.NotifyAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS}, %-6p, %m%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.jp.illg.nora.NoraGateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.nora.gateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.gateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.routing" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.repeater" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	
+	<logger name="org.jp.illg.dstar.reflector" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	
+	<logger name ="org.jp.illg.dstar.service" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.g2route" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+	
+	<logger name="org.jp.illg.dstar.remote.web" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<root level="OFF">
+	</root>
+
+</Configuration>

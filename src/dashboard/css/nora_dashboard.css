@@ -1,0 +1,221 @@
+html,body {
+  height: 100%;
+  
+  background: linear-gradient(-135deg, #0f2027, #203a43, #2c5364);
+  padding: 20px;
+  
+}
+
+.hide-under-sm {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .hide-under-sm {
+    display: block; }
+}
+#jdstarnow_title {
+  color: #ffffff;
+}
+
+#log_console_title {
+  color: #ffffff;
+}
+
+#log_console {
+  height: 200px;
+  padding: 10px;
+  overflow: auto;
+}
+
+#tab-content {
+  height: 200px;
+  overflow: auto;
+}
+
+.log-trace-msg {
+  color: #dcdcdc;
+}
+
+.log-debug-msg {
+  color: #f5f5f5;
+}
+
+.log-info-msg {
+  color: #ffffff;
+}
+
+.log-warn-msg {
+  color: #ffd700;
+}
+
+.log-error-msg {
+  color: #ff6347;
+}
+
+.container{
+  height: 100%;
+  align-content: center;
+}
+
+.top-menu-area {
+  background-color: rgba(0,0,0,0.5);
+}
+
+.login-area{
+  height: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.card-header h3{
+  color: white;
+}
+
+.login-area-logo{
+  width: 120px;
+  position: absolute;
+  right: 20px;
+  top: -45px;
+}
+
+.input-group-prepend span{
+  width: 130px;
+  background-color: #428bca;
+  color: white;
+  font-weight: bold;
+  border:0 !important;
+}
+
+.input-group-prepend i{
+  padding: 5px;
+  background-color: #428bca;
+  color: white;
+  font-size: 24px;
+  border:0 !important;
+}
+  
+input:focus{
+  outline: 0 0 0 0  !important;
+  box-shadow: 0 0 0 0 !important; 
+ }
+  
+.remember{
+  color: white;
+}
+  
+.remember input
+{
+  width: 20px;
+  height: 20px;
+  margin-left: 15px;
+  margin-right: 5px;
+}
+
+.login_btn{
+  color: white;
+  background-color: #428bca;
+  width: 150px;
+  font-weight: bold;
+}
+  
+.login_btn:hover{
+  color: black;
+  background-color: white;
+}
+
+.links{
+  color: white;
+}
+
+.links a{
+  margin-left: 4px;
+}
+
+.fa-user-circle:hover {
+  color: #98c1f0;
+}
+
+
+.config-menu {
+  width: auto;
+  height: 1000px;
+  padding: 0px;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.config-menu-item {
+  height: 50px;
+  padding: 10px;
+  background-color: transparent;
+  color: white;
+  font-weight: bold;
+}
+
+.config-menu-item a:hover {
+  background-color: #428bca;
+  color: white;
+  font-weight: bold;
+}
+
+.config-menu-item-selected {
+  background-color: #428bca;
+  color: white;
+  font-weight: bold;
+}
+
+.config-menu-item a{
+  color: white;
+}
+
+.config-menu-item i {
+  width: 40px;
+  color: white;
+  font-size: 24px;
+  border:0 !important;
+}
+
+.config-menu-item span {
+  width: auto;
+  color: white;
+  font-weight: bold;
+  border:0 !important;
+}
+
+.config-contents {
+  width: auto;
+  margin-left: 20px;
+}
+
+.config-contents h3{
+  color: white;
+}
+
+.config-editor {
+  height: 800px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 14px;
+}
+
+.config-edit-save-btn{
+  color: white;
+  background-color: #428bca;
+  width: 150px;
+  font-weight: bold;
+}
+
+.config-edit-save-btn:hover{
+  color: red;
+  background-color: #71afe6;
+}
+
+.system-utilities-item{
+  color: white;
+  padding: 10px;
+  background-color: rgba(0,0,0,0.5);
+}

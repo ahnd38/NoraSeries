@@ -1,0 +1,297 @@
+{	
+	"home":{
+		"title_version" : "Version",
+		"title_uptime" : "Uptime",
+		"cpuload":{
+			"title" : "CPU Load",
+			"application" : "Application",
+			"system" : "System"
+		},
+		"viewers":{
+			"title" : "Current Viewers"
+		},
+		"gateway":{
+			"title" : "Gateway",
+			"gatewaycallsign" : "GatewayCallsign",
+			"proxygateway" : "ProxyGateway",
+			"lastheard" : "LastHeard",
+			"scope" : "Scope",
+			"name" : "Name",
+			"location" : "Location",
+			"description" : "Description",
+			"url" : "URL"
+		},
+		"repeaters":{
+			"title" : "Repeaters & Nodes",
+			"repeatercallsign" : "RepeaterCallsign",
+			"type" : "Type",
+			"routingservice" : "RoutingService",
+			"linkedreflector" : "LinkedReflector",
+			"lastheard" : "LastHeard",
+			"scope" : "Scope",
+			"name" : "Name",
+			"location" : "Location",
+			"description" : "Description",
+			"url" : "URL"
+		},
+		"reflectors":{
+			"title" : "Reflector Services",
+			"reflectortype" : "ReflectorType",
+			"status" : "Status",
+			"incominglink" : "IncomingLink(:Port)",
+			"incominglink_count" : "IncomingLink Count",
+			"outgoinglink" : "OutgoingLink",
+			"outgoinglink_count" : "OutgoingLink Count"
+		},
+		"routingservices":{
+			"title" : "Routing Services",
+			"type" : "Type",
+			"status" : "Status",
+			"serveraddress" : "ServerAddress(:Port)"
+		}
+	},
+	
+	"gateway":{
+		"info" : {
+			"title" : "Gateway Information",
+			"callsign" : "Callsign",
+			"scope" : "Scope",
+			"name" : "Name",
+			"position" : "Position",
+			"location" : "Location",
+			"description" : "Description",
+			"url" : "URL",
+			"proxygateway" : "ProxyGateway"
+		},
+		"lastheard" : {
+			"title" : "Last Heard",
+			"index" : "#",
+			"time" : "Time",
+			"txtime" : "TXTime",
+			"direction" : "Dir",
+			"repeater1callsign" : "RPT1",
+			"repeater2callsign" : "RPT2",
+			"yourcallsign" : "UR",
+			"mycallsign" : "MY",
+			"myshortcallsign" : "MY(Suffix)",
+			"from" : "From",
+			"destination" : "Dest",
+			"message" : "Message",
+			"latitude" : "Lat",
+			"longitude" : "Lon",
+			"position" : "GPS",
+			"protocol" : "Protocol",
+			"packetdroprate" : "PDR",
+			"biterrorrate" : "BER"
+		},
+		"reflectorhostlist":{
+			"title" : "Reflector Host List",
+			"button_listview_title" : "List View",
+			"modal":{
+				"title" : "Reflector Host List",
+				"index" : "#",
+				"callsign" : "Callsign",
+				"name" : "Name",
+				"protocol" : "Protocol",
+				"address" : "Address(:Port)",
+				"priority" : "Priority",
+				"updatetime" : "UpdateTime",
+				"datasource" : "DataSource",
+				"button_close_title" : "Close"
+			}
+		}
+	},
+	
+	"repeaters":{
+		"info":{
+			"title" : "Repeater Information",
+			"callsign" : "Callsign",
+			"type" : "Type",
+			"routingservice" : "Routing Service",
+			"linkedreflector" : "Linked Reflector",
+			"scope" : "Scope",
+			"name" : "Name",
+			"position" : "Position",
+			"location" : "Location",
+			"frequency" : "Frequency",
+			"agl" : "Agl",
+			"description" : "Descriprion",
+			"url" : "URL",
+			"allowdirect" : "Allow DIRECT",
+			"auto_disconnect_reflector_g2" : "Auto Disconnect Reflector @G2"
+		},
+		"reflector_link_control" : {
+			"title" : "Reflector Link Control",
+			"callsign" : "Reflector Callsign",
+			"callsign_help" : "Please input callsign with 8 characters.(e.g.:XLX380 B,JQ1ZYC B)",
+			"button_reflector_list_title" : "Reflector List",
+			"button_link_title" : "Link",
+			"button_unlink_title" : "Unlink",
+			"modal":{
+				"title" : "Reflector Host Selector",
+				"index" : "#",
+				"callsign" : "Callsign",
+				"name" : "Name",
+				"protocol" : "Protocol",
+				"address" : "Address(:Port)",
+				"priority" : "Priority",
+				"updatetime" : "UpdateTime",
+				"datasource" : "DataSource",
+				"button_close_title" : "Close"
+			}
+		}
+	},
+	
+	"routing_services" : {
+		"info":{
+			"title" : "Routing Service Information",
+			"type" : "Type",
+			"servers":{
+				"title" : "Servers",
+				"index":"#",
+				"status":"Status",
+				"address":"Address"
+			}
+		},
+		"query" : {
+			"form" :{
+				"title" : "Query Search",
+				"mode" :{
+					"label" : "Search Mode",
+					"option_user" : "User",
+					"option_repeater" : "Repeater"
+				},
+				"query_callsign":{
+					"label" : "Query Callsign",
+					"required" : "Please input user or repeater callsign."
+				},
+				"execute_btn" :{
+					"label" : "EXECUTE QUERY"
+				}
+			},
+			"modal" :{
+				"title" : "Query Result",
+				"button_close_title" : "Close"
+			}
+		}
+	},
+	
+	"reflectors" : {
+		"type" : "Reflector Type",
+		"connection_summary":{
+			"title" : "Connection Summary",
+			"index" : "#",
+			"direction" : "Direction",
+			"reflector_callsign" : "Reflector Callsign",
+			"repeater_callsign" : "Repeater Callsign",
+			"id" : "ID"
+		},
+		"connection_details":{
+			"title" : "Connections",
+			"id" : "ID",
+			"direction" : "Dir",
+			"reflector_callsign" : "Reflector Callsign",
+			"repeater_callsign" : "Repeater Callsign"
+		}
+	},
+	
+	"config":{
+		"menu":{
+			"config_file_edit" : "ConfigFile Edit",
+			"auth_user_list_file_edit" : "AuthorizationUserListFile Edit",
+			"system_utilities" : "System Utilities"
+		},
+		"config_file_edit":{
+			"title" : "ConfigurationFile Edit"
+		},
+		"auth_user_list_file_edit":{
+			"title" : "AuthorizationUserListFile Edit"
+		},
+		"system_utilities":{
+			"title" : "System Utilities",
+			"application_reboot" :{
+				"title" : "Application Internal Reboot",
+				"description" : "Apply configuration and reboot application in application internal"
+			},
+			"application_update":{
+				"title" : "Application Update(Stable Release)",
+				"description" : "Update this application and system reboot"
+			},
+			"system_reboot":{
+				"title" : "System Reboot",
+				"description" : "Reboot this system"
+			},
+			"system_shutdown":{
+				"title" : "System Shutdown",
+				"description" : "Shutdown this system"
+			}
+		}
+	},
+
+	"dashboard":{
+		"alert_version_too_old" : "This dashboard version is too old, please update.",
+		
+		"navbar":{
+			"init_connecting" : "Connecting ...",
+			"title_dashboard" : "Dashboard",
+			"menu_home" : "Home",
+			"menu_gateway" : "Gateway",
+			"menu_repeaters" : "Repeaters",
+			"menu_reflectors" : "Reflectors",
+			"menu_routingservices" : "RoutingServices",
+			"menu_config" : "Config"
+		},
+		
+		"nora":{
+			"img_message" : "Language : English(US)",
+			"img_src" : "./img/n1.png"
+		},
+		"logconsole":{
+			"title" : "Log Console"
+		},
+		
+		"footer_navbar":{
+			"button_language_title" : "Language Select",
+			"button_license_title" : "License",
+			"license_modal" : {
+				"title" : "OpenSourceLicense",
+				"button_close_title" : "Close"
+			}
+		}
+	},
+	
+	"dstarnow":{
+		"title" : "DSTAR Now",
+		"title_index" : "#",
+		"title_time" : "Time",
+		"title_repeatername" : "RepeaterName",
+		"title_repeater1callsign" : "RPT1",
+		"title_repeater2callsign" : "RPT2",
+		"title_yourcallsign" : "UR",
+		"title_mycallsign" : "MY",
+		"title_myshortcallsign" : "MY(Suffix)",
+		"title_destination" : "Destination",
+		"title_message" : "Message",
+		"title_routingnetwork" : "RoutingNetwork",
+		"title_position" : "Pos"
+	},
+	
+	"noraapi":{
+		"tm_connected" : "Connected to server",
+		"tm_connection_timeout" : "Connection timeout !",
+		"tm_connection_error" : "Connection error !",
+		"log_client_connected" : "Client has connected to the server !",
+		"log_client_disconnected" : "Client has disconnected, reloading ..."
+	},
+	
+	"kdkapi":{
+		"tm_connection_timeout" : "KdkAPI Connection timeout",
+		"tm_connection_error" : "KdkAPI Connection error"
+	},
+	
+	"validator":{
+		"is_valid_callsign":{
+			"fail" : "Illegal callsign"
+		}
+	}
+}

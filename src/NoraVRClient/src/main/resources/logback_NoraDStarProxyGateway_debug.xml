@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration debug="false">
+
+	<appender name="stdout"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{35} - %msg %n</pattern>
+		</encoder>
+	</appender>
+
+
+	<logger name="org.jp.illg.nora.proxy" level="INFO">
+		<appender-ref ref="stdout" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.g1proxy" level="INFO">
+		<appender-ref ref="stdout" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.g1proxy.G1ProxyLogTransporter" level="TRACE">
+	</logger>
+
+
+	<root level="INFO">
+	</root>
+
+</Configuration>
