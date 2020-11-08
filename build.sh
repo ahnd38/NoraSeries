@@ -53,6 +53,9 @@ fi
 printf "\n"
 
 printf "5. Copy Application Files...\n"
+if [ ! -e ./dist/ ]; then
+    mkdir ./dist/
+fi
 if [ -e ./src/NoraGateway/target ]; then
     cp ./src/NoraGateway/target/*.zip ./dist/
 fi
