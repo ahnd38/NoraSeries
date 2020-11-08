@@ -63,6 +63,9 @@ if errorlevel 1 (
 echo.
 
 echo 5. Copy Application Files...
+if not exist "%~dp0dist\" (
+  mkdir "%~dp0dist\"
+)
 if exist "%~dp0src\NoraGateway\target" (
   copy "%~dp0src\NoraGateway\target\*.zip" "%~dp0dist\"
 )
