@@ -1,6 +1,6 @@
 * text eol=auto
-*.sh text eof=lf
-*.bat text eof=crlf
+*.sh text eol=lf
+*.bat text eol=crlf
 
 *.jar binary
 *.ambe binary
