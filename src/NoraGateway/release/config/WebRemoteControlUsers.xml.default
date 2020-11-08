@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+	WebRemoteControlログインユーザーリスト
+
+	<UserEntry
+		username="ユーザー名"
+		password="「4」文字以上のパスワード"
+		group="Administrators/Users/Guestsの何れか"
+			Administrators ... 管理者(全操作可能)
+			Users          ... 利用者(制限付操作可能)
+			Guests         ... 閲覧者(操作不可＆ログ閲覧不可)
+	/>
+-->
+
+<WebRemoteControlUsers>
+	<Users>	
+		<!-- サンプル管理者用エントリ(※必ずパスワードを変更して下さい) -->
+		<UserEntry username="admin" password="admin" group="Administrators" />
+		
+		<!-- ゲストログイン用エントリ(ゲストログインを許可しない場合は下記エントリを削除して下さい) -->
+		<UserEntry username="guest" password="guest" group="Guests" />
+	</Users>
+</WebRemoteControlUsers>

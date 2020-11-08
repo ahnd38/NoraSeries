@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration debug="false">
+
+	<appender name="fileout"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>./log/NoraGateway.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>./log/NoraGateway_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxFileSize>50MB</maxFileSize>
+			<maxHistory>30</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy/MM/dd HH:mm:ss.SSS}, [%t], %-6p, %c{10}, %m%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="fileout_async" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="fileout"/>
+	</appender>
+	
+	<root level="INFO">
+		<appender-ref ref="fileout_async" />
+	</root>
+
+</Configuration>

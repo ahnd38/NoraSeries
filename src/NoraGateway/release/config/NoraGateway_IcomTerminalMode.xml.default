@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NoraGateway>
+	<Gateway
+		callsign="XXXXXX G"
+
+		port="40000"
+		useProxyGateway="true"
+		proxyGatewayAddress="proxy.k-dk.net"
+		proxyPort="56513"
+	>
+		<RoutingServices>
+
+			<RoutingService enable="true" type="JapanTrust">
+				<ConfigurationProperties>
+					<ServerAddress>trust.d-star.info</ServerAddress>
+					<ServerPort>30001</ServerPort>
+				</ConfigurationProperties>
+			</RoutingService>
+
+			<RoutingService enable="true" type="ircDDB">
+				<ConfigurationProperties>
+					<ServerAddress>k-dk.net</ServerAddress>
+					<ServerPassword>dstar</ServerPassword>
+
+					<Channel>#dstar</Channel>
+				</ConfigurationProperties>
+			</RoutingService>
+
+		</RoutingServices>
+
+		<Reflectors hostsFile="./config/hosts.txt">
+
+			<Reflector enable="false" type="DExtra">
+				<ConfigurationProperties>
+				</ConfigurationProperties>
+			</Reflector>
+
+			<Reflector enable="true" type="DCS">
+				<ConfigurationProperties>
+				</ConfigurationProperties>
+			</Reflector>
+
+			<Reflector enable="true" type="DPlus">
+				<ConfigurationProperties>
+				</ConfigurationProperties>
+			</Reflector>
+
+			<Reflector enable="true" type="JARLLink">
+				<ConfigurationProperties>
+				</ConfigurationProperties>
+			</Reflector>
+
+		</Reflectors>
+
+	</Gateway>
+
+	<Repeaters>
+		<Repeater
+			enable="true" type="Internal" callsign="XXXXXX B"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false" allowDIRECT="true"
+			autoDisconnectFromReflectorOnTxToG2Route="true">
+			<Modems>
+				<Modem type="NewAccessPoint" allowDIRECT="true">
+					<ConfigurationProperties>
+						<PortName>COMx</PortName>
+					</ConfigurationProperties>
+				</Modem>
+			</Modems>
+		</Repeater>
+	</Repeaters>
+	
+	<WebRemoteControlService enable="true" port="3000" context="/nora" />
+
+	<ReflectorHostFileDownloadService enable="true">
+		<URLEntry enable="true" intervalMinutes="360" url="https://k-dk.net/norahosts/hosts.txt" />
+		<URLEntry enable="true" intervalMinutes="30" url="https://k-dk.net/nora_hosts.php" />
+	</ReflectorHostFileDownloadService>
+
+</NoraGateway>

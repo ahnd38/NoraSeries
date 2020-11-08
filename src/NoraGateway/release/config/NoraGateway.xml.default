@@ -1,0 +1,1108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+NoraGateway アプリケーション設定ファイル
+*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+-->
+<NoraGateway>
+
+<!--
+***************************************
+①ゲートウェイコールサイン設定
+***************************************
+callsignにゲートウェイとして使用するコールサインに「G」を付加して記述します
+
+※ゲートウェイとして使用するコールサインとは、
+　→ターミナルモードではご自分のコールサイン
+　→アクセスポイントモードでは、異なるコールサイン(社団局、固定局、異なるエリアの移動局)
+が必要です。詳しくは以下を参照して下さい
+http://d-star.at.webry.info/201609/article_1.html
+
+※必ず8文字になるように設定します
+
+例 JQ1ZYCの場合、XXXXXX G→JQ1ZYC G
+例 7T1ABCの場合、XXXXXX G→7T1ABC G
+例 JZ1ABの場合、 XXXXXX G→JZ1AB  G(コールサインとGの間にスペース2文字)
+-->
+<!-- ###################################################################### -->
+	<!--
+		Callsign                -> ゲートウェイコールサイン(ex. JQ1ZYCなど)
+		port                    -> ゲート超え送受信ポート(通常は40000ポートを指定してください。0を指定すると適当な空きポートを選択します)
+		g2ProtocolVersion       -> ゲート超えプロトコルバージョン(現状では無効)
+		disableHeardAtReflector -> trueにするとリフレクターに送信する際に最終アクセスレピータ情報を管理サーバ・ircddbに送信しなくなります
+		announceVoice           -> アナウンスに使用する音声キャラクタです。KizunaAkari(合成音声)/QOW(女性)/Silent(無音)のどちらかを選択可能
+		disableWakeupAnnounce   -> trueにすると、起動時の「NoraGateway起動しました」のアナウンスが流れなくなります
+		scope                   -> 公開範囲。Public(公開)/Private(非公開)のいずれかです
+		name                    -> ゲートウェイ名称(高輪ケートウェイ等)
+		location                -> ゲートウェイ設置場所(Hidaka, Saitama, Japan等)
+		latitude                -> 設置場所 緯度(Degree表記)※正確に入力せずに、近所の公共施設等に合わせて下さい
+		longitude               -> 設置場所 経度(Degree表記)※正確に入力せずに、近所の公共施設等に合わせて下さい
+		description1            -> コメント1(※アクティブノードリストに載るだけですので自由に記述可)
+		description2            -> コメント2(※アクティブノードリストに載るだけですので自由に記述可)
+		url                     -> 関連するURL(社団局のHPなど)
+		dashboardUrl            -> インターネットから閲覧可能なダッシュボードURL(ダッシュボードを動作させていない場合や非公開の場合には未入力可)
+		**********************************************************************
+		NoraDStarProxyGateway G1ゲートウェイプロキシ接続機能(v0.1.3a以降)
+		
+		40000ポートがフォワード出来ない(ポート開放できない)環境でもプロキシサーバを経由してゲート越えを可能にするものです。
+		また、同一ゲートウェイコールサインにて、物理的に複数のG1ゲートウェイの運用を可能にします。
+		
+		設定パラメータ一覧(下記の<Gateway内に設定してください)
+		useProxyGateway       -> true
+		proxyGatewayAddress   -> NoraDStarProxyGatewayを設置しているサーバのアドレス
+		proxyPort             -> NoraDStarProxyGatewayを設置しているサーバのポート
+		**********************************************************************
+	-->
+	<Gateway
+		callsign="XXXXXX"
+		port="40000" g2ProtocolVersion="2"
+		useProxyGateway="false"
+		proxyGatewayAddress="proxy.k-dk.net"
+		proxyPort="56513"
+		disableHeardAtReflector="true"
+		announceVoice="KizunaAkari"
+		disableWakeupAnnounce="false"
+		scope="private"
+		name=""
+		location=""
+		latitude="35.6982557"
+		longitude="139.7715392"
+		description1=""
+		description2=""
+		url="https://k-dk.net/kdk/"
+		dashboardUrl=""
+	>
+<!-- ###################################################################### -->
+	
+	
+		<RoutingServices>
+			<!-- 日本の管理サーバへの接続設定-->
+			<RoutingService enable="true" type="JapanTrust">
+				<ConfigurationProperties>
+					<ServerAddress>trust.d-star.info</ServerAddress>
+					<ServerPort>30001</ServerPort>
+					<StatusTransmit>true</StatusTransmit>
+					<StatusServerAddress>status.d-star.info</StatusServerAddress>
+					<StatusServerPort>21050</StatusServerPort>
+				</ConfigurationProperties>
+			</RoutingService>
+			
+			<!-- G2/G3ゲートウェイへの接続設定(v0.1.3a以降) -->
+			<RoutingService enable="false" type="GlobalTrust">
+				<ConfigurationProperties>
+					<!-- Please enter gateway address of near you -->
+					<ServerAddress>***</ServerAddress>
+					<ServerHeardPort>12346</ServerHeardPort>
+					<ServerQueryPort>12345</ServerQueryPort>
+				</ConfigurationProperties>
+			</RoutingService>
+			
+			<!-- ircDDBサーバへの接続設定 ※実験的かつ機能限定(v0.0.6a以降) -->
+			<RoutingService enable="true" type="ircDDB">
+				<ConfigurationProperties>
+					<ServerAddress>ircddb.k-dk.net</ServerAddress>
+					<ServerPassword></ServerPassword>
+					
+					<!--
+						※複数のircDDBサーバを設定する場合には、下記にて最大9箇所を設定可能
+						
+						ServerAddress1...9のように番号を付与させること
+					-->
+<!--
+					<ServerAddress1>rr.openquad.net</ServerAddress1>
+					<ServerPassword1></ServerPassword1>
+-->
+<!--
+					<ServerAddress2></ServerAddress2>
+					<ServerPort2></ServerPort2>
+					<ServerPassword2></ServerPassword2>
+					<Debug2>false</Debug2>
+-->
+				</ConfigurationProperties>
+			</RoutingService>
+
+		</RoutingServices>
+		
+		<Reflectors hostsFile="./config/hosts.txt">
+			<Reflector enable="false" type="DExtra">
+				<ConfigurationProperties>
+					<!-- 外部(リフレクター等)への接続有効・無効 -->
+					<OutgoingLink>true</OutgoingLink>
+					<!-- 外部(リフレクター等)への接続総セッション数制限 -->
+					<MaxOutgoingLink>8</MaxOutgoingLink>
+					
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続有効・無効 -->
+					<IncomingLink>false</IncomingLink>
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続総セッション数制限 -->
+					<MaxIncomingLink>20</MaxIncomingLink>
+				</ConfigurationProperties>
+			</Reflector>
+
+			<!-- DCS接続機能(v0.1.2a以降) -->
+			<Reflector enable="true" type="DCS">
+				<ConfigurationProperties>
+					<!-- 外部(リフレクター等)への接続有効・無効 -->
+					<OutgoingLink>true</OutgoingLink>
+					<!-- 外部(リフレクター等)への接続総セッション数制限 -->
+					<MaxOutgoingLink>8</MaxOutgoingLink>
+					
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続有効・無効 -->
+					<IncomingLink>false</IncomingLink>
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続総セッション数制限 -->
+					<MaxIncomingLink>20</MaxIncomingLink>
+				</ConfigurationProperties>
+			</Reflector>
+
+			<!-- DPlus接続機能(v0.1.2a以降) -->
+			<Reflector enable="true" type="DPlus">
+				<ConfigurationProperties>
+					<!--
+						LoginCallsignは、既に登録されたコールサインが必要です
+						http://www.dstargateway.org/D-Star_Registration.html
+						未登録コールサインでは、XLXリフレクタでは動作するが、本来のREFリフレクタでは動作しない等の問題が発生します
+						※入力が無ければ、Gatewayに設定されたコールサインが使用されます
+					-->
+					<LoginCallsign></LoginCallsign>
+					<OpenDStarServerAddress>auth.dstargateway.org</OpenDStarServerAddress>
+					
+					<!-- 外部(リフレクター等)への接続有効・無効 -->
+					<OutgoingLink>true</OutgoingLink>
+					<!-- 外部(リフレクター等)への接続総セッション数制限 -->
+					<MaxOutgoingLink>8</MaxOutgoingLink>
+					
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続有効・無効 -->
+					<IncomingLink>false</IncomingLink>
+					<!-- 外部(NoraGateway/BlueDVなど)からの接続総セッション数制限 -->
+					<MaxIncomingLink>20</MaxIncomingLink>
+				</ConfigurationProperties>
+			</Reflector>
+			
+			<!-- JARL MultiForward Link(仮称) リピータ接続機能(v0.1.1a以降) -->
+			<Reflector enable="true" type="JARLLink">
+				<ConfigurationProperties>
+					<!--
+						LoginCallsignは、JARLに登録されたコールサインが必要です
+						https://www.d-star.info/
+						未登録コールサインでは、受信は出来るが送信が出来ない等の問題が発生します
+						※入力が無ければ、Gatewayに設定されたコールサインが使用されます
+						※LoginCallsignの他、送信時にはMY Callsignも登録をチェックされるようです
+					-->
+					<LoginCallsign></LoginCallsign>
+					
+					<!-- 接続制御用サーバー設定(※通常は変更の必要なし) -->
+					<ConnectionObserverAddress>hole-punchd.d-star.info</ConnectionObserverAddress>
+					<ConnectionObserverPort>30010</ConnectionObserverPort>
+					<RepeaterHostnameServerAddress>mfrptlst.k-dk.net</RepeaterHostnameServerAddress>
+					<RepeaterHostnameServerPort>30011</RepeaterHostnameServerPort>
+					
+					<IgnoreKeepalive>false</IgnoreKeepalive>
+					<IgnoreLinkStateOnLinking>false</IgnoreLinkStateOnLinking>
+				</ConfigurationProperties>
+			</Reflector>
+			
+		</Reflectors>
+		
+		<!--
+			リモートコントロール機能(v0.0.8a以降)
+			※有効にする場合には、enable="true"として下さい
+		-->
+		<RemoteControlService enable="false" port="62115" password="NoraRemotePass" />
+		
+		<!--
+			リフレクタ接続管理機能(v0.1.0a以降)
+		-->
+		<ReflectorLinkManager>
+			<!--
+				自動接続機能
+				※有効にする場合には、enable="true"として下さい
+			
+				※重要！
+				→レピータ毎の自動接続有効/無効はコマンドから切り替える事が出来ます
+				　→ 「__RLMACE」…自動接続有効
+				　→ 「__RLMACD」…自動接続無効
+				　また、自動接続が有効の状態で、切断コマンド「_______U」を入力すると、
+				　リフレクターから切断すると共に自動的に自動接続が無効になります
+				　復帰させるには、「__RLMACE」を入力して、自動接続を再度有効にして下さい
+				
+				※重要！
+				→同一のレピータに対して、タイムベース接続と常時固定接続は併用できません
+			-->
+			<AutoConnect enable="false">
+				<!--
+					タイムベース接続
+					※時間別でリフレクター接続先を変更します
+					
+					callsign        自動接続を行うレピータコール
+					
+					dayOfWeek       曜日                    Mon/Tue/Wed...
+					startTime       開始時刻                時:分:秒
+					endTime         終了時刻                時:分:秒
+					linkReflector   接続先リフレクターコールサイン  XLX380 Fなど
+				-->
+				<Repeater callsign="XXXXXX X" mode="TimeBased">
+					<TimeBasedEntry dayOfWeek="Sun" startTime="00:00:00" endTime="06:00:00" linkReflector="XLX380 A" />
+					<TimeBasedEntry dayOfWeek="Sun" startTime="23:44:00" endTime="23:44:30" linkReflector="XLX380 A" />
+					<TimeBasedEntry dayOfWeek="Sun" startTime="23:44:30" endTime="23:45:00" linkReflector="XLX380 B" />
+					<TimeBasedEntry dayOfWeek="Sun" startTime="23:45:30" endTime="23:46:00" linkReflector="XLX380 A" />
+					<TimeBasedEntry dayOfWeek="Sun" startTime="23:46:00" endTime="23:47:00" linkReflector="XLX380 C" />
+				</Repeater>
+				<!--
+					常時固定接続
+					※常時固定されたリフレクターに接続します
+					
+					callsign        自動接続を行うレピータコール    JQ1ZYC Bなど
+					
+					linkReflector   接続先リフレクターコールサイン    XLX380 Fなど
+				-->
+				<Repeater callsign="XXXXXX X" mode="Fixed">
+					<FixedEntry linkReflector="XLX380 B" />
+				</Repeater>
+			</AutoConnect>
+			
+			<!--
+				リフレクターブラックリスト(v0.1.5a以降)
+				
+				下記に設定されたリフレクターへの接続、レピータノードからの接続を拒否します
+				※複数設定可能
+				
+				値         リフレクター(レピータノード)コールサイン(識別符号を含む) ex. JQ1ZYC A
+				enable     有効・無効(true=有効/false=無効)
+				dir        接続方向(INCOMING=レピータノードからの接続/OUTGOING=リフレクターへの接続/BIDIRECTIONAL=双方向)
+			-->
+			<ReflectorBlackList>
+				<CallsignEntry enable="true" dir="OUTGOING">REF001 C</CallsignEntry>
+				<CallsignEntry enable="true" dir="OUTGOING">REF030 C</CallsignEntry>
+				<CallsignEntry enable="true" dir="OUTGOING">REF030 D</CallsignEntry>
+			</ReflectorBlackList>
+			
+			<!--
+				リフレクター基本使用プロトコル設定(v0.1.5a以降)
+				
+				リフレクターへの接続時に使用する基本プロトコルを指定します
+				※上から順に使用します
+				
+				enable      有効・無効(true=有効/false=無効)(※無効にすると指定されたプロトコルを使用しなくなります)
+				protocol    プロトコル(DCS/DPlus/DExtra/JARLLinkのいずれか)(※JARLLinkはmulti_forwardです)
+				
+				※未指定の場合、DCS->DPlus->DExtra->JARLLinkの順となります
+			-->
+			<DefaultReflectorPreferredProtocols>
+				<ProtocolEntry enable="true" protocol="DCS" />
+				<ProtocolEntry enable="true" protocol="DPlus" />
+				<ProtocolEntry enable="true" protocol="DExtra" />
+				<ProtocolEntry enable="true" protocol="JARLLink" />
+			</DefaultReflectorPreferredProtocols>
+			
+			<!--
+				リフレクター使用プロトコル設定(v0.1.5a以降)
+				
+				※callsignに設定したリフレクターに対しての接続時に使用するプロトコルを指定します
+				※設定されていないリフレクターに対しては、基本使用プロトコルで設定されたプロトコルが使用されます
+				※複数設定可
+				
+				enable      有効・無効(true=有効/false=無効)
+				callsign    リフレクターコールサイン(XLX380/JQ1ZYC Bなど)
+				protocol    プロトコル(DCS/DPlus/DExtra/JARLLinkのいずれか)(※JARLLinkはmulti_forwardです)
+			-->
+			<ReflectorPreferredProtocols>
+				<ProtocolEntry enable="false" callsign="JQ1ZYC" protocol="DCS" />
+				<ProtocolEntry enable="false" callsign="JQ1ZYC B" protocol="DCS" />
+			</ReflectorPreferredProtocols>
+			
+		</ReflectorLinkManager>
+		
+	</Gateway>
+
+	<Repeaters>
+	
+<!--
+***************************************
+②レピータコールサイン設定
+***************************************
+callsignにレピータとして使用するコールサインに「A～Z」(Gを除く)を付加して設定します
+
+上記①で設定したcallsignの同一のコールとし、「G」を「A」～「Z」(「G」を除く)に変更して設定して下さい
+
+※必ず8文字になるように設定します
+
+例 上記①で設定したcallsign=JQ1ZYC G→JQ1ZYC B
+
+※重要！
+　→設定したcallsignは、JARL DSTAR機器登録が必要です。以下のサイトから登録して下さい。
+http://www.d-star.info/
+
+※重要！
+　→設定したcallsignは、アクセスポイントモードの場合、
+　　「喋る」無線機に設定するレピータコールサインと同一である必要があります
+
+※重要！
+　→ターミナルモードを使用する場合には、allowDIRECT="false"を"true"に変更して下さい(2箇所あります)
+-->
+<!-- ###################################################################### -->
+	<!--
+		enable                                           -> レピータ(ノード)有効・無効(trueで有効)
+		type                                             -> レピータ(ノード)タイプ(Internal/ExternalHomebrew/VoiceroidAutoReply/EchoAutoReply/ReflectorEchoAutoReplyのいずれか)
+		module                                           -> レピータ(ノード)モジュール(ex. Bなど)※日本の管理サーバではG,I,Sは使用不可
+		defaultRoutingService                            -> デフォルトルーティングサービス(JapanTrust/GlobalTrust/ircDDBのいずれか)
+		routingServiceFixed                              -> ルーティングサービスを固定する(trueで固定)
+		allowDIRECT                                      -> RPT1/RPT2にDIRECTが入っていた場合に自動で正しいコールサインに置き換える(trueで自動置き換え)
+		                                                    ※ICOMターミナルモード・DVシンプレックスモードを使用する場合にはtrueにする必要があります
+		directMyCallsigns                                -> ICOMターミナルモード・DVシンプレックスモードにおいて、ゲートウェイに設定されたコールサインと別のコールサインを使用する場合には、そのコールサインを入力
+		                                                    ※識別符号は無視されます
+															※複数のコールサインを入力したい場合は、(,)区切りで入力して下さい(JQ1ZYC,JJ0TPXなど)
+		autoDisconnectFromReflectorOnTxToG2Route         -> リフレクターへ接続中にゲート超えを行った場合においてリフレクターを自動切断する(trueで自動切断)
+		autoDisconnectFromReflectorOutgoingUnusedMinutes -> 使用されないリフレクターへの接続を自動で切断するまでの時間(分)(0=無効)
+		allowIncomingConnection                          -> 外部からの各種リフレクタープロトコルによる接続を許可する(true=許可/false=不許可)※RepeaterTypeによっては設定不可
+		allowOutgoingConnection                          -> 外部への各種リフレクタープロトコルによる接続を許可する(true=許可/false=不許可)※RepeaterTypeによっては設定不可
+		scope                                            -> 公開範囲。Public(公開)/Private(非公開)のいずれかです
+		name                                             -> レピータ(ノード)名称(高輪ケートウェイ等)
+		location                                         -> レピータ(ノード)設置場所(Hidaka, Saitama, Japan等)
+		latitude                                         -> 設置場所 緯度(Degree表記)※正確に入力せずに、近所の公共施設等に合わせて下さい
+		longitude                                        -> 設置場所 経度(Degree表記)※正確に入力せずに、近所の公共施設等に合わせて下さい
+		range                                            -> レピータ(ノード)のサービス範囲[m](10km→10000)
+		agl                                              -> アンテナ地上高[m]
+		frequency                                        -> レピータ(ノード)周波数[Hz](430.8MHz→430800000)
+		frequencyOffset                                  -> レピータ(ノード)オフセット周波数[Hz](5MHz→5000000)
+		description1                                     -> コメント1
+		description2                                     -> コメント2
+		url                                              -> 関連するURL(社団局のHPなど)
+	-->
+		<Repeater
+			enable="true" type="Internal" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false"
+			allowDIRECT="false"
+			directMyCallsign="　　　　　　　　"
+			autoDisconnectFromReflectorOnTxToG2Route="true"
+			autoDisconnectFromReflectorOutgoingUnusedMinutes="0"
+			allowIncomingConnection="true"
+			allowOutgoingConnection="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+<!-- ###################################################################### -->
+		
+	<!--
+		type                                     -> モデムタイプ
+		                                            NewAccessPoint/MMDVM/NoraVR/AccessPointのいずれか
+		allowDIRECT                              -> RPT1/RPT2にDIRECTが入っていた場合に自動で正しいコールサインに置き換える(trueで自動置き換え)
+		                                            ※ICOMターミナルモード・DVシンプレックスモードを使用する場合にはtrueにする必要があります
+		scope                                    -> 公開範囲。Public(公開)/Private(非公開)のいずれかです
+		transceiverMode                          -> 通信モード
+													*FullDuplex : 全二重(NoraVR/MMDVM)※MMDVMはボード側の構成による
+													*HalfDuplex : 半二重(NoraVR/MMDVM/NewAccessPoint)
+													*TxOnly     : 送信のみ(NoraVR/MMDVM/NewAccessPoint)
+													*RxOnly     : 受信のみ(NoraVR/MMDVM/NewAccessPoint)
+	-->
+			<Modems>
+				<Modem
+					enable="true"
+					type="NewAccessPoint"
+					allowDIRECT="false"
+					scope="private"
+					transceiverMode="HalfDuplex"
+				>
+					<ConfigurationProperties>
+
+<!--
+③PortNameにID-51Plus2/ID-31Plus/ID-4100と接続されているポート名を設定します
+
+デバイスマネージャなどでポート名を確認して下さい
+
+例：
+Windowsの場合 COM1・COM2など
+Linuxの場合 /dev/ttyUSB0など
+
+※コードスケルチを有効にする場合、EnableCodeSquelchのfalseをtrueに変更し、
+CodeSquelchCodeに00～99までのお好きなコードを設定して下さい
+設定したコードは、喋る無線機側と合わせる必要があります
+尚、アクセスポイントモード限定であり、ターミナルモードでは設定しても動作しません
+-->
+<!-- ###################################################################### -->
+						<PortName>COMx</PortName>
+						
+						<!-- コードスケルチ機能(v0.0.9a以降) -->
+						<EnableCodeSquelch>false</EnableCodeSquelch>
+						<CodeSquelchCode>00</CodeSquelchCode>
+<!-- ###################################################################### -->
+					</ConfigurationProperties>
+				</Modem>
+			</Modems>
+		</Repeater>
+		
+		<!--
+			MMDVM互換デバイス接続機能(v0.1.1a以降)
+			
+			※使用するには、各ConfigurationPropertiesを設定し、enable="true"として下さい
+			※下記に指定されている値は、JamboSpotの例となっています。他のデバイスでは異なりますので、各自調整を行って下さい
+		-->
+		<Repeater
+			enable="false" type="Internal" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false"
+			autoDisconnectFromReflectorOnTxToG2Route="true"
+			autoDisconnectFromReflectorOutgoingUnusedMinutes="0"
+			allowIncomingConnection="true"
+			allowOutgoingConnection="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+			<Modems>
+				<Modem type="MMDVM" scope="private">
+					<ConfigurationProperties>
+						<PortName>COMX</PortName>
+
+						<Duplex>false</Duplex>
+						<RxInvert>false</RxInvert>
+						<TxInvert>false</TxInvert>
+						<PTTInvert>false</PTTInvert>
+						<TxDelay>100</TxDelay>
+						<RxFrequency>430800000</RxFrequency>
+						<RxFrequencyOffset>500</RxFrequencyOffset>
+						<TxFrequency>430800000</TxFrequency>
+						<TxFrequencyOffset>500</TxFrequencyOffset>
+						<RxDCOffset>0</RxDCOffset>
+						<TxDCOffset>0</TxDCOffset>
+						<RfLevel>100</RfLevel>
+						<RxLevel>50</RxLevel>
+						<TxLevel>50</TxLevel>
+						
+						<TransparentEnable>false</TransparentEnable>
+						<TransparentRemoteAddress>127.0.0.1</TransparentRemoteAddress>
+						<TransparentRemotePort>63201</TransparentRemotePort>
+						<TransparentLocalPort>63200</TransparentLocalPort>
+						<TransparentSendFrameType>1</TransparentSendFrameType>
+					</ConfigurationProperties>
+				</Modem>
+			</Modems>
+		</Repeater>
+		
+		
+		
+<!--
+***************************************
+↓この先は必須ではありません
+↓無線機を複数台接続する場合や、
+↓PCRepeaterController関連のソフトウェアを接続する場合に設定します
+***************************************
+-->
+<!--
+***************************************
+③複数台接続(v0.0.4alpha以降)
+***************************************
+
+アクセスポイントモード、ターミナルモード対応機を複数台接続する事が出来ます
+下記のenable="false"をenable="true"にして、②項に沿って設定して下さい
+
+※重要！
+　→callsignは、上記①で設定したcallsignの同一のコールとし、「G」を「A」～「Z」(「G」を除く)に変更して設定して下さい
+-->
+		<Repeater
+			enable="false" type="Internal" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false"
+			autoDisconnectFromReflectorOnTxToG2Route="true"
+			autoDisconnectFromReflectorOutgoingUnusedMinutes="0"
+			allowDIRECT="false"
+			directMyCallsign="　　　　　　　　"
+			allowIncomingConnection="true"
+			allowOutgoingConnection="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+		
+			<Modems>
+				<Modem enable="true"
+					type="NewAccessPoint"
+					allowDIRECT="false"
+					scope="private"
+					transceiverMode="HalfDuplex"
+				>
+					<ConfigurationProperties>
+						<PortName>COMx</PortName>
+						<EnableCodeSquelch>false</EnableCodeSquelch>
+						<CodeSquelchCode>00</CodeSquelchCode>
+					</ConfigurationProperties>
+				</Modem>
+				
+				<Modem enable="false"
+					type="NewAccessPoint"
+					allowDIRECT="false"
+					scope="private"
+					transceiverMode="HalfDuplex"
+				>
+					<ConfigurationProperties>
+						<PortName>COMx</PortName>
+						<EnableCodeSquelch>false</EnableCodeSquelch>
+						<CodeSquelchCode>00</CodeSquelchCode>
+					</ConfigurationProperties>
+				</Modem>
+			
+				<Modem enable="false" type="MMDVM" scope="private">
+					<ConfigurationProperties>
+						<PortName>COMX</PortName>
+
+						<Duplex>false</Duplex>
+						<RxInvert>false</RxInvert>
+						<TxInvert>false</TxInvert>
+						<PTTInvert>false</PTTInvert>
+						<TxDelay>100</TxDelay>
+						<RxFrequency>430800000</RxFrequency>
+						<RxFrequencyOffset>500</RxFrequencyOffset>
+						<TxFrequency>430800000</TxFrequency>
+						<TxFrequencyOffset>500</TxFrequencyOffset>
+						<RxDCOffset>0</RxDCOffset>
+						<TxDCOffset>0</TxDCOffset>
+						<RfLevel>100</RfLevel>
+						<RxLevel>50</RxLevel>
+						<TxLevel>50</TxLevel>
+						
+						<TransparentEnable>false</TransparentEnable>
+						<TransparentRemoteAddress>127.0.0.1</TransparentRemoteAddress>
+						<TransparentRemotePort>63201</TransparentRemotePort>
+						<TransparentLocalPort>63200</TransparentLocalPort>
+						<TransparentSendFrameType>1</TransparentSendFrameType>
+					</ConfigurationProperties>
+				</Modem>
+			</Modems>
+		</Repeater>
+<!--
+***************************************
+④PcRepeaterController関連(v0.0.4alpha以降)
+***************************************
+
+PC Repeater Controller関連のソフトウェアと暫定的に接続する事が出来ます
+
+詳しくはコチラをご覧ください
+https://groups.yahoo.com/neo/groups/pcrepeatercontroller/info
+
+下記のenable="false"をenable="true"に変更してお使い下さい
+
+※重要！
+　→必ず、RPT1/RPT2のチェックが入るソフトウェアを使用し、RPT1/RPT2チェックが入るように設定をお願い致します
+　→********************************************************************
+　→********* RPT1/RPT2チェックが行われないソフトウェアは使用しないで下さい *********
+　→********************************************************************
+
+※重要！
+　→callsignは、上記①で設定したcallsignの同一のコールとし、末尾の「G」を「A」～「Z」(「G」を除く)に変更して設定して下さい
+
+※重要！
+　→LocalPortにて指定したポート番号は、ポート開放並びにセキュリティソフトウェアの例外設定が必要です
+
+※重要！
+　→デフォルトでは、ゲート超え出来ないようになっています
+　　useRoutingService="true"を追加するとゲート超えが有効になりますが、必ずRPT1/RPT2チェックが入ることを確認してから有効にして下さい
+-->
+
+		<Repeater
+			enable="false" type="ExternalHomebrew" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false"
+			autoDisconnectFromReflectorOnTxToG2Route="true"
+			autoDisconnectFromReflectorOutgoingUnusedMinutes="0"
+			allowIncomingConnection="true"
+			allowOutgoingConnection="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+			<ConfigurationProperties>
+				<RemoteRepeaterAddress>XXX.XXX.XXX.XXX</RemoteRepeaterAddress>
+				<RemoteRepeaterPort>200XX</RemoteRepeaterPort>
+				<LocalPort>200XX</LocalPort>
+			</ConfigurationProperties>
+			
+			<!--
+				アクセスホワイトリスト
+				
+				下記にアクセスするユーザーコールサインのリストを設定して下さい(※CallsignEntryは複数設定可)
+				
+				※ゲートウェイに設定されたコールサインと同一のコールサインであれば、設定しなくてもアクセス可能です
+				
+				enable   -> 有効無効(true=有効/false=無効)
+				callsign -> アクセスするユーザーのコールサイン(※識別符号は無視されます)
+			-->
+			<AccessWhiteList>
+				<CallsignEntry enable="false" callsign="        " />
+			</AccessWhiteList>
+		</Repeater>
+
+
+
+<!--
+***************************************
+⑤自動応答関連(v0.0.5alpha以降)
+***************************************
+
+定形自動応答・録音自動応答を設定します
+
+「定形自動応答」とは、カーチャンクを受信してから数秒後に
+「XXXXXX X局、こんにちわ。こちらは～」
+と定形音声を自動で返します。
+
+「録音自動応答」とは、受信した音声を録音して、
+数秒後に同内容の録音した音声を自動で返します。
+とりあえず設定しておけば、自分の変調をローカルで確認できます。
+
+
+AutoReplyOperatorCallsign(自動応答にしようするオペレータコールサイン)は、
+自動応答時にMyコールに設定されるコールサインです。(※JARLに登録する必要があります)
+例えば、AutoReplyOperatorCallsignに「7X9ABC A」を設定し、TO「7X9ABC A」を呼び出した場合、
+    UR「呼び出したあなたのコールサイン」 \ MY「7X9ABC A」
+として、返答します。一般的なDSTARレピータの自動応答を抜き出したイメージです。
+日本国内のレピータ、またRS-MS3A/W使用のアクセスポイントから呼ばれても応答します。
+
+AutoReplyVoiceCharactorNameは、現状では変更できません。
+尚、定形メッセージの音声には、下記を使用しています。
+http://www.ah-soft.com/voiceroid/akari/index.html
+
+下記のコメントアウトを削除して、お使い下さい
+
+※重要！
+　→callsignは、上記①で設定したcallsignの同一のコールとし、末尾の「G」を「A」～「Z」(「G」を除く)に変更して設定して下さい
+-->
+
+<!-- 定形自動応答 -->
+		<Repeater
+			enable="false" type="VoiceroidAutoReply" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+			<ConfigurationProperties>
+				<!-- 自動応答用コールサイン -->
+				<AutoReplyOperatorCallsign>XXXXXX X</AutoReplyOperatorCallsign>
+
+				<!-- 自動応答キャラクタ名称 -->
+				<AutoReplyVoiceCharactorName>KizunaAkari</AutoReplyVoiceCharactorName>
+
+				<!-- 自動応答ショートメッセージ -->
+				<AutoReplyShortMessage></AutoReplyShortMessage>
+
+				<!-- 自動応答用コールサイン最終アクセスレピータ更新間隔時間(時間) -->
+				<AutoReplyHeardIntervalHours>3</AutoReplyHeardIntervalHours>
+			</ConfigurationProperties>
+		</Repeater>
+
+<!-- 録音自動応答 -->
+
+		<Repeater
+			enable="false" type="EchoAutoReply" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+			<ConfigurationProperties>
+				<!-- 自動応答用コールサイン -->
+				<AutoReplyOperatorCallsign>XXXXXX X</AutoReplyOperatorCallsign>
+
+				<!-- 自動応答用コールサイン最終アクセスレピータ更新間隔時間(時間) -->
+				<AutoReplyHeardIntervalHours>5</AutoReplyHeardIntervalHours>
+			</ConfigurationProperties>
+		</Repeater>
+
+<!--
+	リフレクター向け録音自動応答(v0.1.0alpha以降)
+	※※※ リフレクター管理者、もしくは許可を得た方以外は設定しないでください ※※※
+	
+	対リフレクター向けのエコーバックを提供します
+	ReflectorLinkManagerのAutoConnectを併用して設定して下さい
+-->
+		<Repeater
+			enable="false" type="ReflectorEchoAutoReply" module="X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+				<ConfigurationProperties>
+					<EchoControlBySlowdata>true</EchoControlBySlowdata>
+				</ConfigurationProperties>
+		</Repeater>
+
+<!--
+***************************************
+⑥NoraVR(v0.1.5alpha以降)
+
+ネットワーク経由で仮想レピータを形成します(VR=VirtualRepeater)
+
+使用例：
+　・アナログレピータ<->リフレクタブリッジ
+　・アナログ無線機からDSTAR網・リフレクターへの接続
+　・スマートフォンやスマートウォッチ、PCからのDSTAR網・リフレクターへの接続
+　・DSTAR網、リフレクターを経由したパケット通信
+
+【設定パラメータ】
+○AMBEサーバのIPアドレス
+<DV3KServerAddress>XXX.XXX.XXX.XXX</DV3KServerAddress>
+
+○AMBEサーバの待受ポート
+<DV3KServerPort>2460</DV3KServerPort>
+
+○デフォルトログインパスワード(クライアント側が接続する時に入力するパスワード)
+<NoraVRLoginPassword></NoraVRLoginPassword>
+
+○RFノードを許可するか(LoginUserListに無い場合のデフォルト設定)
+<NoraVRAllowRFNode>false</NoraVRAllowRFNode>
+
+○AMBEパススルーを使用するか
+<NoraVRUseCodecAMBE>true</NoraVRUseCodecAMBE>
+
+○PCMコーデックを使用するか(音質：最良/通信帯域専有：高)
+<NoraVRUseCodecPCM>true</NoraVRUseCodecPCM>
+
+○Opus(64k VBR)コーデックを使用するか(音質：良/通信帯域専有：中)
+<NoraVRUseCodecOpus64k>true</NoraVRUseCodecOpus64k>
+
+○Opus(24k VBR)コーデックを使用するか(音質：中/通信帯域専有：小)
+<NoraVRUseCodecOpus24k>true</NoraVRUseCodecOpus24k>
+
+○Opus(8k VBR)コーデックを使用するか(音質：悪/通信帯域専有：最小)
+<NoraVRUseCodecOpus8k>true</NoraVRUseCodecOpus8k>
+
+○個別ログインユーザー設定(いくつでも指定可)
+    ※このリストに存在しないユーザーのログイン認証は、<NoraVRLoginPassword>が使用されます
+<LoginUser loginCallsign="" loginPassword="passw0rd"  allowRFNode="true" />
+
+※DVStickなどのAMBE3000デバイスが必要です
+***************************************
+-->
+		<Repeater
+			enable="false" type="Internal" callsign="XXXXXX X"
+			defaultRoutingService="JapanTrust" routingServiceFixed="false"
+			allowDIRECT="false"
+			autoDisconnectFromReflectorOnTxToG2Route="true"
+			autoDisconnectFromReflectorOutgoingUnusedMinutes="0"
+			allowIncomingConnection="true"
+			allowOutgoingConnection="true"
+			scope="private"
+			name=""
+			location=""
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://k-dk.net/kdk/"
+		>
+			<Modem type="NoraVR" allowDIRECT="false">
+				<ConfigurationProperties>
+					<!--
+						DV3Kインターフェースタイプ
+						
+						Network  -> ネットワーク上のAMBE Serverを使用する
+						Uart     -> ローカルに接続されたAMBE3000デバイス(DVStick30等)を使用する
+					-->
+					<DV3KInterfaceType>Network</DV3KInterfaceType>
+					
+					<!--
+						AMBEサーバーの設定
+						(DV3KInterfaceType = Network)
+					-->
+					<!-- AMBEサーバーのIPアドレス(ドメイン表記可) -->
+					<DV3KServerAddress>XXX.XXX.XXX.XXX</DV3KServerAddress>
+					<!-- AMBEサーバーのポート -->
+					<DV3KServerPort>2460</DV3KServerPort>
+					
+					<!--
+						DV3Kデバイスの設定
+						(DV3KInterfaceType = Uart)
+					-->
+					<DV3KPortName>/dev/ttyUSB0</DV3KPortName>
+					
+					<!-- NoraVRポート -->
+					<NoraVRPort>52161</NoraVRPort>
+					
+					<!-- NoraVRクライアント接続制限数 -->
+					<NoraVRClientConnectionLimit>100</NoraVRClientConnectionLimit>
+					
+					<!-- NoraVRデフォルト接続パスワード -->
+					<NoraVRLoginPassword></NoraVRLoginPassword>
+					
+					<!-- NoraVRクライアント RF接続可否 -->
+					<NoraVRAllowRFNode>false</NoraVRAllowRFNode>
+					
+					<!--
+						NoraVRサーバー側対応コーデック設定
+						
+						対応するコーデックの有効・無効を設定します
+						※AMBEのみtrueに設定した場合、AMBE3000やAMBEサーバーは不要です
+						(但し、Android Client等のPCMやOpusを要求するクライアントは接続できなくなります)
+					-->
+					<NoraVRUseCodecAMBE>true</NoraVRUseCodecAMBE>
+					<NoraVRUseCodecPCM>true</NoraVRUseCodecPCM>
+					<NoraVRUseCodecOpus64k>true</NoraVRUseCodecOpus64k>
+					<NoraVRUseCodecOpus24k>true</NoraVRUseCodecOpus24k>
+					<NoraVRUseCodecOpus8k>true</NoraVRUseCodecOpus8k>
+					
+					<!--
+						NoraVR接続ユーザーリスト
+						
+						ログインコールサイン(ユーザー)別にログインパスワードとRF接続可否を個別に設定することが出来ます
+						※このユーザーリストに無いユーザーの場合には、上記にて設定されたNoraVRLoginPasswordとNoraVRAllowRFNodeが使用されます
+					-->
+					<LoginUserList>
+						<!--
+							ログインユーザーエントリ(※複数指定可)
+							
+							loginCallsign    -> ログインコールサイン
+							loginPassword    -> ログインパスワード
+							allowRFNode      -> このクライアントに対してRF接続を許可するか(許可する場合にはtrue)
+						-->
+						<LoginUser loginCallsign="" loginPassword="passw0rd"  allowRFNode="true" />
+					</LoginUserList>
+					
+				</ConfigurationProperties>
+			</Modem>
+		</Repeater>
+
+<!--
+***************************************
+⑦ICOM純正外部レピータ(v0.1.6a以降)
+
+ICOM純正レピータコントローラ(ID-RP2C)を介して接続されているレピータを設定します
+
+※使用する場合には、Services->IcomRepeaterCommunicationServiceも併せて設定して下さい
+
+※制限事項
+ * アシスト局を使用した構成には対応していません
+   430MHz+1200MHzのデュアルバンド構成もしくはシングルバンド構成に対応しています
+ * 現状では、DDモードに対応していません
+***************************************
+-->
+		<!-- 430MHz帯 -->
+		<Repeater
+			enable="false" type="ExternalICOMRepeater" module="A"
+			defaultRoutingService="ircDDB" routingServiceFixed="false"
+			scope="private"
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://kdk.ddns.net/kdk/"
+		>
+			<ConfigurationProperties></ConfigurationProperties>
+		</Repeater>
+
+		<!-- 1200MHz帯 -->
+		<Repeater
+			enable="false" type="ExternalICOMRepeater" module="B"
+			defaultRoutingService="ircDDB" routingServiceFixed="false"
+			scope="private"
+			latitude="35.6982557"
+			longitude="139.7715392"
+			range="0"
+			agl="0"
+			frequency="430800000"
+			frequencyOffset="0"
+			description1=",Japan"
+			description2=""
+			url="https://kdk.ddns.net/kdk/"
+		>
+			<ConfigurationProperties></ConfigurationProperties>
+		</Repeater>
+
+	</Repeaters>
+	
+	<!--
+		サービス関連設定
+	-->
+	<Services>
+		<!--
+			ICOMレピータコントローラ通信サービス
+
+			enable              -> 有効(true)/無効(false)
+		-->
+		<ICOMRepeaterCommunicationService enable="false">
+			<ICOMRepeaters>
+				<!--
+					ICOMレピータコントローラ設定
+
+					enable              -> 有効(true)/無効(false)
+					type                -> コントローラ種別(ID-RP2Cのみ)
+				-->
+				<ICOMRepeater enable="true" type="ID-RP2C">
+					<ConfigurationProperties>
+					<!--
+						ID-RP2C通信関連設定
+						※基本的にはID-RP2C設定ツール(Utility for ID-RP2C)の設定値と合わせて設定を行います
+						※Utility for ID-RP2C必須設定
+						  * General-Callsign            -> この設定ファイルのゲートウェイに設定されているコールサインと同じコールサインを設定
+						  * Gateway-Use Gateway         -> ON
+						  * Gateway-IP Address          -> NoraGatewayが稼働しているデバイスのIPアドレス
+						  * Gateway-Port                -> 下記のGatewayLocalPortと一致する番号(通常は20000)
+						  * Monitor-Monitor             -> ON
+						  * Monitor-IP Address          -> NoraGatewayが稼働しているデバイスのIPアドレス
+						  * Monitor-Port                -> 下記のMonitorLocalPortと一致する番号(通常は21000)
+
+						[設定値一覧]
+						GatewayLocalPort                -> ゲートウェイポート番号(デフォルト値20000)
+						MonitorLocalPort                -> モニターポート番号(デフォルト値21000)
+						ControllerAddress               -> ID-RP2C IPアドレス(※設定しなければ自動で設定されます)
+						ControllerPort                  -> ID-RP2C ポート番号(デフォルト値20000)(※設定しなければ自動で設定されます)
+					-->
+						<GatewayLocalPort>20000</GatewayLocalPort>
+						<MonitorLocalPort>21000</MonitorLocalPort>
+						<!--
+						<ControllerAddress>192.168.200.150</ControllerAddress>
+						<ControllerPort>20000</ControllerPort>
+						-->
+					</ConfigurationProperties>
+				</ICOMRepeater>
+
+				<!-- 複数定義可(※ポート番号が他の定義と重複しないようにして下さい) -->
+				<ICOMRepeater enable="false" type="ID-RP2C">
+					<ConfigurationProperties>
+						<GatewayLocalPort>20001</GatewayLocalPort>
+						<MonitorLocalPort>21001</MonitorLocalPort>
+					</ConfigurationProperties>
+				</ICOMRepeater>
+			</ICOMRepeaters>
+		</ICOMRepeaterCommunicationService>
+
+		<!--
+			動作情報ファイル出力サービス(v0.0.9a以降)
+			※有効にする場合には、enable="true"として下さい
+			
+			他アプリケーション連携用
+		-->
+		<StatusInformationFileOutputService enable="false" outputPath="/tmp/" />
+		
+		<!--
+			Webダッシュボードサービス(v0.1.4a以降)
+			※有効にする場合には、enable="true"として下さい
+		-->
+		<WebRemoteControlService enable="true" port="3000" context="/nora" />
+		
+		<!--
+			リフレクターホストファイルダウンロードサービス(v0.1.6a以降)
+			※有効にする場合には、enable="true"として下さい
+		-->
+		<ReflectorHostFileDownloadService enable="true">
+			<!--
+				URLEntry
+				
+				enable           -> 有効(true)/無効(false)
+				intervalMinutes  -> ダウンロード間隔(分)(360 = 6時間)
+				url              -> ホストファイルURL
+			-->
+			<URLEntry enable="true" intervalMinutes="360" url="https://k-dk.net/norahosts/hosts.txt" />
+			<URLEntry enable="true" intervalMinutes="30" url="https://k-dk.net/nora_hosts.php" />
+			<URLEntry enable="false" intervalMinutes="360" url="file:./users_hostfile.txt" />
+		</ReflectorHostFileDownloadService>
+		
+		<!--
+		 	レピータリストインポートサービス(v0.1.6a以降)
+
+		 	DSTARレピータ等のレピータリストを読み込みます
+		 	※ここで読み込まれたデータは、主にダッシュボードに利用されます
+		-->
+		<RepeaterNameService>
+			<Importers>
+				<!--
+					Importer
+
+					type      -> 取り込むデータの種別(ICOM)
+				-->
+				<Importer enable="true" type="ICOM">
+					<ConfigurationProperties>
+						<!-- アイコム社HPで配布されているレピータリストCSVを指定 -->
+						<TargetFilePath>./config/4100_JPN_Rpt_200901.csv</TargetFilePath>
+					</ConfigurationProperties>
+				</Importer>
+			</Importers>
+		</RepeaterNameService>
+
+		<!--
+			クラッシュレポートサービス
+
+			このアプリケーションが予期せぬクラッシュをした場合に、サーバーにクラッシュレポートを送信するサービスです
+
+			enable               -> true=有効/false=無効
+		-->
+		<CrashReportService enable="true" />
+
+		<!--
+			補助動作サービス
+
+			Webダッシュボードからのコマンド等、NoraGatewayの補助を行うアプリケーションです
+
+			port                 -> ポート番号
+		-->
+		<HelperService port="42611" />
+
+	</Services>
+	
+</NoraGateway>
