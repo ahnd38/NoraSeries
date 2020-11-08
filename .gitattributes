@@ -1,3 +1,9 @@
 * text eol=lf
 
-*.ambe binaly
+*.jar binary
+*.ambe binary
+*.wav binary
+*.drawio binary
+*.png binary
+*.jpg binary
+*.png binary
