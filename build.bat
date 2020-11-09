@@ -48,6 +48,7 @@ if "%GIT_USEREMAIL%" == "" (
 echo.
 
 echo 4. Building...
+mvn clean
 if exist "%~dp0keystore" (
   call mvn clean compile install --settings ./.mvn/local-settings.xml
 ) else (
