@@ -39,6 +39,7 @@ fi
 printf "\n"
 
 printf "4. Building...\n"
+mvn clean
 if [ -e ./keystore ]; then
     mvn clean compile install --settings ./.mvn/local-settings.xml
 else
