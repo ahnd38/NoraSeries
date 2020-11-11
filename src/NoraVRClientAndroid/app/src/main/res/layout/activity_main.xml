@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	tools:context=".MainActivity"
+	android:padding="8dp"
+	android:background="?attr/noraBackgroundColor"
+	>
+
+	<Button
+		android:id="@+id/buttonConfig"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentStart="true"
+		android:text="Config"
+		/>
+
+	<Button
+		android:id="@+id/buttonMainConnect"
+		android:layout_height="wrap_content"
+		android:layout_width="wrap_content"
+		android:layout_marginStart="5dp"
+		android:layout_alignTop="@+id/buttonConfig"
+		android:layout_alignBottom="@+id/buttonConfig"
+		android:layout_toEndOf="@+id/buttonConfig"
+		android:text="CONNECT" />
+
+	<TextView
+		android:id="@+id/textViewMainApplicationVersion"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="10dp"
+		android:layout_toEndOf="@id/buttonMainConnect"
+		android:layout_alignTop="@+id/buttonMainConnect"
+		android:gravity="center_vertical"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainStatus"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_toEndOf="@id/buttonMainConnect"
+		android:layout_marginStart="10dp"
+		android:layout_below="@+id/textViewMainApplicationVersion"
+		android:gravity="center_vertical"
+		android:text="Initialized"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainYourCallsign"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/buttonConfig"
+		android:layout_alignTop="@+id/editTextMainYourCallsign"
+		android:layout_alignBottom="@+id/editTextMainYourCallsign"
+		android:gravity="center_vertical"
+		android:text="YOUR CALL"
+		/>
+
+	<EditText
+		android:id="@+id/editTextMainYourCallsign"
+		android:layout_width="120dp"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/buttonConfig"
+		android:layout_alignStart="@+id/switchMainUseGateway"
+		android:layout_toEndOf="@id/textViewMainYourCallsign" />
+
+	<Button
+		android:id="@+id/buttonMainRXCS"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/editTextMainYourCallsign"
+		android:layout_alignBottom="@+id/editTextMainYourCallsign"
+		android:layout_alignParentEnd="true"
+		android:text="RXCS" />
+
+	<Button
+		android:id="@+id/buttonMainHistory"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/buttonMainRXCS"
+		android:layout_alignParentEnd="true"
+		android:text="HIST" />
+
+	<Button
+		android:id="@+id/buttonMainLastHeard"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/buttonMainHistory"
+		android:layout_alignParentEnd="true"
+		android:text="LH" />
+
+	<TextView
+		android:id="@+id/textViewMainYourCallsignCQ"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/textViewMainYourCallsign"
+		android:layout_alignTop="@+id/switchMainYourCallsignCQ"
+		android:layout_alignBottom="@+id/switchMainYourCallsignCQ"
+		android:layout_toStartOf="@+id/switchMainYourCallsignCQ"
+		android:layout_marginEnd="10dp"
+		android:gravity="center_vertical"
+		android:text="(CQCQCQ)"
+		/>
+
+	<Switch
+		android:id="@+id/switchMainYourCallsignCQ"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/textViewMainYourCallsign"
+		android:layout_alignEnd="@+id/editTextMainYourCallsign"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainUseGateway"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/textViewMainYourCallsignCQ"
+		android:layout_alignTop="@+id/switchMainUseGateway"
+		android:layout_alignBottom="@+id/switchMainUseGateway"
+		android:gravity="center_vertical"
+		android:layout_marginEnd="20dp"
+		android:text="Use Gateway"
+		/>
+	<Switch
+		android:id="@+id/switchMainUseGateway"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/textViewMainYourCallsignCQ"
+		android:layout_toEndOf="@+id/textViewMainUseGateway"
+		/>
+
+	<ImageView
+		android:id="@+id/imageviewMain"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_below="@+id/switchMainUseGateway"
+		android:layout_above="@+id/textViewMainReceiveStatusLabel"
+		/>
+<!--
+	<TextView
+		android:id="@+id/textViewMainLastHeardListLabel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="10dp"
+		android:layout_below="@id/switchMainUseGateway"
+		android:gravity="center_vertical"
+		android:text="[Last Heard]"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainLastHeardList"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/textViewMainLastHeardListLabel"
+		android:layout_alignStart="@+id/textViewMainLastHeardListLabel"
+		android:layout_alignParentEnd="true"
+		android:layout_marginStart="10dp"
+		android:fontFamily="monospace"
+		/>
+-->
+	<TextView
+		android:id="@+id/textViewMainReceiveStatusLabel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/textViewMainReceiveStatus"
+		android:layout_alignBottom="@+id/textViewMainReceiveStatus"
+		android:layout_above="@id/textViewMainEchoback"
+		android:gravity="center_vertical"
+		android:text="RxStatus"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainReceiveStatus"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_above="@id/textViewMainEchoback"
+		android:layout_alignStart="@+id/editTextMainYourCallsign"
+		android:gravity="center_vertical"
+		android:singleLine="false"
+		android:maxLines="2"
+		android:text="none"
+		android:textStyle="bold" />
+
+	<TextView
+		android:id="@+id/textViewMainEchoback"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/textViewMainUseGateway"
+		android:layout_alignTop="@+id/switchMainEchoback"
+		android:layout_alignBottom="@+id/switchMainEchoback"
+		android:gravity="center_vertical"
+		android:text="Echoback"
+		/>
+	<Switch
+		android:id="@+id/switchMainEchoback"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:layout_above="@+id/textViewMainMicGain"
+		android:layout_alignStart="@+id/editTextMainYourCallsign"
+		android:layout_toEndOf="@+id/textViewMainEchoback"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainLinkedReflector"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="20dp"
+		android:layout_toEndOf="@+id/switchMainEchoback"
+		android:layout_alignTop="@+id/switchMainEchoback"
+		android:layout_alignBottom="@+id/switchMainEchoback"
+		android:gravity="center_vertical"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainMicGain"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/switchMainEnableMicAGC"
+		android:layout_alignBottom="@+id/switchMainEnableMicAGC"
+		android:layout_alignStart="@+id/textViewMainYourCallsign"
+		android:layout_above="@+id/textViewMicLevel"
+		android:gravity="center_vertical"
+		android:text="MicGain"
+		/>
+	<TextView
+		android:id="@+id/textViewMainMicGainCurrent"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="10sp"
+		android:layout_toStartOf="@+id/seekBarMainMicGain"
+		android:layout_alignTop="@+id/switchMainEnableMicAGC"
+		android:layout_alignBottom="@+id/switchMainEnableMicAGC"
+		android:gravity="center_vertical"
+		/>
+	<SeekBar
+		android:id="@+id/seekBarMainMicGain"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/switchMainEnableMicAGC"
+		android:layout_alignBottom="@+id/switchMainEnableMicAGC"
+		android:layout_above="@+id/textViewMicLevel"
+		android:layout_toEndOf="@+id/textViewMainMicGain"
+		android:layout_alignStart="@+id/editTextMainYourCallsign"
+		android:layout_toStartOf="@+id/textViewMainEnableMicAGC"
+		/>
+	<TextView
+		android:id="@+id/textViewMainEnableMicAGC"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/switchMainEnableMicAGC"
+		android:layout_alignBottom="@+id/switchMainEnableMicAGC"
+		android:layout_above="@+id/textViewMicLevel"
+		android:layout_toStartOf="@+id/switchMainEnableMicAGC"
+		android:gravity="center_vertical"
+		android:text="Auto"
+		/>
+	<Switch
+		android:id="@+id/switchMainEnableMicAGC"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_above="@+id/textViewMicLevel"
+		android:layout_alignParentEnd="true"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMicLevel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="5dp"
+		android:layout_alignStart="@+id/textViewMainYourCallsign"
+		android:layout_above="@+id/textViewSpeakerLevel"
+		android:gravity="center_vertical"
+		android:text="MicLvl"
+		/>
+	<ProgressBar
+		android:id="@+id/progressBarMicLevel"
+		style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+		android:layout_width="200dp"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/textViewMicLevel"
+		android:layout_alignBottom="@+id/textViewMicLevel"
+		android:layout_above="@+id/swipeButtonPTT"
+		android:layout_alignStart="@+id/editTextMainYourCallsign"
+		/>
+
+	<TextView
+		android:id="@+id/textViewSpeakerLevel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginBottom="8dp"
+		android:layout_alignStart="@+id/textViewMainYourCallsign"
+		android:layout_above="@+id/swipeButtonPTT"
+		android:gravity="center_vertical"
+		android:text="SpeakerLvl"
+		/>
+	<ProgressBar
+		android:id="@+id/progressBarSpeakerLevel"
+		style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+		android:layout_width="200dp"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@+id/textViewSpeakerLevel"
+		android:layout_alignBottom="@+id/textViewSpeakerLevel"
+		android:layout_above="@+id/swipeButtonPTT"
+		android:layout_alignStart="@+id/editTextMainYourCallsign"
+		/>
+
+	<TextView
+		android:id="@+id/textViewMainRemainingTime"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_toEndOf="@+id/progressBarSpeakerLevel"
+		android:layout_alignTop="@+id/textViewMicLevel"
+		android:layout_alignBottom="@+id/textViewSpeakerLevel"
+		android:gravity="center"
+		android:textSize="20sp"
+		/>
+
+	<in.shadowfax.proswipebutton.ProSwipeButton
+		android:id="@+id/swipeButtonPTT"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_alignParentBottom="true"
+		android:layout_margin="8dp"
+		app:arrow_color="#33FFFFFF"
+		app:bg_color="?attr/colorPrimary"
+		app:btn_text="SWIPE TO TALK"
+		app:text_color="@android:color/white"
+		app:text_size="18sp" />
+
+
+</RelativeLayout>

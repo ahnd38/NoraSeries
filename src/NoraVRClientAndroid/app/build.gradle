@@ -1,0 +1,142 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "org.jp.illg.noravrclient"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0.15"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    productFlavors {
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
+
+    configurations {
+        all {
+            exclude module: 'commons-logging'
+        }
+    }
+
+//    externalNativeBuild {
+//        ndkBuild {
+//            path 'src/main/jni/Android.mk'
+//        }
+//    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+
+    sourceSets{
+        main.java.srcDirs = []
+        main.java.srcDirs += 'src/main/java'
+        main.java.srcDirs += '../../NoraCommon/src/main/java'
+        main.java.srcDirs += '../../NoraVRClient/src/main/java'
+
+        main{
+            java{
+                exclude 'org/jp/illg/nora/android/**'
+                exclude 'org/jp/illg/noragateway/**'
+                exclude 'org/jp/illg/nora/NoraGatewayForAndroid.java'
+                exclude 'org/jp/illg/nora/NoraGatewayForAndroidService.java'
+                exclude 'net/ircDDB/**'
+                exclude 'org/jp/illg/nora/NoraGateway.java'
+                exclude 'org/jp/illg/nora/NoraConsoleStatusViewer.java'
+                exclude 'org/jp/illg/util/mon/cpu/CPUUsageMonitorTool.java'
+                exclude 'org/jp/illg/util/log4j/**'
+                exclude 'org/jp/illg/dvr/**'
+                exclude 'org/jp/illg/dstar/repeater/modem/analog/AnalogModemPiGPIO.java'
+                exclude 'org/jp/illg/nora/vr/NoraVRClientSample.java'
+                exclude 'org/jp/illg/util/CPUUsageMonitorTool.java'
+                exclude 'org/jp/illg/util/audio/util/winlinux/**'
+                exclude 'org/jp/illg/**/**Test.java'
+//                exclude 'org/jp/illg/util/audio/vocoder/opus/android/**'
+                exclude 'org/jp/illg/util/audio/vocoder/opus/winlinux/**'
+                exclude 'android/annotation/SuppressLint.java'
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    compileOnly 'org.projectlombok:lombok:1.18.16'
+    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+    implementation 'net.java.dev.jna:jna:5.2.0'
+    implementation 'net.java.dev.jna:jna-platform:5.2.0'
+    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'com.github.tony19:logback-android:1.1.1-12'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+    implementation 'frankiesardo:icepick:3.2.0'
+    annotationProcessor 'frankiesardo:icepick-processor:3.2.0'
+    implementation 'org.parceler:parceler-api:1.1.12'
+    annotationProcessor 'org.parceler:parceler:1.1.12'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'club.minnced:opus-java-api:1.0.4'
+    implementation ('com.corundumstudio.socketio:netty-socketio:1.7.17') {
+        exclude group:'org.slf4j'
+    }
+    implementation group: 'com.auth0', name: 'java-jwt', version: '3.10.3'
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.8'
+    implementation group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.1.1'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
+    implementation group: 'org.greenrobot', name: 'eventbus', version: '3.1.1'
+    implementation group: 'com.fazecast', name: 'jSerialComm', version: '1.3.11'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    implementation group: 'com.annimon', name: 'stream', version: '1.2.0'
+
+
+
+
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+
+    testImplementation 'org.robolectric:robolectric:4.2.1'
+    testImplementation "org.robolectric:shadows-multidex:4.2"
+
+    implementation 'com.google.firebase:firebase-core:18.0.0'
+    implementation 'com.google.firebase:firebase-crashlytics:17.2.2'
+    implementation 'com.google.firebase:firebase-analytics:18.0.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+repositories {
+    mavenCentral()
+}

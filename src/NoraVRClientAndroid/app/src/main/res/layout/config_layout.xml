@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content">
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		android:scrollbars="vertical"
+		android:scrollbarAlwaysDrawVerticalTrack="true">
+
+		<RelativeLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:padding="10dp"
+			>
+
+		<TextView
+			android:id="@+id/textViewConfigServerAddress"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@id/editTextConfigServerAddress"
+			android:layout_alignBottom="@id/editTextConfigServerAddress"
+			android:gravity="center_vertical"
+			android:layout_marginEnd="20dp"
+			android:text="ServerAddress"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigServerAddress"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_toEndOf="@id/textViewConfigServerAddress"
+			android:inputType="textWebEmailAddress" />
+
+		<TextView
+			android:id="@+id/textViewConfigServerPort"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerAddress"
+			android:layout_alignTop="@id/editTextConfigServerPort"
+			android:layout_alignBottom="@id/editTextConfigServerPort"
+			android:gravity="center_vertical"
+			android:text="ServerPort"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigServerPort"
+			android:layout_width="100dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerAddress"
+			android:layout_alignStart="@id/editTextConfigServerAddress"
+			android:layout_toEndOf="@id/textViewConfigServerPort"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewConfigServerLoginCallsign"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerPort"
+			android:layout_alignTop="@id/editTextConfigServerLoginCallsign"
+			android:layout_alignBottom="@id/editTextConfigServerLoginCallsign"
+			android:gravity="center_vertical"
+			android:text="LoginCallsign"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigServerLoginCallsign"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerPort"
+			android:layout_alignStart="@id/editTextConfigServerAddress"
+			android:layout_toEndOf="@id/textViewConfigServerLoginCallsign"
+			android:inputType="text" />
+
+		<TextView
+			android:id="@+id/textViewConfigServerLoginPassword"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerLoginCallsign"
+			android:layout_alignTop="@id/editTextConfigServerLoginPassword"
+			android:layout_alignBottom="@id/editTextConfigServerLoginPassword"
+			android:gravity="center_vertical"
+			android:text="LoginPassword"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigServerLoginPassword"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerLoginCallsign"
+			android:layout_alignStart="@id/editTextConfigServerAddress"
+			android:layout_toEndOf="@id/textViewConfigServerLoginPassword"
+			android:inputType="textWebPassword" />
+
+		<TextView
+			android:id="@+id/textViewConfigCodecType"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerLoginPassword"
+			android:layout_alignTop="@id/spinnerConfigCodecType"
+			android:layout_alignBottom="@id/spinnerConfigCodecType"
+			android:gravity="center_vertical"
+			android:text="CodecType"
+			/>
+
+		<Spinner
+			android:id="@+id/spinnerConfigCodecType"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/textViewConfigServerLoginPassword"
+			android:layout_toEndOf="@+id/textViewConfigCodecType"
+			android:layout_alignStart="@id/editTextConfigServerAddress"
+			>
+
+		</Spinner>
+
+		<TextView
+			android:id="@+id/textViewConfigMyCallsignLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/textViewConfigCodecType"
+			android:layout_alignTop="@+id/editTextConfigMyCallsignLong"
+			android:layout_alignBottom="@+id/editTextConfigMyCallsignLong"
+			android:gravity="center_vertical"
+			android:text="MyCallsign"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigMyCallsignLong"
+			android:layout_width="110dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/spinnerConfigCodecType"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			android:layout_toEndOf="@+id/textViewConfigMyCallsignLabel"
+
+			android:inputType="text" />
+		<TextView
+			android:id="@+id/textViewConfigMyCallsignSlashLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="10dp"
+			android:layout_marginEnd="10dp"
+			android:layout_toEndOf="@+id/editTextConfigMyCallsignLong"
+			android:layout_below="@+id/textViewConfigCodecType"
+			android:layout_alignTop="@+id/editTextConfigMyCallsignLong"
+			android:layout_alignBottom="@+id/editTextConfigMyCallsignLong"
+			android:gravity="center_vertical"
+			android:text="/"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigMyCallsignShort"
+			android:layout_width="80dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextConfigMyCallsignLong"
+			android:layout_alignStart="@+id/editTextConfigMyCallsignLong"
+			android:inputType="text" />
+
+
+		<TextView
+			android:id="@+id/textViewConfigEnableTransmitShortMessage"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextConfigMyCallsignShort"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Enable\n ShortMessage" />
+
+		<Switch
+			android:id="@+id/switchConfigEnableTransmitShortMessage"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigEnableTransmitShortMessage"
+			android:layout_alignBottom="@+id/textViewConfigEnableTransmitShortMessage"
+			android:layout_below="@+id/editTextConfigMyCallsignShort"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+
+		<TextView
+			android:id="@+id/textViewConfigShortMessage"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/switchConfigEnableTransmitShortMessage"
+			android:layout_alignTop="@id/editTextConfigShortMessage"
+			android:layout_alignBottom="@id/editTextConfigShortMessage"
+			android:gravity="center_vertical"
+			android:text="ShortMessage"
+			/>
+
+		<EditText
+			android:id="@+id/editTextConfigShortMessage"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@id/switchConfigEnableTransmitShortMessage"
+			android:layout_alignStart="@id/editTextConfigServerAddress"
+			android:layout_toEndOf="@id/textViewConfigShortMessage"
+			android:inputType="text" />
+
+
+		<TextView
+			android:id="@+id/textViewConfigEnableTransmitGPS"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextConfigShortMessage"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Enable\n transmit GPS" />
+
+		<Switch
+			android:id="@+id/switchConfigEnableTransmitGPS"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigEnableTransmitGPS"
+			android:layout_alignBottom="@+id/textViewConfigEnableTransmitGPS"
+			android:layout_below="@+id/editTextConfigShortMessage"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+
+		<TextView
+			android:id="@+id/textViewConfigEnableBeepOnReceiveStart"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/switchConfigEnableTransmitGPS"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Beep on\n receive start" />
+
+		<Switch
+			android:id="@+id/switchConfigEnableBeepOnReceiveStart"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigEnableBeepOnReceiveStart"
+			android:layout_alignBottom="@+id/textViewConfigEnableBeepOnReceiveStart"
+			android:layout_below="@+id/switchConfigEnableTransmitGPS"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+
+		<TextView
+			android:id="@+id/textViewConfigEnableBeepOnReceiveEnd"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/switchConfigEnableBeepOnReceiveStart"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Beep on\n receive end" />
+
+		<Switch
+			android:id="@+id/switchConfigEnableBeepOnReceiveEnd"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigEnableBeepOnReceiveEnd"
+			android:layout_alignBottom="@+id/textViewConfigEnableBeepOnReceiveEnd"
+			android:layout_below="@+id/switchConfigEnableBeepOnReceiveStart"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+
+		<TextView
+			android:id="@+id/textViewConfigEnableGPSLocationPopup"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/switchConfigEnableBeepOnReceiveEnd"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="GPS Location\n Popup" />
+
+		<Switch
+			android:id="@+id/switchConfigEnableGPSLocationPopup"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigEnableGPSLocationPopup"
+			android:layout_alignBottom="@+id/textViewConfigEnableGPSLocationPopup"
+			android:layout_below="@+id/switchConfigEnableBeepOnReceiveEnd"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+		<TextView
+			android:id="@+id/textViewConfigDisableDisplaySleep"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/switchConfigEnableGPSLocationPopup"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Disable\n display sleep" />
+
+		<Switch
+			android:id="@+id/switchConfigDisableDisplaySleep"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigDisableDisplaySleep"
+			android:layout_alignBottom="@+id/textViewConfigDisableDisplaySleep"
+			android:layout_below="@+id/switchConfigEnableGPSLocationPopup"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+
+		<TextView
+			android:id="@+id/textViewConfigExternalPTT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/textViewConfigDisableDisplaySleep"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:layout_alignTop="@+id/textViewConfigExternalPTTKeycode"
+			android:layout_alignBottom="@+id/textViewConfigExternalPTTKeycode"
+			android:gravity="center_vertical"
+			android:text="ExternalPTT" />
+
+		<TextView
+			android:id="@+id/textViewConfigExternalPTTKeycode"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/textViewConfigDisableDisplaySleep"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			android:layout_toEndOf="@id/textViewConfigExternalPTT"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:gravity="center_vertical"
+			android:text="" />
+
+		<Button
+			android:id="@+id/buttonConfigExternalPTT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			android:layout_below="@+id/textViewConfigExternalPTTKeycode"
+			android:singleLine="false"
+			android:text="REGIST" />
+
+		<Button
+			android:id="@+id/buttonConfigExternalPTTClear"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="5dp"
+			android:layout_toEndOf="@+id/buttonConfigExternalPTT"
+			android:layout_below="@+id/textViewConfigExternalPTTKeycode"
+			android:singleLine="false"
+			android:text="CLEAR" />
+
+		<TextView
+			android:id="@+id/textViewConfigTouchPTTTransmit"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/buttonConfigExternalPTT"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Enable\n Touch PTT" />
+
+		<Switch
+			android:id="@+id/switchConfigTouchPTTTransmit"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigTouchPTTTransmit"
+			android:layout_alignBottom="@+id/textViewConfigTouchPTTTransmit"
+			android:layout_below="@+id/buttonConfigExternalPTT"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+		<TextView
+			android:id="@+id/textViewConfigPTTToggleMode"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/textViewConfigTouchPTTTransmit"
+			android:layout_alignStart="@+id/textViewConfigMyCallsignLabel"
+			android:minLines="2"
+			android:maxLines="2"
+			android:lines="2"
+			android:singleLine="false"
+			android:gravity="center_vertical"
+			android:text="Enable\n PTT Toggle" />
+
+		<Switch
+			android:id="@+id/switchConfigPTTToggleMode"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewConfigPTTToggleMode"
+			android:layout_alignBottom="@+id/textViewConfigPTTToggleMode"
+			android:layout_below="@+id/switchConfigTouchPTTTransmit"
+			android:layout_alignStart="@+id/editTextConfigServerAddress"
+			/>
+
+		</RelativeLayout>
+	</LinearLayout>
+
+</ScrollView>

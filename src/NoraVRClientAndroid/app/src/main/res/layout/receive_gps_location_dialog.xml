@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/relativeLayoutGPSLocation"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:padding="10dp">
+
+	<TextView
+		android:id="@+id/textViewGPSLocationCallsignLabel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical"
+		android:text="Callsign : "
+		/>
+
+	<TextView
+		android:id="@+id/textViewGPSLocationCallsign"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_toEndOf="@+id/textViewGPSLocationCallsignLabel"
+		android:layout_alignTop="@id/textViewGPSLocationCallsignLabel"
+		android:layout_alignBottom="@+id/textViewGPSLocationCallsignLabel"
+		android:layout_marginStart="20dp"
+		/>
+
+	<TextView
+		android:id="@+id/textViewGPSLocationMessageLabel"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/textViewGPSLocationCallsignLabel"
+		android:gravity="center_vertical"
+		android:text="Message : "
+		/>
+
+	<TextView
+		android:id="@+id/textViewGPSLocationMessage"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@id/textViewGPSLocationMessageLabel"
+		android:layout_alignBottom="@+id/textViewGPSLocationMessageLabel"
+		android:layout_alignStart="@id/textViewGPSLocationCallsign"
+		/>
+
+	<com.google.android.gms.maps.MapView
+		android:id="@+id/mapViewGPSLocation"
+		android:layout_width="300dp"
+		android:layout_height="300dp"
+		android:layout_below="@+id/textViewGPSLocationMessageLabel"
+		android:layout_marginTop="20dp"
+		android:layout_centerHorizontal="true">
+
+	</com.google.android.gms.maps.MapView>
+
+	<TextView
+		android:id="@+id/textViewGPSLocationRemainTime"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/mapViewGPSLocation"
+		android:layout_alignEnd="@+id/mapViewGPSLocation"
+		android:textSize="16sp"
+		android:text="0"/>
+
+</RelativeLayout>

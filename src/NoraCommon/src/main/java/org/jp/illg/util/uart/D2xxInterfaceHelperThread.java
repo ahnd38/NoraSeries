@@ -38,7 +38,7 @@ public class D2xxInterfaceHelperThread extends ThreadBase {
     public D2xxInterfaceHelperThread(ThreadUncaughtExceptionListener exceptionListener, D2xxInterface d2xxInterface){
         super(exceptionListener, D2xxInterfaceHelperThread.class.getSimpleName());
 
-        setProcessLoopPeriodMillis(1);
+        setProcessLoopIntervalTimeMillis(1);
 
         receiveBuffer = new byte[1024];
 

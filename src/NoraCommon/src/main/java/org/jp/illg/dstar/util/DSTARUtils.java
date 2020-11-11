@@ -21,6 +21,7 @@ import org.jp.illg.dstar.model.InternalPacket;
 import org.jp.illg.dstar.model.VoiceAMBE;
 import org.jp.illg.dstar.model.defines.ConnectionDirectionType;
 import org.jp.illg.dstar.model.defines.RepeaterControlFlag;
+import org.jp.illg.dstar.model.defines.RepeaterRoute;
 
 import lombok.NonNull;
 
@@ -523,5 +524,59 @@ public class DSTARUtils {
 		}
 
 		return packets;
+	}
+
+	/**
+	 * 仕様外の幹線ヘッダを可能な限り修正する
+	 * @param backbone 幹線ヘッダ
+	 * @return 利用可能な幹線ヘッダであればtrue
+	 */
+	public static boolean fixBackboneHeader(@NonNull final BackBoneHeader backbone) {
+		boolean isValid = true;
+
+		if(backbone.getType() == null) {
+			isValid = false;
+		}
+
+		if(backbone.getFrameType() == null) {
+			isValid = false;
+		}
+		else if(backbone.getFrameType() == BackBoneHeaderFrameType.VoiceDataHeader) {
+			backbone.setSequenceNumber((byte)0x0);
+		}
+		else if(
+			backbone.getFrameType() == BackBoneHeaderFrameType.VoiceData ||
+			backbone.getFrameType() == BackBoneHeaderFrameType.VoiceDataLastFrame
+		) {
+			if(backbone.getSequenceNumber() > DSTARDefines.MaxSequenceNumber)
+				backbone.setSequenceNumber(DSTARDefines.MaxSequenceNumber);
+			else if(backbone.getSequenceNumber() < DSTARDefines.MinSequenceNumber)
+				backbone.setSequenceNumber(DSTARDefines.MinSequenceNumber);
+		}
+
+		return isValid;
+	}
+
+	/**
+	 * 仕様外のRFヘッダを可能な限り修正する
+	 * @param header RFヘッダ
+	 * @return 可能可能なRFヘッダであればtrue
+	 */
+	public static boolean fixHeader(@NonNull final Header header) {
+		boolean isValid = true;
+
+		if(
+			header.getRepeaterRouteFlag() == RepeaterRoute.Unknown ||
+			header.getRepeaterRouteFlag() == null ||
+			header.getRepeaterControlFlag()	== RepeaterControlFlag.Unknown ||
+			header.getRepeaterControlFlag() == null
+		){
+			isValid = false;
+		}
+
+		//仕様外のコールサイン文字をスペースで埋める
+		header.replaceCallsignsIllegalCharToSpace();
+
+		return isValid;
 	}
 }

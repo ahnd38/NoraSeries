@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<array name="codecTypes">
+		<item>PCM</item>
+		<item>Opus8k</item>
+		<item>Opus24k</item>
+		<item>Opus64k</item>
+	</array>
+</resources>

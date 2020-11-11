@@ -116,16 +116,10 @@ public class Header implements Cloneable{
 		Arrays.fill(this.getSourceRepeater2Callsign(), ' ');
 	}
 
-	/**
-	 * @return flags
-	 */
 	public byte[] getFlags() {
 		return flags;
 	}
 
-	/**
-	 * @param flags セットする flags
-	 */
 	public void setFlags(@NonNull final byte[] flags) {
 		if(flags == null || flags.length <= 0) {return;}
 

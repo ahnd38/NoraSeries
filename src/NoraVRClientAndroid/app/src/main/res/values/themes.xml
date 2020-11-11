@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Base application theme. -->
+	<style name="NoraVRClientTheme" parent="Theme.MaterialComponents.NoActionBar">
+		<!-- Customize your theme here. -->
+		<item name="colorPrimary">@color/colorPrimary</item>
+		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+		<item name="colorAccent">@color/blue_A400</item>
+	</style>
+
+	<style name="NoraVRClientTheme.Default" parent="NoraVRClientTheme">
+		<item name="colorPrimary">@color/indigo_900</item>
+		<item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+		<item name="colorAccent">@color/blue_A400</item>
+
+		<item name="noraBackgroundColor">@drawable/background_main</item>
+	</style>
+
+</resources>
