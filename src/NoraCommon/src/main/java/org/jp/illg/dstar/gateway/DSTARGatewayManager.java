@@ -16,6 +16,7 @@ import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.util.ApplicationInformation;
+import org.jp.illg.util.socketio.SocketIO;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
 
 import lombok.NonNull;
@@ -50,6 +51,7 @@ public class DSTARGatewayManager {
 		ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final String gatewayCallsign,
 		@NonNull final ExecutorService workerExecutor,
+		final SocketIO socketio,
 		@NonNull final ApplicationInformation<?> applicationVersion,
 		@NonNull final ReflectorNameService reflectorNameService,
 		@NonNull final RepeaterNameService repeaterNameService
@@ -70,6 +72,7 @@ public class DSTARGatewayManager {
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final String gatewayCallsign,
 		@NonNull final ExecutorService workerExecutor,
+		final SocketIO socketio,
 		final WebRemoteControlService webRemoteControlService,
 		@NonNull final ApplicationInformation<?> applicationVersion,
 		@NonNull final ReflectorNameService reflectorNameService,
@@ -92,6 +95,7 @@ public class DSTARGatewayManager {
 					systemID,
 					exceptionListener, gatewayCallsign,
 					workerExecutor,
+					socketio,
 					applicationVersion,
 					reflectorNameService,
 					repeaterNameService
@@ -154,7 +158,16 @@ public class DSTARGatewayManager {
 		}
 
 		try {
-			if(isGatewayRemoving) {gateway.stop();}
+			if(isGatewayRemoving) {
+				gateway.stop();
+
+				locker.lock();
+				try {
+					systemGateways.remove(systemID);
+				}finally {
+					locker.unlock();
+				}
+			}
 		}
 		finally {
 			locker.lock();

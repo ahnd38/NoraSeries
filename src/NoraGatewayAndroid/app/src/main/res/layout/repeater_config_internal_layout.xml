@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/noraBackgroundColor"
+    >
+
+    <TextView
+        android:id="@+id/textViewRepeaterConfigInternalModemType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/spinnerRepeaterConfigInternalModemType"
+        android:layout_alignBottom="@+id/spinnerRepeaterConfigInternalModemType"
+        android:gravity="center_vertical"
+        android:text="Modem Type:"
+        android:textSize="18sp"
+        android:textColor="?attr/noraTextColor" />
+
+    <Spinner
+        android:id="@+id/spinnerRepeaterConfigInternalModemType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/textViewRepeaterConfigInternalModemType"
+        android:layout_marginStart="10dp"
+        android:paddingTop="10dp"
+        android:spinnerMode="dropdown" />
+
+    <TextView
+        android:id="@+id/textViewRepeaterConfigInternalDirectMyCallsigns"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/editTextRepeaterConfigInternalDirectMyCallsigns"
+        android:layout_alignBottom="@+id/editTextRepeaterConfigInternalDirectMyCallsigns"
+        android:gravity="center_vertical"
+        android:text="DirectMyCallsigns:"
+        android:textSize="18sp"
+        android:textColor="?attr/noraTextColor" />
+
+    <EditText
+        android:id="@+id/editTextRepeaterConfigInternalDirectMyCallsigns"
+        android:layout_toEndOf="@+id/textViewRepeaterConfigInternalDirectMyCallsigns"
+        android:layout_below="@+id/spinnerRepeaterConfigInternalModemType"
+        android:layout_marginStart="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text|textCapCharacters|textNoSuggestions" />
+
+
+    <org.jp.illg.util.android.view.IgnoreSwipeViewPager
+        android:id="@+id/viewPagerRepeaterConfigInternalModem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editTextRepeaterConfigInternalDirectMyCallsigns"
+     />
+
+</RelativeLayout>

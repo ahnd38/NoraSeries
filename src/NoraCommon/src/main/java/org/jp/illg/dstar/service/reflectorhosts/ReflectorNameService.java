@@ -18,11 +18,13 @@ import org.jp.illg.dstar.DSTARDefines;
 import org.jp.illg.dstar.model.defines.DSTARProtocol;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfo;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfoKey;
+import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.repeatername.model.RepeaterData;
 import org.jp.illg.dstar.util.CallSignValidator;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.util.Timer;
 import org.jp.illg.util.thread.Callback;
+import org.jp.illg.util.thread.ThreadProcessResult;
 
 import com.annimon.stream.ComparatorCompat;
 import com.annimon.stream.Optional;
@@ -38,7 +40,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ReflectorNameService {
+public class ReflectorNameService implements Service {
 
 	private static final String logHeader;
 
@@ -64,6 +66,7 @@ public class ReflectorNameService {
 	@Setter
 	private Function<ReflectorHostInfo, RepeaterData> funcFindRepeaterInfo;
 
+	private boolean isRunning;
 
 	private static final List<DSTARProtocol> defaultBaseReflectorPreferredProtocol;
 	private final List<DSTARProtocol> baseReflectorPreferredProtocols;
@@ -101,6 +104,8 @@ public class ReflectorNameService {
 		baseReflectorPreferredProtocols = new LinkedList<>();
 
 		reflectorPreferredProtocols = new ConcurrentHashMap<>();
+
+		isRunning = false;
 
 		setOutputFilePath(outputFilePathDefault);
 
@@ -144,7 +149,30 @@ public class ReflectorNameService {
 		}
 	}
 
-	public void process() {
+	@Override
+	public boolean start() {
+		isRunning = true;
+
+		return true;
+	}
+
+	@Override
+	public void stop() {
+		isRunning = false;
+	}
+
+	@Override
+	public void close() {
+		stop();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return isRunning;
+	}
+
+	@Override
+	public ThreadProcessResult processService() {
 		if(processIntervalTimerKeeper.isTimeout(5, TimeUnit.SECONDS)) {
 			processIntervalTimerKeeper.updateTimestamp();
 
@@ -157,6 +185,8 @@ public class ReflectorNameService {
 				saveHosts(getOutputFilePath());
 			}
 		}
+
+		return ThreadProcessResult.NoErrors;
 	}
 
 	public boolean loadHostsFromAndroidAssets(
@@ -172,14 +202,14 @@ public class ReflectorNameService {
 		final Map<ReflectorHostInfoKey, ReflectorHostInfo> readHosts =
 			ReflectorHostsFileReaderWriter.readHostFile(getOutputFilePath(), false);
 
-		return readHosts != null ? updateHosts(logSuppress, readHosts, getOutputFilePath(), true) : false;
+		return readHosts != null && updateHosts(logSuppress, readHosts, getOutputFilePath(), true);
 	}
 
 	public boolean loadHosts(String filePath, boolean rewriteDataSource, boolean logSuppress) {
 		final Map<ReflectorHostInfoKey, ReflectorHostInfo> readHosts =
 			ReflectorHostsFileReaderWriter.readHostFile(filePath, rewriteDataSource);
 
-		return readHosts != null ? updateHosts(logSuppress, readHosts, filePath, true) : false;
+		return readHosts != null && updateHosts(logSuppress, readHosts, filePath, true);
 	}
 
 	public boolean loadHosts(URL url, boolean rewriteDataSource, boolean logSuppress) {
@@ -188,7 +218,7 @@ public class ReflectorNameService {
 		final Map<ReflectorHostInfoKey, ReflectorHostInfo> readHosts =
 			ReflectorHostsFileReaderWriter.readHostFile(url, rewriteDataSource);
 
-		return readHosts != null ? updateHosts(logSuppress, readHosts, url.toExternalForm(), true) : false;
+		return readHosts != null && updateHosts(logSuppress, readHosts, url.toExternalForm(), true);
 	}
 
 	public boolean loadHosts(
@@ -310,21 +340,20 @@ public class ReflectorNameService {
 
 				final ReflectorHostInfo oldHostInfo = hosts.get(key);
 
-				final boolean isUpdateHostInfo = oldHostInfo != null ?
+				final boolean isUpdateHostInfo = oldHostInfo != null &&
 					(
 						!hostInfo.equals(oldHostInfo) &&
 						(
 							hostInfo.getUpdateTime() >= oldHostInfo.getUpdateTime() ||
 							hostInfo.getPriority() <= oldHostInfo.getPriority()
 						)
-					) : false;
+					);
 
-				final boolean isTimestampUpdateOnly = oldHostInfo != null ?
+				final boolean isTimestampUpdateOnly = oldHostInfo != null &&
 					(
 						hostInfo.equalsIgnoreUpdateTimestamp(oldHostInfo) &&
 						hostInfo.getUpdateTime() >= oldHostInfo.getUpdateTime()
-					)
-					: false;
+					);
 
 				if(oldHostInfo == null || isUpdateHostInfo || isTimestampUpdateOnly){
 					if(oldHostInfo != null) {hosts.remove(key);}

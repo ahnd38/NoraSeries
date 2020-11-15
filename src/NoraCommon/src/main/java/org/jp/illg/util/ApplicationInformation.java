@@ -15,6 +15,7 @@ public interface ApplicationInformation<T> {
 	public String getBuildTime();
 	public String getBuilderName();
 	public String getBuilderEMail();
+	public boolean isBuildRelease();
 
 	public String getGitBranchName();
 	public String getGitCommitID();

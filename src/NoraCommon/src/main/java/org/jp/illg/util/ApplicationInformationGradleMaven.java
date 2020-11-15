@@ -70,6 +70,11 @@ public class ApplicationInformationGradleMaven<T> implements ApplicationInformat
 	}
 
 	@Override
+	public boolean isBuildRelease() {
+		return Boolean.getBoolean(getVersionPropertyFromMaven("releasebuild"));
+	}
+
+	@Override
 	public String getGitBranchName() {
 		String value = getGitPropertyFromMaven("git.branch");
 

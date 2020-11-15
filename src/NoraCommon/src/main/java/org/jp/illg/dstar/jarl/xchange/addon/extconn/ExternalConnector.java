@@ -1121,7 +1121,7 @@ implements DSTARGateway, WebRemoteControlGatewayHandler
 
 		reflectorLinkManager.processReflectorLinkManagement();
 
-		reflectorNameService.process();
+		reflectorNameService.processService();
 
 
 		cleanupProcessEntry();
@@ -1426,6 +1426,7 @@ implements DSTARGateway, WebRemoteControlGatewayHandler
 			reflectorProperties.getType(),
 			reflectorProperties,
 			workerExecutor,
+			getSocketIO(),
 			reflectorLinkManager,
 			reflectorEventListener,
 			getApplicationName() + "@" + applicationVersion.getRunningOperatingSystem(),

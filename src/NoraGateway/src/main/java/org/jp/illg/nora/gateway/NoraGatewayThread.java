@@ -12,11 +12,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.jp.illg.dstar.gateway.DSTARGatewayManager;
+import org.jp.illg.dstar.DSTARSystemManager;
+import org.jp.illg.dstar.DSTARSystemManager.DSTARSystem;
 import org.jp.illg.dstar.model.DSTARGateway;
-import org.jp.illg.dstar.model.DSTARRepeater;
-import org.jp.illg.dstar.model.config.RepeaterProperties;
-import org.jp.illg.dstar.repeater.DSTARRepeaterManager;
 import org.jp.illg.dstar.reporter.model.BasicStatusInformation;
 import org.jp.illg.dstar.service.hfdownloader.ReflectorHostFileDownloadService;
 import org.jp.illg.dstar.service.hfdownloader.ReflectorHostFileDownloadService.DownloadHostsData;
@@ -25,9 +23,9 @@ import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.dstar.service.web.model.WebRemoteControlServiceEvent;
-import org.jp.illg.dstar.util.DSTARSystemManager;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.nora.gateway.reporter.NoraGatewayStatusReporter;
+import org.jp.illg.nora.gateway.reporter.NoraGatewayStatusReporterWinLinux;
 import org.jp.illg.nora.gateway.reporter.model.NoraGatewayStatusReportListener;
 import org.jp.illg.nora.gateway.service.norausers.NoraCrashReporter;
 import org.jp.illg.nora.gateway.service.norausers.NoraUsersAPIService;
@@ -310,6 +308,7 @@ public class NoraGatewayThread{
 				logTag +
 				"[Environment Information]" + SystemUtil.getLineSeparator() +
 				applicationVersionInfo.getApplicationName() +
+				(!applicationVersionInfo.isBuildRelease() ? "(DEBUG)" : "") +
 				" Version" + applicationVersionInfo.getApplicationVersion() +
 				"@" + applicationVersionInfo.getRunningOperatingSystem() + SystemUtil.getLineSeparator() +
 
@@ -335,12 +334,11 @@ public class NoraGatewayThread{
 		isRequestReboot = false;
 		boolean isSuccess = false;
 		do {
-			if(isRequestReboot && log.isInfoEnabled())
-				log.info(logTag + "Rebooting...");
-
+			applicationError = null;
+			uncaughtException = null;
 			isRequestReboot = false;
 
-			isSuccess = mainProcess();
+			isSuccess = entryThread();
 		}while(isSuccess && isRequestReboot);
 
 		return isSuccess;
@@ -350,33 +348,22 @@ public class NoraGatewayThread{
 	 * アプリケーションメインルーチン
 	 * @return 正常終了ならtrue/異常終了ならfalse
 	 */
-	private boolean mainProcess() {
+	private boolean entryThread() {
 
 		NoraConsoleStatusViewer consoleViewer = null;
-		NoraGatewayStatusReporter statusReporter = null;
-		NoraUsersAPIService noraUsersAPIService = null;
 		ExecutorService workerExecutor = null;
 		FileUpdateMonitoringTool fileUpdateMonitoringTool = null;
 
-		workerExecutor = Executors.newFixedThreadPool(workerThreads, new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				final Thread thread = new Thread(r);
-				thread.setName("NoraWorker_" + thread.getId());
+		try{
+			workerExecutor = Executors.newFixedThreadPool(workerThreads, new ThreadFactory() {
+				@Override
+				public Thread newThread(Runnable r) {
+					final Thread thread = new Thread(r);
+					thread.setName("NoraWorker_" + thread.getId());
 
-				return thread;
-			}
-		});
-
-		try(final SocketIO localSocketIO = new SocketIO(exceptionListener, workerExecutor)) {
-			if(!localSocketIO.start()) {
-				if(log.isErrorEnabled())
-					log.error(logTag + "Could not start local socket io.");
-
-				localSocketIO.stop();
-
-				return false;
-			}
+					return thread;
+				}
+			});
 
 			fileUpdateMonitoringTool =
 				new FileUpdateMonitoringTool(exceptionListener, workerExecutor);
@@ -384,6 +371,7 @@ public class NoraGatewayThread{
 				new LogbackConfigurator(logbackConfigurationFilePath)
 					.getFileUpdateMonitoringFunction()
 			);
+
 			//logback設定
 			if(!fileUpdateMonitoringTool.initialize()) {
 				if(log.isErrorEnabled())
@@ -406,7 +394,7 @@ public class NoraGatewayThread{
 			//ホストファイル監視設定
 			fileUpdateMonitoringTool.addFunction(hostsFileMonitoringFunction);
 
-			if(!isServiceMode) {
+			if(!isServiceMode && !isDaemonMode) {
 				consoleViewer =
 					new NoraConsoleStatusViewer(
 						systemID,
@@ -423,18 +411,117 @@ public class NoraGatewayThread{
 				}
 			}
 
-			statusReporter = new NoraGatewayStatusReporter(
-				systemID, exceptionListener, cpuUsageMonitorTool, applicationVersionInfo
+			return mainProcess(workerExecutor, fileUpdateMonitoringTool);
+		}
+		finally {
+			if(!workerExecutor.isShutdown()) {workerExecutor.shutdown();}
+			if(consoleViewer != null && consoleViewer.isRunning()) {consoleViewer.stop();}
+		}
+	}
+
+	private boolean mainProcess(
+		final ExecutorService workerExecutor,
+		final FileUpdateMonitoringTool fileUpdateMonitoringTool
+	) {
+		try(
+			final ReflectorNameService reflectorNameService = new ReflectorNameService();
+
+			final RepeaterNameService repeaterNameService = new RepeaterNameService(
+				systemID,
+				exceptionListener,
+				workerExecutor
 			);
 
-			noraUsersAPIService =
+			final NoraGatewayStatusReporter statusReporter = new NoraGatewayStatusReporterWinLinux(
+				systemID, exceptionListener, applicationVersionInfo, cpuUsageMonitorTool
+			);
+
+			final WebRemoteControlService webRemoteControlService =
+				appProperties.getServiceProperties().getWebRemoteControlServiceProperties().isEnable() ?
+				new WebRemoteControlService(
+					exceptionListener,
+					applicationVersionInfo,
+					workerExecutor,
+					new EventListener<WebRemoteControlServiceEvent>() {
+						@Override
+						public void event(WebRemoteControlServiceEvent event, Object attachment) {
+							if(event == WebRemoteControlServiceEvent.RequestRestart) {
+								if(log.isInfoEnabled())
+									log.info(logTag + "Restart request from WebRemoteControlService...");
+
+								isRequestReboot = true;
+							}
+						}
+					},
+					appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getUserListFile(),
+					applicationConfigurationFilePath.normalize().toFile().getAbsolutePath(),
+					appProperties.getServiceProperties().getHelperServiceProperties().getPort()
+				) : null;
+
+			final StatusInformationFileOutputService statusFileOutputService =
+				appProperties.getServiceProperties().getStatusInformationFileOutputServiceProperties().isEnable() ?
+				new StatusInformationFileOutputService(
+					applicationVersionInfo,
+					statusReporter,
+					appProperties.getServiceProperties()
+						.getStatusInformationFileOutputServiceProperties().getOutputPath()
+				) : null;
+
+			final ReflectorHostFileDownloadService reflectorHostFileDownloadService =
+				new ReflectorHostFileDownloadService(
+					systemID,
+					exceptionListener,
+					workerExecutor,
+					new EventListener<ReflectorHostFileDownloadService.DownloadHostsData>() {
+						@Override
+						public void event(DownloadHostsData event, Object attachment) {
+							if(NoraGatewayThread.this.gateway != null) {
+								NoraGatewayThread.this.gateway.loadReflectorHosts(
+									event.getHosts(), event.getUrl().toExternalForm(), true
+								);
+							}
+						}
+					}
+				);
+
+			final DSTARSystem dstarSystem = DSTARSystemManager.createSystem(
+				systemID,
+				exceptionListener,
+				applicationVersionInfo,
+				appProperties.getGatewayProperties(),
+				appProperties.getRepeaterProperties(),
+				workerExecutor,
+				webRemoteControlService,
+				reflectorNameService,
+				repeaterNameService
+			);
+
+			final IcomRepeaterCommunicationService icomRepeaterCommunicationService =
+				appProperties.getServiceProperties().getIcomRepeaterCommunicationServiceProperties().isEnable() ?
+				IcomRepeaterCommunicationService.createInstance(
+					systemID, exceptionListener, workerExecutor, dstarSystem.getSocketIO(), dstarSystem.getGateway()
+				) : null;
+		) {
+			if(dstarSystem == null){
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to create dstar system");
+
+				return false;
+			}
+			this.gateway = dstarSystem.getGateway();
+
+			final NoraUsersAPIService noraUsersAPIService =
 				new NoraUsersAPIService(
-					exceptionListener, applicationVersionInfo, localSocketIO,
+					exceptionListener, applicationVersionInfo, dstarSystem.getSocketIO(),
 					apiServerAddress, apiServerPort,
 					DSTARUtils.formatFullCallsign(appProperties.getGatewayProperties().getCallsign(), ' ')
 			);
+
 			if(!checkAllowVersion(noraUsersAPIService)) {
-				System.err.println("This software version too old, please update !");
+				if(log.isErrorEnabled())
+					log.error(logTag + "This software version is out of date, please update !");
+
+				System.err.println("This software version is out of date, please update !");
 
 				return false;
 			}
@@ -449,33 +536,113 @@ public class NoraGatewayThread{
 				return false;
 			}
 
+			if(webRemoteControlService != null) {
+				if(!webRemoteControlService.initialize(
+					appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getPort(),
+					appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getContext()
+				)) {
+					if(log.isErrorEnabled())
+						log.error(logTag + "Failed to initialize web remote service.");
+
+					return false;
+				}
+				statusReporter.addListener(new NoraGatewayStatusReportListener() {
+					@Override
+					public void report(BasicStatusInformation info) {
+						webRemoteControlService.setStatusInformation(info);
+					}
+
+					@Override
+					public void listenerProcess() {
+					}
+				});
+			}
+
+			if(!repeaterNameService.initialize(
+				appProperties.getServiceProperties().getRepeaterNameServiceProperties()
+			)) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to initialize RepeaterNameService.");
+
+				return false;
+			}
+			else if(!reflectorHostFileDownloadService.setProperties(
+				appProperties.getServiceProperties().getReflectorHostFileDownloadServiceProperties()
+			)) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Could not initialize ReflectorHostFileDownloadService.");
+
+				return false;
+			}
+			else if(
+				icomRepeaterCommunicationService != null &&
+				!icomRepeaterCommunicationService.setProperties(
+					appProperties.getServiceProperties().getIcomRepeaterCommunicationServiceProperties()
+				)
+			) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to initialize icom repeater communication service");
+
+				return false;
+			}
+
+			if(!dstarSystem.start()) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to start dstar system");
+
+				return false;
+			}
+			else if(webRemoteControlService != null && !webRemoteControlService.start()) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to start web remote service.");
+
+				return false;
+			}
+			else if(icomRepeaterCommunicationService != null && !icomRepeaterCommunicationService.start()) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Failed to start icom repeater communication service");
+
+				return false;
+			}
+
+			if(log.isInfoEnabled()) {
+				log.info(logTag + "Configuration file read and logger configuration completed.");
+
+				log.info(logTag + applicationVersionInfo.getApplicationName() + " started.");
+			}
+
 			return mainLoop(
+				reflectorNameService,
+				repeaterNameService,
+				webRemoteControlService,
+				reflectorHostFileDownloadService,
 				noraUsersAPIService,
 				statusReporter,
-				localSocketIO,
+				dstarSystem.getSocketIO(),
 				workerExecutor,
-				fileUpdateMonitoringTool
+				fileUpdateMonitoringTool,
+				dstarSystem
 			);
-		}
-		finally {
-			if(!workerExecutor.isShutdown()) {workerExecutor.shutdown();}
-			if(consoleViewer != null && consoleViewer.isRunning()) {consoleViewer.stop();}
-			if(statusReporter != null && statusReporter.isRunning()) {statusReporter.stop();}
-			if(noraUsersAPIService != null) {noraUsersAPIService = null;}
 		}
 	}
 
 	private boolean mainLoop(
+		final ReflectorNameService reflectorNameService,
+		final RepeaterNameService repeaterNameService,
+		final WebRemoteControlService webRemoteControlService,
+		final ReflectorHostFileDownloadService reflectorHostFileDownloadService,
 		final NoraUsersAPIService apiService,
 		final NoraGatewayStatusReporter reporter,
 		final SocketIO localSocketIO,
 		final ExecutorService workerExecutor,
-		final FileUpdateMonitoringTool fileUpdateMonitoringTool
+		final FileUpdateMonitoringTool fileUpdateMonitoringTool,
+		final DSTARSystem dstarSystem
 	) {
 		if(log.isInfoEnabled()) {
 			log.info(
 				logTag +
 				applicationVersionInfo.getApplicationName() +
+				(!applicationVersionInfo.isBuildRelease() ? "(DEBUG)" : "") +
 				" Version" + applicationVersionInfo.getApplicationVersion() +
 				"@" + applicationVersionInfo.getRunningOperatingSystem() + "\n" +
 
@@ -492,240 +659,58 @@ public class NoraGatewayThread{
 		}
 
 		try {
-			try {
-				@SuppressWarnings("unused")
-				StatusInformationFileOutputService statusFileOutputService = null;
-				if(appProperties.getServiceProperties().getStatusInformationFileOutputServiceProperties().isEnable()) {
-					statusFileOutputService =
-						new StatusInformationFileOutputService(
-							applicationVersionInfo,
-							reporter,
-							appProperties.getServiceProperties()
-								.getStatusInformationFileOutputServiceProperties().getOutputPath()
-						);
+			final BufferedReader stdinReader = new BufferedReader(new InputStreamReader(System.in));
+
+			isRequestReboot = false;
+			while(
+				applicationError == null && uncaughtException == null &&
+				!isRequestReboot
+			) {
+				reflectorNameService.processService();
+				repeaterNameService.processService();
+
+				apiService.processService();
+
+				processCPUUsageReport();
+
+				if(webRemoteControlService != null)
+					webRemoteControlService.processService();
+
+				if(reflectorHostFileDownloadService != null)
+					reflectorHostFileDownloadService.processService();
+
+				fileUpdateMonitoringTool.process();
+
+				if(stdinReader.ready()) {break;}
+				else if(apiService.isVersionDeny()) {
+					if(log.isErrorEnabled())
+						log.error(logTag + "This version is out of date, please update !");
+
+					System.err.println("This version is out of date, please update !");
+
+					break;
 				}
 
-				final ReflectorNameService reflectorNameService = new ReflectorNameService();
+				dstarSystem.processService();
 
-				final ReflectorHostFileDownloadService reflectorHostFileDownloadService =
-					new ReflectorHostFileDownloadService(
-						systemID,
-						exceptionListener,
-						workerExecutor,
-						new EventListener<ReflectorHostFileDownloadService.DownloadHostsData>() {
-							@Override
-							public void event(DownloadHostsData event, Object attachment) {
-								if(NoraGatewayThread.this.gateway != null) {
-									NoraGatewayThread.this.gateway.loadReflectorHosts(
-										event.getHosts(), event.getUrl().toExternalForm(), true
-									);
-								}
-							}
-						}
+				Thread.sleep(TimeUnit.MILLISECONDS.toMillis(1000));
+			}
+
+			if(isRequestReboot) {
+				if(log.isInfoEnabled()) {log.info(logTag + "Rebooting...");}
+			}
+
+			if(applicationError != null) {
+				if(log.isErrorEnabled()) {
+					log.error(
+						logTag +
+							"Application fatal error occurred.\n" + applicationError,
+						uncaughtException
 					);
-				if(
-					!reflectorHostFileDownloadService.setProperties(
-						appProperties.getServiceProperties().getReflectorHostFileDownloadServiceProperties()
-					)
-				) {
-					if(log.isErrorEnabled())
-						log.error(logTag + "Could not initialize ReflectorHostFileDownloadService.");
-
-					return false;
 				}
-
-				final RepeaterNameService repeaterNameService =
-					new RepeaterNameService(systemID, exceptionListener, workerExecutor);
-				if(!repeaterNameService.initialize(
-					appProperties.getServiceProperties().getRepeaterNameServiceProperties()
-				)) {
-					if(log.isErrorEnabled())
-						log.error(logTag + "Failed initialize RepeaterNameService.");
-
-					return false;
-				}
-
-				WebRemoteControlService webRemote = null;
-				if(appProperties.getServiceProperties().getWebRemoteControlServiceProperties().isEnable()) {
-					webRemote = new WebRemoteControlService(
-						exceptionListener,
-						applicationVersionInfo,
-						workerExecutor,
-						new EventListener<WebRemoteControlServiceEvent>() {
-							@Override
-							public void event(WebRemoteControlServiceEvent event, Object attachment) {
-								if(event == WebRemoteControlServiceEvent.RequestRestart) {
-									if(log.isInfoEnabled())
-										log.info(logTag + "Restart request from WebRemoteControlService...");
-
-									isRequestReboot = true;
-								}
-							}
-						},
-						appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getUserListFile(),
-						applicationConfigurationFilePath.normalize().toFile().getAbsolutePath(),
-						appProperties.getServiceProperties().getHelperServiceProperties().getPort()
-					);
-					if(!webRemote.initialize(
-							appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getPort(),
-							appProperties.getServiceProperties().getWebRemoteControlServiceProperties().getContext()
-					)) {
-						if(log.isErrorEnabled())
-							log.error(logTag + "Failed to initialize web remote service.");
-
-						return false;
-					}
-					else {
-						final WebRemoteControlService wrcs = webRemote;
-						reporter.addListener(new NoraGatewayStatusReportListener() {
-							@Override
-							public void report(BasicStatusInformation info) {
-								wrcs.setStatusInformation(info);
-							}
-
-							@Override
-							public void listenerProcess() {
-							}
-						});
-					}
-				}
-
-				//ゲートウェイ初期化
-				final DSTARGateway gateway = initializeGateway(
-					workerExecutor, webRemote,
-					reflectorNameService, repeaterNameService
-				);
-				if(gateway == null) {
-					if(log.isErrorEnabled())
-						log.error(logTag + "Could not initialize gateway.");
-
-					return false;
-				}
-
-				//ゲートウェイスタート
-				if(!gateway.start()) {
-					if(log.isErrorEnabled())
-						log.error(logTag + "Could not start gateway..." + gateway.getGatewayCallsign());
-
-					return false;
-				}
-
-				this.gateway = gateway;
-
-				//レピータ初期化
-				if(!initializeRepeaters(gateway, localSocketIO, workerExecutor, webRemote)) {
-					return false;
-				}
-
-				//レピータ開始
-				for(DSTARRepeater repeater : DSTARRepeaterManager.getRepeaters(systemID)) {
-					if(!repeater.start()) {
-						if(log.isErrorEnabled())
-							log.error(logTag + "Could not start repeater..." + repeater.getRepeaterCallsign());
-
-						return false;
-					}
-				}
-
-				IcomRepeaterCommunicationService icomRepeaterCommunicationService = null;
-				if(appProperties.getServiceProperties().getIcomRepeaterCommunicationServiceProperties().isEnable()) {
-					icomRepeaterCommunicationService = IcomRepeaterCommunicationService.createInstance(
-						systemID, exceptionListener, workerExecutor, localSocketIO, gateway
-					);
-
-					if(!icomRepeaterCommunicationService.setProperties(
-							appProperties.getServiceProperties().getIcomRepeaterCommunicationServiceProperties()
-					)) {
-						if(log.isErrorEnabled())
-							log.error(logTag + "Failed to initialize icom repeater communication service");
-
-						return false;
-					}
-				}
-
-				try {
-					if(webRemote != null && !webRemote.start()) {
-						if(log.isErrorEnabled())
-							log.error(logTag + "Failed to start web remote service.");
-
-						return false;
-					}
-					else if(icomRepeaterCommunicationService != null && !icomRepeaterCommunicationService.start()) {
-						if(log.isErrorEnabled())
-							log.error(logTag + "Failed to start icom repeater communication service");
-
-						return false;
-					}
-
-					if(log.isInfoEnabled()) {
-						log.info(logTag + "Configuration file read and logger configuration completed.");
-
-						log.info(logTag + applicationVersionInfo.getApplicationName() + " started.");
-					}
-
-
-					final BufferedReader stdinReader = new BufferedReader(new InputStreamReader(System.in));
-
-					isRequestReboot = false;
-					while(
-						applicationError == null && uncaughtException == null &&
-						!isRequestReboot
-					) {
-						reflectorNameService.process();
-						repeaterNameService.processService();
-						fileUpdateMonitoringTool.process();
-
-						processCPUUsageReport();
-
-						if(webRemote != null)
-							webRemote.processService();
-
-						if(reflectorHostFileDownloadService != null)
-							reflectorHostFileDownloadService.processService();
-
-						if(stdinReader.ready()) {break;}
-						else if(apiService.isVersionDeny()) {
-							if(log.isErrorEnabled())
-								log.error(logTag + "This version is out of date, please update !");
-
-							System.err.println("This version is out of date, please update !");
-
-							break;
-						}
-
-						DSTARSystemManager.process();
-
-						Thread.sleep(TimeUnit.MILLISECONDS.toMillis(1000));
-					}
-
-					if(applicationError != null) {
-						if(log.isErrorEnabled()) {
-							log.error(
-								logTag +
-									"Application fatal error occurred.\n" + applicationError,
-								uncaughtException
-							);
-						}
-					}
-					else if(uncaughtException != null) {
-						throw uncaughtException;
-					}
-				}finally {
-					if(webRemote != null) {
-						webRemote.stop();
-
-						webRemote = null;
-					}
-
-					if(icomRepeaterCommunicationService != null) {
-						icomRepeaterCommunicationService.stop();
-						IcomRepeaterCommunicationService.removeInstance(systemID);
-					}
-				}
-			}finally {
-				DSTARGatewayManager.removeGateway(systemID, true);
-
-				DSTARRepeaterManager.removeRepeaters(systemID, true);
+			}
+			else if(uncaughtException != null) {
+				throw uncaughtException;
 			}
 
 			return true;
@@ -819,81 +804,6 @@ public class NoraGatewayThread{
 			log.info(logTag + sb.toString());
 		}
 
-
-		return true;
-	}
-
-	private DSTARGateway initializeGateway(
-		final ExecutorService workerExecutor,
-		final WebRemoteControlService webRemoteControlService,
-		final ReflectorNameService reflectorNameService,
-		final RepeaterNameService repeaterNameService
-	) {
-		DSTARGateway gateway = null;
-
-		DSTARGatewayManager.removeGateway(systemID, true);
-		gateway = DSTARGatewayManager.createGateway(
-			systemID,
-			exceptionListener,
-			appProperties.getGatewayProperties().getCallsign(),
-			workerExecutor,
-			webRemoteControlService,
-			applicationVersionInfo,
-			reflectorNameService,
-			repeaterNameService
-		);
-		if(gateway == null) {return null;}
-
-		if(!gateway.setProperties(appProperties.getGatewayProperties())) {
-			if(log.isErrorEnabled())
-				log.error(logTag + "Failed property set to gateway.");
-
-			return null;
-		}
-
-		if(log.isInfoEnabled())
-			log.info(logTag + "    Created gateway..." + gateway.getGatewayCallsign());
-
-		return gateway;
-	}
-
-	private boolean initializeRepeaters(
-		final DSTARGateway gateway, final SocketIO localSocketIO,
-		final ExecutorService workerExecutor,
-		final WebRemoteControlService webRemoteControlService
-	) {
-		assert gateway != null;
-
-		for(RepeaterProperties repeaterProperties : appProperties.getRepeaterProperties().values()) {
-			if(!repeaterProperties.isEnable()) {continue;}
-
-			final DSTARRepeater repeater =
-				DSTARRepeaterManager.createRepeater(
-					systemID,
-					localSocketIO,
-					workerExecutor,
-					gateway,
-					gateway.getOnRepeaterEventListener(),
-					repeaterProperties.getType(), repeaterProperties.getCallsign(),
-					repeaterProperties,
-					webRemoteControlService
-				);
-			if(repeater == null) {continue;}
-
-			if(log.isInfoEnabled()) {
-				log.info(
-					logTag +
-					"    Created repeater..." + repeater.getRepeaterCallsign() + " / Type:" + repeater.getRepeaterType()
-				);
-			}
-		}
-
-		if(DSTARRepeaterManager.getRepeaters(systemID).isEmpty()) {
-			if(log.isErrorEnabled())
-				log.error(logTag + "There is no definication repeater and at least one is necessary.");
-
-			return false;
-		}
 
 		return true;
 	}

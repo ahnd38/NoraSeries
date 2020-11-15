@@ -1,0 +1,127 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.google.gms.google-services'
+
+android {
+    compileSdkVersion 29
+    defaultConfig {
+        applicationId "org.jp.illg.noragateway"
+        minSdkVersion 19
+        targetSdkVersion 29
+        versionCode 1
+        versionName '0.0.1a-PR44'
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        debug {
+            ext.enableCrashlytics = true
+        }
+        release {
+            ext.enableCrashlytics = true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    productFlavors {
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
+
+    configurations {
+        all {
+            exclude module: 'commons-logging'
+        }
+    }
+	
+    sourceSets{
+        main.java.srcDirs = []
+        main.java.srcDirs += 'src/main/java'
+        main.java.srcDirs += '../../NoraCommon/src/main/java'
+        main.java.srcDirs += '../../NoraGatewayCommon/src/main/java'
+
+        main{
+            java{
+                exclude 'org/jp/illg/dstar/dvdongle/**'
+                exclude 'org/jp/illg/dstar/repeater/modem/analog/AnalogModemPiGPIO.java'
+                exclude 'org/jp/illg/util/mon/cpu/CPUUsageMonitorTool.java'
+                exclude 'org/jp/illg/util/android/pttutil/**'
+                exclude 'org/jp/illg/util/audio/util/winlinux/**'
+                exclude 'org/jp/illg/**/**Test.java'
+                exclude 'android/annotation/SuppressLint.java'
+            }
+        }
+    }
+    buildToolsVersion = '29.0.3'
+}
+
+dependencies {
+    def lifecycle_version = "2.2.0"
+
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    annotationProcessor "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+    compileOnly 'org.projectlombok:lombok:1.18.16'
+    api 'com.google.guava:guava:27.0.1-android'
+    implementation 'com.github.tony19:logback-android:1.1.1-12'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    implementation 'frankiesardo:icepick:3.2.0'
+    annotationProcessor 'frankiesardo:icepick-processor:3.2.0'
+    implementation 'org.parceler:parceler-api:1.1.12'
+    annotationProcessor 'org.parceler:parceler:1.1.12'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'club.minnced:opus-java-api:1.0.4'
+    implementation 'net.java.dev.jna:jna:5.2.0'
+    implementation 'net.java.dev.jna:jna-platform:5.2.0'
+    implementation ('com.corundumstudio.socketio:netty-socketio:1.7.17') {
+        exclude group:'org.slf4j'
+    }
+    implementation group: 'com.auth0', name: 'java-jwt', version: '3.10.3'
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.8'
+    implementation group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.1.1'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
+    implementation group: 'org.greenrobot', name: 'eventbus', version: '3.1.1'
+    implementation group: 'com.fazecast', name: 'jSerialComm', version: '1.3.11'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    implementation group: 'com.annimon', name: 'stream', version: '1.2.0'
+    implementation 'com.pi4j:pi4j-core:1.1'
+
+	implementation 'com.google.firebase:firebase-crashlytics:17.2.2'
+	implementation 'com.google.firebase:firebase-analytics:18.0.0'
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+
+apply plugin: 'com.google.gms.google-services'
+repositories {
+    mavenCentral()
+}

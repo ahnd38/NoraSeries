@@ -36,6 +36,7 @@ import org.jp.illg.dstar.reporter.model.BasicStatusInformation;
 import org.jp.illg.dstar.routing.service.gltrust.GlobalTrustClientService;
 import org.jp.illg.dstar.routing.service.ircDDB.IrcDDBRoutingService;
 import org.jp.illg.dstar.routing.service.jptrust.JpTrustClientService;
+import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.web.func.AccessPointFunctions;
 import org.jp.illg.dstar.service.web.func.AnalogModemPiGPIOFunctions;
 import org.jp.illg.dstar.service.web.func.ConfigFunctions;
@@ -101,6 +102,7 @@ import org.jp.illg.util.io.websocket.WebSocketServerManager;
 import org.jp.illg.util.logback.appender.NotifyAppender;
 import org.jp.illg.util.logback.appender.NotifyAppenderListener;
 import org.jp.illg.util.logback.appender.NotifyLogEvent;
+import org.jp.illg.util.thread.ThreadProcessResult;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
 import org.slf4j.event.Level;
 
@@ -118,7 +120,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class WebRemoteControlService {
+public class WebRemoteControlService implements Service {
 
 	/**
 	 * 要求するダッシュボードの最低バージョン
@@ -334,6 +336,7 @@ public class WebRemoteControlService {
 		return true;
 	}
 
+	@Override
 	public boolean start() {
 		if(!initialized || serverStarted)
 			return false;
@@ -381,6 +384,7 @@ public class WebRemoteControlService {
 		return true;
 	}
 
+	@Override
 	public void stop() {
 		if(initialized && serverStarted && server != null)
 			webSocketServerManager.removeServer(serverID, true);
@@ -392,7 +396,18 @@ public class WebRemoteControlService {
 		server = null;
 	}
 
-	public void processService() {
+	@Override
+	public boolean isRunning(){
+		return initialized && serverStarted;
+	}
+
+	@Override
+	public void close() {
+		stop();
+	}
+
+	@Override
+	public ThreadProcessResult processService() {
 
 		final BasicStatusInformation status = getStatusInformation();
 		if(statusTransmitIntevalTimekeeper.isTimeout() && status != null) {
@@ -401,6 +416,8 @@ public class WebRemoteControlService {
 
 			sendUpdateBasicStatusInformationBroadcast(status);
 		}
+
+		return ThreadProcessResult.NoErrors;
 	}
 
 	public SocketIOServer getServer() {

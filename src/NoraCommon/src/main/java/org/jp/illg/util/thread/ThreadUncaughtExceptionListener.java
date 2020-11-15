@@ -9,7 +9,7 @@ public interface ThreadUncaughtExceptionListener {
 	 * @param ex exception
 	 * @param thread for occurred exception
 	 */
-	public void threadUncaughtExceptionEvent(Exception ex, Thread thread);
+	void threadUncaughtExceptionEvent(Exception ex, Thread thread);
 
 	/**
 	 * Thread fatal application error event
@@ -20,5 +20,5 @@ public interface ThreadUncaughtExceptionListener {
 	 * @param ex exception when available
 	 * @param thread thread for occurred thread
 	 */
-	public void threadFatalApplicationErrorEvent(String message, Exception ex, Thread thread);
+	void threadFatalApplicationErrorEvent(String message, Exception ex, Thread thread);
 }

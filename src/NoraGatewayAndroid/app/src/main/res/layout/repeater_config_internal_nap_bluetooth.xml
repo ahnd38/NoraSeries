@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:background="?attr/noraBackgroundColor"
+	>
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemNewAccessPointBluetoothPort"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemNewAccessPointBluetoothRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemNewAccessPointBluetoothRefresh"
+			android:gravity="center_vertical"
+			android:text="Port:"
+			android:textSize="18sp"
+			android:textColor="?attr/noraTextColor" />
+
+		<Spinner
+			android:id="@+id/spinnerRepeaterConfigModemNewAccessPointBluetoothPort"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemNewAccessPointBluetoothRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemNewAccessPointBluetoothRefresh"
+			android:layout_toEndOf="@id/textViewRepeaterConfigModemNewAccessPointBluetoothPort"
+			android:spinnerMode="dropdown" />
+		<Button
+			android:id="@+id/buttonRepeaterConfigModemNewAccessPointBluetoothRefresh"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentEnd="true"
+			android:gravity="center_vertical"
+			android:text="Refresh" />
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/spinnerRepeaterConfigModemNewAccessPointBluetoothPort"
+			android:orientation="horizontal"
+			>
+			<Switch
+				android:id="@+id/switchRepeaterConfigModemNewAccessPointBluetoothAllowDVSimplex"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textColor="?attr/noraTextColor"
+				/>
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginLeft="10dp"
+				android:layout_marginRight="10dp"
+				android:text="Allow DV Simplex Mode"
+				android:textColor="?attr/noraTextColor" />
+		</LinearLayout>
+
+	</RelativeLayout>
+</ScrollView>

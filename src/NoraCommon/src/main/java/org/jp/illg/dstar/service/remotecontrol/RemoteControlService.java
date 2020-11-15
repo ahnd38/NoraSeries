@@ -1,6 +1,5 @@
 package org.jp.illg.dstar.service.remotecontrol;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -24,6 +23,7 @@ import org.jp.illg.dstar.model.defines.ReconnectType;
 import org.jp.illg.dstar.reflector.ReflectorCommunicationService;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfo;
 import org.jp.illg.dstar.repeater.DSTARRepeaterManager;
+import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.remotecontrol.model.RemoteControlCommand;
 import org.jp.illg.dstar.service.remotecontrol.model.RemoteControlCommandType;
 import org.jp.illg.dstar.service.remotecontrol.model.RemoteControlRepeater;
@@ -52,6 +52,7 @@ import org.jp.illg.util.HashUtil;
 import org.jp.illg.util.socketio.SocketIO;
 import org.jp.illg.util.socketio.SocketIOEntryUDP;
 import org.jp.illg.util.socketio.model.OperationRequest;
+import org.jp.illg.util.socketio.napi.SocketIOHandler;
 import org.jp.illg.util.socketio.napi.SocketIOHandlerWithThread;
 import org.jp.illg.util.socketio.napi.define.ChannelProtocol;
 import org.jp.illg.util.socketio.napi.model.BufferEntry;
@@ -69,14 +70,138 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry> {
+public class RemoteControlService implements Service {
 
+	private class RemoteControlServiceThread extends SocketIOHandlerWithThread<BufferEntry>{
+
+		private SocketIOEntryUDP channel;
+
+		public RemoteControlServiceThread(
+			final ThreadUncaughtExceptionListener exceptionListener,
+			final SocketIO socketio
+		) {
+			super(
+				exceptionListener,
+				RemoteControlServiceThread.class,
+				socketio,
+				BufferEntry.class,
+				HostIdentType.RemoteAddressPort
+			);
+		}
+
+		@Override
+		public boolean start() {
+			if(
+				!super.start(
+					new Runnable() {
+						@Override
+						public void run() {
+							channel =
+								getSocketIO().registUDP(
+									new InetSocketAddress(getPortNumber()),
+									getHandler(),
+									RemoteControlServiceThread.class.getSimpleName()
+								);
+						}
+					}
+				) || channel == null
+			){
+				stop();
+
+				return false;
+			}
+
+			return true;
+		}
+
+		@Override
+		public void stop() {
+			super.stop();
+
+			if(channel != null)
+				SocketIOHandler.closeChannel(channel);
+
+			channel = null;
+		}
+
+		@Override
+		protected ThreadProcessResult threadInitialize() {
+			return ThreadProcessResult.NoErrors;
+		}
+
+		@Override
+		protected ThreadProcessResult processThread() {
+			return processService();
+		}
+
+		@Override
+		public void updateReceiveBuffer(InetSocketAddress remoteAddress, int receiveBytes) {
+			wakeupProcessThread();
+		}
+
+		@Override
+		public OperationRequest readEvent(
+			SelectionKey key, ChannelProtocol protocol,
+			InetSocketAddress localAddress, InetSocketAddress remoteAddress
+		) {
+			return null;
+		}
+
+		@Override
+		public OperationRequest acceptedEvent(
+			SelectionKey key, ChannelProtocol protocol,
+			InetSocketAddress localAddress, InetSocketAddress remoteAddress
+		) {
+			return null;
+		}
+
+		@Override
+		public OperationRequest connectedEvent(
+			SelectionKey key, ChannelProtocol protocol,
+			InetSocketAddress localAddress, InetSocketAddress remoteAddress
+		) {
+			return null;
+		}
+
+		@Override
+		public void disconnectedEvent(
+			SelectionKey key, ChannelProtocol protocol,
+			InetSocketAddress localAddress, InetSocketAddress remoteAddress
+		) {
+
+		}
+
+		@Override
+		public void errorEvent(
+			SelectionKey key, ChannelProtocol protocol,
+			InetSocketAddress localAddress, InetSocketAddress remoteAddress,
+			Exception ex
+		) {
+
+		}
+
+		@Override
+		public Optional<BufferEntry> getReceivedReadBuffer() {
+			return super.getReceivedReadBuffer();
+		}
+
+		public boolean writeUDPPacket(@NonNull InetSocketAddress dstAddress, @NonNull ByteBuffer buffer) {
+			if(channel == null || !channel.getChannel().isOpen())
+				return false;
+
+			return super.writeUDPPacket(channel.getKey(), dstAddress, buffer);
+		}
+	}
+
+	private static final String logTag = RemoteControlService.class.getSimpleName() + " : ";
 
 	private final UUID systemID;
+	private final ThreadUncaughtExceptionListener exceptionListener;
+	private final SocketIO socketio;
 
-	private SocketIOEntryUDP channel;
+	private final DSTARGateway gateway;
 
-	private DSTARGateway gateway;
+	private RemoteControlServiceThread thread;
 
 	private static InetAddress localhost;
 
@@ -120,27 +245,12 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 	public RemoteControlService(
 		@NonNull final UUID systemID,
 		final ThreadUncaughtExceptionListener exceptionListener,
-		@NonNull final DSTARGateway gateway
+		@NonNull final DSTARGateway gateway,
+		final SocketIO socketio
 	) {
-		this(systemID, exceptionListener, gateway, null);
-
-		setProcessLoopIntervalTimeMillis(1000L);
-	}
-
-	public RemoteControlService(
-		@NonNull final UUID systemID,
-		final ThreadUncaughtExceptionListener exceptionListener,
-		@NonNull DSTARGateway gateway,
-		final SocketIO socketIO
-	) {
-		super(
-			exceptionListener,
-			RemoteControlService.class,
-			socketIO, BufferEntry.class, HostIdentType.RemoteAddressPort
-		);
-
 		this.systemID = systemID;
-
+		this.exceptionListener = exceptionListener;
+		this.socketio = socketio;
 		this.gateway = gateway;
 
 		userEntries = new HashMap<>();
@@ -152,106 +262,59 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 	@Override
 	public boolean start() {
 		if(getPortNumber() <= 1023) {
-			log.warn("Illegal remote control port number = " + getPortNumber() + ", replace default port number = " + portNumberDefault + ".");
+			if(log.isWarnEnabled()) {
+				log.warn(
+					logTag +
+					"Illegal remote control port number = " + getPortNumber() +
+					", replace default port number = " + portNumberDefault + "."
+				);
+			}
+
 			setPortNumber(portNumberDefault);
 		}
 		if(getConnectPassword() == null || "".equals(getConnectPassword())) {
-			log.warn("Illegal remote control password = " + getConnectPassword() + ", replace default password = " + connectPasswordDefault + ".");
+			if(log.isWarnEnabled()) {
+				log.warn(
+					logTag +
+					"Illegal remote control password = " + getConnectPassword() +
+					", replace default password = " + connectPasswordDefault + "."
+				);
+			}
 			setConnectPassword(connectPasswordDefault);
 		}
 
-		if(
-			!super.start(
-				new Runnable() {
-					@Override
-					public void run() {
-						channel =
-							getSocketIO().registUDP(
-								new InetSocketAddress(getPortNumber()),
-								RemoteControlService.this.getHandler(),
-								RemoteControlService.this.getClass().getSimpleName()
-							);
-					}
-				}
-			) ||
-			this.channel == null
-		){
-			this.stop();
+		if(isRunning()){stop();}
 
-			return false;
-		}
+		thread = new RemoteControlServiceThread(
+			exceptionListener,
+			socketio
+		);
 
-		return true;
+		return thread.start();
 	}
 
+	@Override
 	public void stop() {
-		super.stop();
-
-		if(this.channel != null && this.channel.getChannel().isOpen()) {
-			try {
-				this.channel.getChannel().close();
-				this.channel = null;
-			}catch(IOException ex) {}
-		}
+		if(isRunning()){thread.stop();}
+		thread = null;
 	}
 
 	@Override
-	public void updateReceiveBuffer(InetSocketAddress remoteAddress, int receiveBytes) {
-		wakeupProcessThread();
+	public void close() throws Exception {
+		stop();
 	}
 
 	@Override
-	public OperationRequest readEvent(
-		SelectionKey key, ChannelProtocol protocol, InetSocketAddress localAddress, InetSocketAddress remoteAddress
-	) {
-		return null;
+	public boolean isRunning() {
+		return thread != null && thread.isRunning();
 	}
 
 	@Override
-	public OperationRequest acceptedEvent(
-			SelectionKey key, ChannelProtocol protocol,
-			InetSocketAddress localAddress, InetSocketAddress remoteAddress
-	) {
-		return null;
-	}
-
-	@Override
-	public OperationRequest connectedEvent(
-			SelectionKey key, ChannelProtocol protocol,
-			InetSocketAddress localAddress, InetSocketAddress remoteAddress
-	) {
-		return null;
-	}
-
-	@Override
-	public void disconnectedEvent(
-			SelectionKey key, ChannelProtocol protocol,
-			InetSocketAddress localAddress, InetSocketAddress remoteAddress
-	) {
-
-	}
-
-	@Override
-	public void errorEvent(
-			SelectionKey key, ChannelProtocol protocol,
-			InetSocketAddress localAddress, InetSocketAddress remoteAddress, Exception ex
-	) {
-
-	}
-
-	@Override
-	protected void threadFinalize() {
-
-	}
-
-	@Override
-	protected ThreadProcessResult threadInitialize() {
-
-		return ThreadProcessResult.NoErrors;
-	}
-
-	@Override
-	protected ThreadProcessResult processThread() {
+	public ThreadProcessResult processService() {
+		if(
+			!isRunning() ||
+			thread.getThreadId() != Thread.currentThread().getId()
+		) {return ThreadProcessResult.NoErrors;}
 
 		parseNetworkPacket();
 
@@ -260,22 +323,22 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 			for(Iterator<RemoteControlUserEntry> userEntryIt = userEntries.values().iterator(); userEntryIt.hasNext();) {
 				RemoteControlUserEntry userEntry = userEntryIt.next();
 
-				boolean userEntryremove = false;
+				boolean userEntryRemove = false;
 
 				while(!userEntry.getReceiveCommand().isEmpty()) {
 					RemoteControlCommand recvCmd = userEntry.getReceiveCommand().poll();
 
 					if(
-							(
-								!userEntry.getRemoteAddress().equals(localhost) ||
+						(
+							!userEntry.getRemoteAddress().equals(localhost) ||
 								recvCmd.getType() != RemoteControlCommandType.LINKSCR
-							) &&
+						) &&
 							(
 								!userEntry.isLoggedin() &&
-								(
-									recvCmd.getType() != RemoteControlCommandType.LOGIN &&
-									recvCmd.getType() != RemoteControlCommandType.HASH
-								)
+									(
+										recvCmd.getType() != RemoteControlCommandType.LOGIN &&
+											recvCmd.getType() != RemoteControlCommandType.HASH
+									)
 							)
 					) {
 						sendNak(userEntry, "You are not logged in");
@@ -283,65 +346,65 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 					}
 
 					switch(recvCmd.getType()) {
-					case LOGOUT:
-						onReceiveLogout(userEntry, recvCmd);
-						userEntryremove = true;
-						break;
+						case LOGOUT:
+							onReceiveLogout(userEntry, recvCmd);
+							userEntryRemove = true;
+							break;
 
-					case LOGIN:
-						onReceiveLogin(userEntry, recvCmd);
-						break;
+						case LOGIN:
+							onReceiveLogin(userEntry, recvCmd);
+							break;
 
-					case HASH:
-						onReceiveHash(userEntry, recvCmd);
-						break;
+						case HASH:
+							onReceiveHash(userEntry, recvCmd);
+							break;
 
-					case GETCALLSIGNS:
-						onReceiveGetCallsign(userEntry, recvCmd);
-						break;
+						case GETCALLSIGNS:
+							onReceiveGetCallsign(userEntry, recvCmd);
+							break;
 
-					case GETREPEATERS:
-						onReceiveGetRepeater(userEntry, recvCmd);
-						break;
+						case GETREPEATERS:
+							onReceiveGetRepeater(userEntry, recvCmd);
+							break;
 
-					case GETSTARNET:
-						onReceiveGetStarnet(userEntry, recvCmd);
-						break;
+						case GETSTARNET:
+							onReceiveGetStarnet(userEntry, recvCmd);
+							break;
 
-					case LINK:
-						onReceiveLink(userEntry, recvCmd);
-						break;
+						case LINK:
+							onReceiveLink(userEntry, recvCmd);
+							break;
 
-					case UNLINK:
-						onReceiveUnlink(userEntry, recvCmd);
-						break;
+						case UNLINK:
+							onReceiveUnlink(userEntry, recvCmd);
+							break;
 
-					case LINKSCR:
-						onReceiveLinkscr(userEntry, recvCmd);
-						break;
+						case LINKSCR:
+							onReceiveLinkscr(userEntry, recvCmd);
+							break;
 
-					case LOGOFF:
-						onReceiveLogoff(userEntry, recvCmd);
-						break;
+						case LOGOFF:
+							onReceiveLogoff(userEntry, recvCmd);
+							break;
 
-					default:
-						if(log.isDebugEnabled())
-							log.debug("Illegal commad received " + recvCmd.toString());
+						default:
+							if(log.isDebugEnabled())
+								log.debug(logTag + "Illegal commad received " + recvCmd.toString());
 
-						break;
+							break;
 
 					}
 				}
 
 				// clean user entry
 				if(
-					userEntryremove ||
-					(System.currentTimeMillis() > (userEntry.getLastActivityTime() + TimeUnit.MINUTES.toMillis(60)))
+					userEntryRemove ||
+						(System.currentTimeMillis() > (userEntry.getLastActivityTime() + TimeUnit.MINUTES.toMillis(60)))
 				){
 					userEntryIt.remove();
 
 					if(log.isTraceEnabled())
-						log.trace("Remove user entry\n" + userEntry.toString());
+						log.trace(logTag + "Remove user entry\n" + userEntry.toString());
 				}
 			}
 		}finally {
@@ -351,19 +414,17 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		return ThreadProcessResult.NoErrors;
 	}
 
-
 	private void parseNetworkPacket() {
-
 		Optional<BufferEntry> opEntry = null;
-		while((opEntry = getReceivedReadBuffer()).isPresent()) {
+		while((opEntry = thread.getReceivedReadBuffer()).isPresent()) {
 			final BufferEntry bufferEntry = opEntry.get();
 
 			bufferEntry.getLocker().lock();
 			try {
 				if(!bufferEntry.isUpdate()) {continue;}
 
-				String remoteHost =
-						bufferEntry.getRemoteAddress().getAddress().getHostAddress() + ":" + bufferEntry.getRemoteAddress().getPort();
+				final String remoteHost =
+					bufferEntry.getRemoteAddress().getAddress().getHostAddress() + ":" + bufferEntry.getRemoteAddress().getPort();
 
 				RemoteControlUserEntry userEntry = null;
 				userEntriesLock.lock();
@@ -371,21 +432,22 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 					userEntry =  userEntries.get(remoteHost);
 					//ユーザーエントリーがなければ作る
 					if(userEntry == null) {
-						userEntry =new RemoteControlUserEntry(
+						userEntry = new RemoteControlUserEntry(
 								bufferEntry.getRemoteAddress().getAddress(), bufferEntry.getRemoteAddress().getPort());
 
 						userEntry.updateLastActivityTime();
 
 						userEntries.put(remoteHost, userEntry);
 
-						log.trace("Create user entry\n" + userEntry.toString());
+						if(log.isTraceEnabled())
+							log.trace(logTag + "Create user entry\n" + userEntry.toString());
 					}
 				}finally {
 					userEntriesLock.unlock();
 				}
 
 				bufferEntry.setBufferState(
-						BufferState.toREAD(bufferEntry.getBuffer(), bufferEntry.getBufferState())
+					BufferState.toREAD(bufferEntry.getBuffer(), bufferEntry.getBufferState())
 				);
 
 				while(!bufferEntry.getBufferPacketInfo().isEmpty()) {
@@ -419,7 +481,8 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 
 						userEntry.updateLastActivityTime();
 
-						log.trace("Command receive..." + cmdCopy.toString());
+						if(log.isTraceEnabled())
+							log.trace(logTag + "Command receive..." + cmdCopy.toString());
 					}
 				}
 
@@ -436,7 +499,8 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 
 		userEntry.setLoggedin(false);
 
-		log.info("[Remote Control Host Logout] " + userEntry.getRemoteHostAddress());
+		if(log.isInfoEnabled())
+			log.info(logTag + "[Remote Control Host Logout] " + userEntry.getRemoteHostAddress());
 
 		sendAck(userEntry);
 	}
@@ -445,9 +509,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null && command != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.LOGOFF ||
-				!(command instanceof LogoffCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.LOGOFF ||
+			!(command instanceof LogoffCommand)
 		) {return;}
 
 		LogoffCommand cmd = (LogoffCommand) command;
@@ -459,9 +523,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.HASH ||
-				!(command instanceof HashCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.HASH ||
+			!(command instanceof HashCommand)
 		) {return;}
 
 		HashCommand cmd = (HashCommand) command;
@@ -481,14 +545,18 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 
 		if(valid) {
 			userEntry.setLoggedin(true);
-			log.info("[Remote Control Host Login] " + userEntry.getRemoteHostAddress());
+			if(log.isInfoEnabled())
+				log.info(logTag + "[Remote Control Host Login] " + userEntry.getRemoteHostAddress());
+
 			sendAck(userEntry);
 		}else {
 			userEntry.setLoggedin(false);
-			log.warn(
-					"[Remote Control Host Login FAILED] Reason:Invalid password, "  +
+			if(log.isWarnEnabled()) {
+				log.warn(
+					"[Remote Control Host Login FAILED] Reason:Invalid password, " +
 					userEntry.getRemoteHostAddress()
-			);
+					);
+			}
 			sendNak(userEntry, "Invalid password");
 		}
 	}
@@ -503,9 +571,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null && command != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.GETREPEATERS ||
-				!(command instanceof GetRepeaterCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.GETREPEATERS ||
+			!(command instanceof GetRepeaterCommand)
 		) {return;}
 
 		GetRepeaterCommand cmd = (GetRepeaterCommand) command;
@@ -529,9 +597,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.LINK ||
-				!(command instanceof LinkCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.LINK ||
+			!(command instanceof LinkCommand)
 		) {return;}
 
 		LinkCommand cmd = (LinkCommand) command;
@@ -542,12 +610,16 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		boolean unlink = DSTARDefines.EmptyLongCallsign.equals(reflectorCallsign);
 
 		if(!CallSignValidator.isValidRepeaterCallsign(repeaterCallsign)) {
-			log.warn("Illegal repeater callsign " + repeaterCallsign + ", Could not link.");
+			if(log.isWarnEnabled())
+				log.warn(logTag + "Illegal repeater callsign " + repeaterCallsign + ", Could not link.");
+
 			sendNak(userEntry, "Illegal repeater callsign");
 			return;
 		}
 		if(!unlink && !CallSignValidator.isValidReflectorCallsign(reflectorCallsign)) {
-			log.warn("Illegal reflector callsign " + reflectorCallsign + ", Could not link.");
+			if(log.isWarnEnabled())
+				log.warn(logTag + "Illegal reflector callsign " + reflectorCallsign + ", Could not link.");
+
 			sendNak(userEntry, "Illegal reflector callsign");
 			return;
 		}
@@ -562,9 +634,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.LINKSCR ||
-				!(command instanceof LinkScrCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.LINKSCR ||
+			!(command instanceof LinkScrCommand)
 		) {return;}
 
 		LinkScrCommand cmd = (LinkScrCommand) command;
@@ -573,11 +645,15 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		String reflectorCallsign = cmd.getReflectorCallsign();
 
 		if(!CallSignValidator.isValidRepeaterCallsign(repeaterCallsign)) {
-			log.warn("Illegal repeater callsign " + repeaterCallsign + ", Could not link.");
+			if(log.isWarnEnabled())
+				log.warn(logTag + "Illegal repeater callsign " + repeaterCallsign + ", Could not link.");
+
 			return;
 		}
 		if(!CallSignValidator.isValidReflectorCallsign(reflectorCallsign)) {
-			log.warn("Illegal reflector callsign " + reflectorCallsign + ", Could not link.");
+			if(log.isWarnEnabled())
+				log.warn(logTag + "Illegal reflector callsign " + reflectorCallsign + ", Could not link.");
+
 			return;
 		}
 
@@ -588,9 +664,9 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 		assert userEntry != null;
 
 		if(
-				command == null ||
-				command.getType() != RemoteControlCommandType.UNLINK ||
-				!(command instanceof UnlinkCommand)
+			command == null ||
+			command.getType() != RemoteControlCommandType.UNLINK ||
+			!(command instanceof UnlinkCommand)
 		) {return;}
 
 		UnlinkCommand cmd = (UnlinkCommand) command;
@@ -673,18 +749,19 @@ public class RemoteControlService extends SocketIOHandlerWithThread<BufferEntry>
 
 		InetSocketAddress dst = new InetSocketAddress(remoteAddress, remotePort);
 
-
-
 		Optional<byte[]> data = command.assembleCommand();
 		if(data.isPresent()) {
-			byte[] sendbuf = data.get();
+			final byte[] sendbuf = data.get();
 
-			log.trace(
+			if(log.isTraceEnabled()) {
+				log.trace(
+					logTag +
 					"Send " + command.getClass().getSimpleName() + " to " + remoteAddress + ":" + remotePort + ".\n" +
-					sendbuf.length + "bytes [" + FormatUtil.bytesToHex(sendbuf) +"]"
-			);
+					sendbuf.length + "bytes [" + FormatUtil.bytesToHex(sendbuf) + "]"
+				);
+			}
 
-			return super.writeUDPPacket(channel.getKey(), dst, ByteBuffer.wrap(data.get()));
+			return thread.writeUDPPacket(dst, ByteBuffer.wrap(data.get()));
 		}else
 			return false;
 	}

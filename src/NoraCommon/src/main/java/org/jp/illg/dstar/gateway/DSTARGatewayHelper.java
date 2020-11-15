@@ -38,9 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DSTARGatewayHelper {
 
-	private static final Lock instanceLocker = new ReentrantLock();
-	private static DSTARGatewayHelper instance;
-
 	@SuppressWarnings("unused")
 	private final String logTag;
 
@@ -57,7 +54,7 @@ public class DSTARGatewayHelper {
 	private final GatewayHelperProperties properties;
 
 
-	private DSTARGatewayHelper(@NonNull final DSTARGatewayImpl gateway) {
+	public DSTARGatewayHelper(@NonNull final DSTARGatewayImpl gateway) {
 		super();
 
 		logTag = this.getClass().getSimpleName() + "[" + gateway.getGatewayCallsign() + "] : ";
@@ -70,22 +67,6 @@ public class DSTARGatewayHelper {
 		processEntries = new HashMap<Integer, ProcessEntry>();
 
 		properties = new GatewayHelperProperties();
-	}
-
-	public static DSTARGatewayHelper getInstance(final DSTARGatewayImpl gateway) {
-		if(gateway == null){throw new IllegalArgumentException();}
-
-		instanceLocker.lock();
-		try {
-			if (instance != null){
-				instance.setGateway(gateway);
-				return instance;
-			}
-			else
-				return (instance = new DSTARGatewayHelper(gateway));
-		}finally {
-			instanceLocker.unlock();
-		}
 	}
 
 	public void setDisableHeardAtReflector(final boolean disableHeardAtReflector) {

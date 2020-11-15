@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<style name="NoraGatewayTheme" parent="Theme.AppCompat.Light.NoActionBar">
+	</style>
+
+	<style name="NoraGatewayTheme.Default" parent="NoraGatewayTheme">
+		<item name="colorPrimary">@color/indigo_900</item>
+		<item name="colorPrimaryDark">@color/primaryDarkColor</item>
+		<item name="colorAccent">@color/colorAccent</item>
+
+		<item name="android:colorBackground">@color/black</item>
+		<item name="android:textColorPrimary">@color/white</item>
+		<item name="android:textColorSecondary">@color/indigo_500</item>
+
+		<item name="colorButtonNormal">@color/indigo_500</item>
+
+
+		<item name="noraTextColor">@color/primaryTextColor</item>
+		<item name="noraBackgroundColor">@drawable/background_main</item>
+
+		<item name="noraSpinnerItemTextColor">@color/primaryTextColor</item>
+		<item name="noraSpinnerItemBackgroundColor">@color/primaryLightColor</item>
+
+
+		<item name="android:textViewStyle">@style/NoraGatewayTheme.Default.TextViewStyle</item>
+
+		<item name="android:buttonStyle">@style/NoraGatewayTheme.Default.ButtonStyle</item>
+		<item name="android:editTextStyle">@style/NoraGatewayTheme.Default.EditTextStyle</item>
+		<item name="editTextStyle">@style/NoraGatewayTheme.Default.EditTextStyle</item>
+		<item name="android:spinnerStyle">@style/NoraGatewayTheme.Default.SpinnerStyle</item>
+		<item name="android:checkboxStyle">@style/NoraGatewayTheme.Default.CheckBoxStyle</item>
+<!--		<item name="android:alertDialogStyle">@style/NoraGatewayTheme.Default.AlertDialogStyle</item> -->
+		<item name="android:colorForeground">@color/blue_A700</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Light" parent="NoraGatewayTheme">
+		<item name="noraTextColor">@android:color/black</item>
+		<item name="noraBackgroundColor">@android:color/white</item>
+
+		<item name="android:textViewStyle">@style/NoraGatewayTheme.Light.TextViewStyle</item>
+
+		<item name="android:buttonStyle">@style/NoraGatewayTheme.Light.ButtonStyle</item>
+		<item name="android:editTextStyle">@style/NoraGatewayTheme.Light.EditTextStyle</item>
+	</style>
+
+</resources>

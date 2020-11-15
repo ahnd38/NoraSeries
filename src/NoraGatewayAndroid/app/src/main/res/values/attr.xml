@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="NoraGatewayTheme">
+
+        <attr name="noraBackgroundColor" format="reference" />
+        <attr name="noraTextColor" format="color" />
+
+        <attr name="noraButtonTextColor" format="color" />
+        <attr name="noraButtonActivateTextColor" format="color" />
+        <attr name="noraButtonBackgroundColor" format="color" />
+        <attr name="noraButtonActivateBackgroundColor" format="color" />
+
+        <attr name="noraEditTextTextColor" format="color" />
+        <attr name="noraEditTextBackgroundColor" format="color" />
+        <attr name="noraEditTextColorControlActivated" format="color" />
+        <attr name="noraEditTextColorControlNormal" format="color" />
+
+        <attr name="noraSpinnerItemTextColor" format="color" />
+        <attr name="noraSpinnerItemBackgroundColor" format="color" />
+
+    </declare-styleable>
+
+</resources>

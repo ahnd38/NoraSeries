@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:background="?attr/noraBackgroundColor"
+	>
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMPort"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:gravity="center_vertical"
+			android:text="Port:"
+			android:textSize="18sp"
+			android:textColor="?attr/noraTextColor" />
+
+		<Spinner
+			android:id="@+id/spinnerRepeaterConfigModemMMDVMPort"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:layout_toEndOf="@id/textViewRepeaterConfigModemMMDVMPort"
+			android:spinnerMode="dropdown" />
+		<Button
+			android:id="@+id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentEnd="true"
+			android:gravity="center_vertical"
+			android:text="Refresh" />
+
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMAllowDIRECT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMAllowDIRECT"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMAllowDIRECT"
+			android:gravity="center_vertical"
+			android:text="Allow DV Simplex Mode"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMAllowDIRECT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/buttonRepeaterConfigModemMMDVMRefresh"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMDuplex"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMDuplex"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMDuplex"
+			android:gravity="center_vertical"
+			android:text="Duplex"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMDuplex"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMAllowDIRECT"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMRxInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMRxInvert"
+			android:gravity="center_vertical"
+			android:text="RxInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMRxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMDuplex"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMTxInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMTxInvert"
+			android:gravity="center_vertical"
+			android:text="TxInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMTxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMRxInvert"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMPTTInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMPTTInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMPTTInvert"
+			android:gravity="center_vertical"
+			android:text="PTTInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMPTTInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMTxInvert"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxDelay"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMTxDelay"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMTxDelay"
+			android:gravity="center_vertical"
+			android:text="TxDelay"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMTxDelay"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/switchRepeaterConfigModemMMDVMPTTInvert"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRxFrequency"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMRxFrequency"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMRxFrequency"
+			android:gravity="center_vertical"
+			android:text="RxFrequency"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMRxFrequency"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMTxDelay"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRxFrequencyOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMRxFrequencyOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMRxFrequencyOffset"
+			android:gravity="center_vertical"
+			android:text="RxFrequencyOffset"
+			android:textColor="?attr/noraTextColor" />
+
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMRxFrequencyOffset"
+			android:layout_width="100dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMRxFrequency"
+			android:layout_alignParentEnd="true"
+			android:layout_marginTop="10dp"
+			android:ems="10"
+			android:inputType="numberSigned|numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxFrequency"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMTxFrequency"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMTxFrequency"
+			android:gravity="center_vertical"
+			android:text="TxFrequency"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMTxFrequency"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMRxFrequencyOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxFrequencyOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMTxFrequencyOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMTxFrequencyOffset"
+			android:gravity="center_vertical"
+			android:text="TxFrequencyOffset"
+			android:textColor="?attr/noraTextColor" />
+
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMTxFrequencyOffset"
+			android:layout_width="100dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMTxFrequency"
+			android:layout_alignParentEnd="true"
+			android:layout_marginTop="10dp"
+			android:ems="10"
+			android:inputType="numberSigned|numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRxDCOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMRxDCOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMRxDCOffset"
+			android:gravity="center_vertical"
+			android:text="RxDCOffset"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMRxDCOffset"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMTxFrequencyOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxDCOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMTxDCOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMTxDCOffset"
+			android:gravity="center_vertical"
+			android:text="TxDCOffset"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMTxDCOffset"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMRxDCOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRfLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMRfLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMRfLevel"
+			android:gravity="center_vertical"
+			android:text="RfLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMRfLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMTxDCOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMRxLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMRxLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMRxLevel"
+			android:gravity="center_vertical"
+			android:text="RxLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMRxLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMRfLevel"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMTxLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMTxLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMTxLevel"
+			android:gravity="center_vertical"
+			android:text="TxLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMTxLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMRxLevel"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+	</RelativeLayout>
+
+
+
+</ScrollView>

@@ -309,6 +309,10 @@ public abstract class ThreadBase implements Runnable {
 			return false;
 	}
 
+	public long getThreadId() {
+		return isRunning() ? workerThread.getId() : -1;
+	}
+
 	public boolean waitThreadInitialize(long timeoutMillis) {
 		if(
 //			!isRunning() ||

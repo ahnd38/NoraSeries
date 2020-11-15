@@ -40,9 +40,6 @@ public class RoutingServiceManager {
 	private static final Condition allServiceRemoveComplete;
 	private static boolean isAllServiceRemoving;
 
-	private static SocketIO localSocketIO;
-	private static final Lock localSocketIOLocker;
-
 	static {
 		logHeader = RoutingServiceManager.class.getSimpleName() + " : ";
 
@@ -52,8 +49,6 @@ public class RoutingServiceManager {
 		isServiceRemoving = false;
 		allServiceRemoveComplete = servicesLocker.newCondition();
 		isAllServiceRemoving = false;
-
-		localSocketIOLocker = new ReentrantLock();
 	}
 
 	private RoutingServiceManager() {}
@@ -97,25 +92,8 @@ public class RoutingServiceManager {
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull final RoutingServiceProperties routingServiceProperties,
 		@NonNull final ApplicationInformation<?> applicationVersion,
-		@NonNull final EventListener<RoutingServiceEvent> eventListener
-	) {
-		return createService(
-			systemID,
-			gateway, workerExecutor, routingServiceProperties,
-			applicationVersion,
-			eventListener,
-			null
-		);
-	}
-
-	public static RoutingService createService(
-		@NonNull final UUID systemID,
-		@NonNull final DSTARGateway gateway,
-		@NonNull final ExecutorService workerExecutor,
-		@NonNull final RoutingServiceProperties routingServiceProperties,
-		@NonNull final ApplicationInformation<?> applicationVersion,
 		@NonNull final EventListener<RoutingServiceEvent> eventListener,
-		final SocketIO socketIO
+		@NonNull final SocketIO socketIO
 	) {
 		RoutingServiceTypes serviceType =
 			RoutingServiceTypes.getTypeByTypeName(routingServiceProperties.getType());
@@ -141,35 +119,13 @@ public class RoutingServiceManager {
 				return null;
 			}
 
-			SocketIO useSocketIO = null;
-			localSocketIOLocker.lock();
-			try {
-				if(socketIO != null)
-					useSocketIO = socketIO;
-				else if(localSocketIO == null) {
-					localSocketIO = new SocketIO(gateway, workerExecutor);
-
-					if(!localSocketIO.start() || !localSocketIO.waitThreadInitialize(TimeUnit.SECONDS.toMillis(10))) {
-						if(log.isErrorEnabled())
-							log.error(logHeader + "Could not start SocketI/O thread.");
-
-						stopLocalSocketIO();
-
-						return null;
-					}
-
-					useSocketIO = localSocketIO;
-				}
-				else {useSocketIO = localSocketIO;}
-			}finally {localSocketIOLocker.unlock();}
-
 			final RoutingService routingService =
 				RoutingServiceFactory.createRoutingService(
 					systemID,
 					gateway, workerExecutor, serviceType,
 					applicationVersion,
 					eventListener,
-					useSocketIO
+					socketIO
 				);
 
 			if(routingService == null) {
@@ -309,16 +265,6 @@ public class RoutingServiceManager {
 
 	public static void finalizeSystem(final @NonNull UUID systemID) {
 		removeServices(systemID, true);
-
-		boolean isNeedStopLocalSocketIO = false;
-		servicesLocker.lock();
-		try {
-			isNeedStopLocalSocketIO = !systemServices.isEmpty();
-		}finally {
-			servicesLocker.unlock();
-		}
-
-		if(isNeedStopLocalSocketIO) {stopLocalSocketIO();}
 	}
 
 	public static void finalizeManager() {
@@ -331,8 +277,6 @@ public class RoutingServiceManager {
 		}finally {
 			servicesLocker.unlock();
 		}
-
-		stopLocalSocketIO();
 	}
 
 	/**
@@ -402,22 +346,5 @@ public class RoutingServiceManager {
 		final char repeaterModule = repeaterCallsign.charAt(DSTARDefines.CallsignFullLength - 1);
 
 		return !service.getServiceType().getModuleBlacklist().contains(String.valueOf(repeaterModule));
-	}
-
-	private static void stopLocalSocketIO() {
-		servicesLocker.lock();
-		try {
-			localSocketIOLocker.lock();
-			try {
-				if(localSocketIO != null) {
-					synchronized(localSocketIO) {
-						if(localSocketIO.isRunning()) {localSocketIO.stop();}
-					}
-				}
-
-				localSocketIO = null;
-
-			}finally {localSocketIOLocker.unlock();}
-		}finally {servicesLocker.unlock();}
 	}
 }

@@ -29,6 +29,12 @@
 			<version>0.0.1</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.jp.illg.nora</groupId>
+			<artifactId>NoraGatewayCommon</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>

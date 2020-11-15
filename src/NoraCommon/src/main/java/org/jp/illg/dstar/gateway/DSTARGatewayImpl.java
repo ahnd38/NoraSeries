@@ -73,6 +73,7 @@ import org.jp.illg.util.SystemUtil;
 import org.jp.illg.util.Timer;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.io.FileSource;
+import org.jp.illg.util.socketio.SocketIO;
 import org.jp.illg.util.thread.Callback;
 import org.jp.illg.util.thread.RunnableTask;
 import org.jp.illg.util.thread.ThreadBase;
@@ -105,13 +106,13 @@ public class DSTARGatewayImpl extends ThreadBase
 
 	private static final String logHeader = DSTARGatewayImpl.class.getSimpleName() + " : ";
 
-	protected static final Lock gatewayLock = new ReentrantLock();
-	private static DSTARGateway gateway;
-
 	private String gatewayCallsign;
 
 	@Getter
 	private final ExecutorService workerExecutor;
+
+	@Getter
+	private final SocketIO socketIO;
 
 	@Getter
 	private final UUID systemID;
@@ -209,6 +210,8 @@ public class DSTARGatewayImpl extends ThreadBase
 
 	private final TaskQueue<DSTARPacket, Boolean> reflectorWriteQueue;
 
+	private final DSTARGatewayHelper helper;
+
 	@Getter
 	private final EventListener<ReflectorCommunicationServiceEvent> reflectorEventListener =
 		new EventListener<ReflectorCommunicationServiceEvent>() {
@@ -231,7 +234,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		new EventListener<DStarRepeaterEvent>() {
 			@Override
 			public void event(DStarRepeaterEvent event, Object attachment) {
-				DSTARGatewayHelper.getInstance(DSTARGatewayImpl.this).processInputPacketFromRepeaters();
+				helper.processInputPacketFromRepeaters();
 			}
 		};
 
@@ -257,6 +260,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		final Class<?> gatewayClass,
 		final String gatewayCallsign,
 		@NonNull final ExecutorService workerExecutor,
+		final SocketIO socketio,
 		final ApplicationInformation<?> applicationVersion,
 		@NonNull final ReflectorNameService reflectorNameService,
 		@NonNull final RepeaterNameService repeaterNameService
@@ -271,19 +275,10 @@ public class DSTARGatewayImpl extends ThreadBase
 		else
 			throw new IllegalArgumentException("DO NOT USE JARL REPEATER CALLSIGN!!!");
 
-		gatewayLock.lock();
-		try {
-			if (gateway == null)
-				gateway = this;
-			else
-				throw new IllegalStateException();
-		} finally {
-			gatewayLock.unlock();
-		}
-
 		setProcessLoopIntervalTime(60, TimeUnit.MILLISECONDS);
 
 		this.workerExecutor = workerExecutor;
+		this.socketIO = socketio;
 
 		reflectorNameService.setOnReflectorHostChangeEventListener(onReflectorHostChangeEventListener);
 		this.reflectorNameService = reflectorNameService;
@@ -316,8 +311,12 @@ public class DSTARGatewayImpl extends ThreadBase
 
 		processState = GatewayProcessStates.Initialize;
 
-		g2CommunicationService = new G123CommunicationService(this, workerExecutor, this);
-		remoteControlService = new RemoteControlService(getSystemID(), this, this);
+		g2CommunicationService = new G123CommunicationService(
+			this, workerExecutor, this, this.socketIO
+		);
+		remoteControlService = new RemoteControlService(
+			getSystemID(), this, this, this.socketIO
+		);
 		reflectorLinkManager = new ReflectorLinkManagerImpl(
 			getSystemID(), this, workerExecutor, reflectorNameService
 		);
@@ -330,6 +329,8 @@ public class DSTARGatewayImpl extends ThreadBase
 
 		reflectorWriteQueue = new TaskQueue<>(workerExecutor);
 
+		helper = new DSTARGatewayHelper(this);
+
 		setDisableWakeupAnnounce(disableWakeupAnnounceDefault);
 	}
 
@@ -338,6 +339,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final String gatewayCallsign,
 		@NonNull final ExecutorService workerExecutor,
+		final SocketIO socketio,
 		@NonNull ApplicationInformation<?> applicationVersion,
 		@NonNull final ReflectorNameService reflectorNameService,
 		@NonNull final RepeaterNameService repeaterNameService
@@ -348,6 +350,7 @@ public class DSTARGatewayImpl extends ThreadBase
 			DSTARGatewayImpl.class,
 			gatewayCallsign,
 			workerExecutor,
+			socketio,
 			applicationVersion,
 			reflectorNameService,
 			repeaterNameService
@@ -433,7 +436,6 @@ public class DSTARGatewayImpl extends ThreadBase
 
 		reflectorLinkManager.setProperties(properties.getReflectorLinkManager());
 
-		final DSTARGatewayHelper helper = DSTARGatewayHelper.getInstance(this);
 		helper.setDisableHeardAtReflector(properties.isDisableHeardAtReflector());
 		helper.setAutoReplaceCQFromReflectorLinkCommand(properties.isAutoReplaceCQFromReflectorLinkCommand());
 
@@ -441,7 +443,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		if (chara == null || chara == VoiceCharactors.Unknown) {
 			chara = VoiceCharactors.KizunaAkari;
 		}
-		DSTARGatewayHelper.getInstance(this).setAnnounceCharactor(chara);
+		helper.setAnnounceCharactor(chara);
 
 		setDisableWakeupAnnounce(properties.isDisableWakeupAnnounce());
 
@@ -469,7 +471,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		if (getWebRemoteControlService() != null) {
 			if (!getWebRemoteControlService().initializeGatewayHandler(this)) {
 				if (log.isErrorEnabled())
-					log.error(logHeader + "Failed web remote control service(gateway).");
+					log.error(logHeader + "Failed to initialize web remote control service(gateway).");
 
 				return false;
 			}
@@ -511,7 +513,6 @@ public class DSTARGatewayImpl extends ThreadBase
 
 	@Override
 	protected ThreadProcessResult threadInitialize() {
-
 		return ThreadProcessResult.NoErrors;
 	}
 
@@ -825,11 +826,6 @@ public class DSTARGatewayImpl extends ThreadBase
 			return;
 		}
 
-		final DSTARGatewayHelper helper = DSTARGatewayHelper.getInstance(this);
-		if (helper == null) {
-			return;
-		}
-
 		helper.notifyLinkReflector(repeaterCallsign, reflectorCallsign);
 	}
 
@@ -840,11 +836,6 @@ public class DSTARGatewayImpl extends ThreadBase
 			return;
 		}
 
-		final DSTARGatewayHelper helper = DSTARGatewayHelper.getInstance(this);
-		if (helper == null) {
-			return;
-		}
-
 		helper.notifyUnlinkReflector(repeaterCallsign, reflectorCallsign);
 	}
 
@@ -852,11 +843,6 @@ public class DSTARGatewayImpl extends ThreadBase
 	public void notifyLinkFailedReflector(
 		String repeaterCallsign, String reflectorCallsign, ReflectorHostInfo reflectorHostInfo) {
 		if (repeaterCallsign == null || reflectorCallsign == null) {
-			return;
-		}
-
-		final DSTARGatewayHelper helper = DSTARGatewayHelper.getInstance(this);
-		if (helper == null) {
 			return;
 		}
 
@@ -877,16 +863,12 @@ public class DSTARGatewayImpl extends ThreadBase
 
 	@Override
 	public List<String> getRouterStatus() {
-		final DSTARGatewayHelper repeaterHandler = DSTARGatewayHelper.getInstance(this);
-
-		return repeaterHandler.getRouterStatus();
+		return helper.getRouterStatus();
 	}
 
 	@Override
 	public GatewayStatusReport getGatewayStatusReport() {
-		final DSTARGatewayHelper repeaterHandler = DSTARGatewayHelper.getInstance(this);
-
-		return repeaterHandler.getGatewayStatusReport();
+		return helper.getGatewayStatusReport();
 	}
 
 	@Override
@@ -952,7 +934,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 	@Override
 	public DSTARGateway getGateway() {
-		return getGatewayInt();
+		return this;
 	}
 
 	@Override
@@ -1257,23 +1239,7 @@ public class DSTARGatewayImpl extends ThreadBase
 	 */
 	@Override
 	public boolean isDataTransferring() {
-		final DSTARGatewayHelper helper = DSTARGatewayHelper.getInstance(this);
-		if (helper == null) {return false;}
-
 		return helper.isDataTransferring();
-	}
-
-	protected static DSTARGateway getGatewayInt() {
-		return gateway;
-	}
-
-	protected static void removeGatewayInt() {
-		gatewayLock.lock();
-		try {
-			gateway = null;
-		} finally {
-			gatewayLock.unlock();
-		}
 	}
 
 	protected boolean removeRoutingServiceAll() {
@@ -1365,8 +1331,7 @@ public class DSTARGatewayImpl extends ThreadBase
 		if (startSuccess) {
 			this.processState = GatewayProcessStates.Processing;
 
-			if (!isDisableWakeupAnnounce())
-				DSTARGatewayHelper.getInstance(this).announceWakeup();
+			if (!isDisableWakeupAnnounce()) {helper.announceWakeup();}
 		} else {
 			return super.threadFatalError("Gateway startup process failed.", null);
 		}
@@ -1383,7 +1348,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 		processG2();
 
-		DSTARGatewayHelper.getInstance(this).processInputPacketFromRepeaters();
+		helper.processInputPacketFromRepeaters();
 
 		processReflectors();
 
@@ -1391,7 +1356,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 		reflectorLinkManager.processReflectorLinkManagement();
 
-		DSTARGatewayHelper.getInstance(this).processHelper();
+		helper.processHelper();
 
 		return ThreadProcessResult.NoErrors;
 	}
@@ -1401,7 +1366,8 @@ public class DSTARGatewayImpl extends ThreadBase
 			getSystemID(),
 			this, getWorkerExecutor(), routingServiceProperties,
 			applicationVersion,
-			onRoutingServiceEventHandler
+			onRoutingServiceEventHandler,
+			getSocketIO()
 		) != null;
 	}
 
@@ -1411,6 +1377,7 @@ public class DSTARGatewayImpl extends ThreadBase
 			getSystemID(),
 			this, reflectorProperties.getType(), reflectorProperties,
 			getWorkerExecutor(),
+			getSocketIO(),
 			getReflectorLinkManager(),
 			reflectorEventListener,
 			getApplicationName() + "@" + applicationVersion.getRunningOperatingSystem(),
@@ -1489,8 +1456,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 					if (positionUpdateInfo != null) {
 						if (task.getRequestSource() == QueryRequestSource.Repeater) {
-							DSTARGatewayHelper.getInstance(this)
-								.completeHeard(task.getTaskID(), positionUpdateInfo.getRoutingResult());
+							helper.completeHeard(task.getTaskID(), positionUpdateInfo.getRoutingResult());
 						} else if (task.getRequestSource() == QueryRequestSource.Callback) {
 							task.getCallback().setAttachData(null);
 
@@ -1506,8 +1472,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 					if (repeaterRoutingInfo != null) {
 						if (task.getRequestSource() == QueryRequestSource.Repeater) {
-							DSTARGatewayHelper.getInstance(this)
-								.completeResolveQueryRepeater(task.getTaskID(), repeaterRoutingInfo);
+							helper.completeResolveQueryRepeater(task.getTaskID(), repeaterRoutingInfo);
 						} else if (task.getRequestSource() == QueryRequestSource.Callback) {
 							task.getCallback().setAttachData(repeaterRoutingInfo);
 
@@ -1523,8 +1488,7 @@ public class DSTARGatewayImpl extends ThreadBase
 
 					if (userRoutingInfo != null) {
 						if (task.getRequestSource() == QueryRequestSource.Repeater) {
-							DSTARGatewayHelper.getInstance(this)
-								.completeResolveQueryUser(task.getTaskID(), userRoutingInfo);
+							helper.completeResolveQueryUser(task.getTaskID(), userRoutingInfo);
 						} else if (task.getRequestSource() == QueryRequestSource.Callback) {
 							task.getCallback().setAttachData(userRoutingInfo);
 
@@ -1554,13 +1518,11 @@ public class DSTARGatewayImpl extends ThreadBase
 	private void processG2() {
 		DSTARPacket packet = null;
 		while ((packet = this.g2CommunicationService.readPacket()) != null) {
-			DSTARGatewayHelper.getInstance(this).processInputPacketFromG123(packet);
+			helper.processInputPacketFromG123(packet);
 		}
 	}
 
 	private void processReflectors() {
-		final DSTARGatewayHelper repeaterHandler = DSTARGatewayHelper.getInstance(this);
-
 		final List<ReflectorCommunicationService> services =
 			ReflectorCommunicationServiceManager.getServices(getSystemID());
 
@@ -1576,7 +1538,7 @@ public class DSTARGatewayImpl extends ThreadBase
 							packet.getRFHeader().setRepeater2Callsign(repeater.getRepeaterCallsign().toCharArray());
 						}
 
-						repeaterHandler.processInputPacketFromReflector(packet);
+						helper.processInputPacketFromReflector(packet);
 					}
 				}
 			}
@@ -1584,9 +1546,7 @@ public class DSTARGatewayImpl extends ThreadBase
 	}
 
 	private void processAnnounce() {
-		final DSTARGatewayHelper repeaterHandler = DSTARGatewayHelper.getInstance(this);
-
-		repeaterHandler.processAnnounce();
+		helper.processAnnounce();
 	}
 
 	private UUID findUser(

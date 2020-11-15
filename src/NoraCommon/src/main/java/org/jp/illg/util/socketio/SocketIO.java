@@ -3,6 +3,7 @@ package org.jp.illg.util.socketio;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.StandardSocketOptions;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
@@ -50,7 +51,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SocketIO extends ThreadBase implements AutoCloseable{
+public class SocketIO implements AutoCloseable{
 
 	public interface SocketIOProcessingHandlerInterface{
 		public OperationRequest socketIOReadEvent(SocketIOEntry<? extends SelectableChannel> entry);
@@ -110,7 +111,83 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 		public String description;
 	}
 
+	private class SocketIOThread extends ThreadBase {
+
+		private SocketIOThread(
+			final ThreadUncaughtExceptionListener exceptionListener
+		){
+			super(
+				exceptionListener,
+				SocketIO.class.getSimpleName(),
+				-1
+			);
+		}
+
+		@Override
+		public boolean start() {
+			if(isRunning()){
+				if(log.isDebugEnabled()) {log.debug(logHeader + "Already running.");}
+
+				return true;
+			}
+
+			if(!super.start()) {return false;}
+
+			return true;
+		}
+
+		@Override
+		public boolean isRunning() {
+			return super.isRunning() &&
+				selector != null && selector.isOpen();
+		}
+
+		@Override
+		public void stop() {
+			super.stop();
+		}
+
+		@Override
+		protected ThreadProcessResult threadInitialize(){
+			try {
+				selector = Selector.open();
+			}catch(IOException ex) {
+				if(log.isErrorEnabled())
+					log.error(logHeader + "Could not open selector.",ex);
+
+				return super.threadFatalError("", ex);
+			}
+
+			return ThreadProcessResult.NoErrors;
+		}
+
+		@Override
+		protected void threadFinalize() {
+			//全てのチャンネルをクローズ
+			closeAllChannelRegistrationQueue();
+
+			try {
+				if(selector != null && selector.isOpen()) {selector.close();}
+			}catch(IOException ex) {
+				if(log.isDebugEnabled())
+					log.debug(logHeader + "Error occurred at selector close()",ex);
+			}
+		}
+
+		@Override
+		public ThreadProcessResult process() {
+			return SocketIO.this.process();
+		}
+
+		@Override
+		public ThreadProcessResult threadFatalError(String message, Exception exception) {
+			return super.threadFatalError(message, exception);
+		}
+	}
+
 	private final Lock locker;
+
+	private final ThreadUncaughtExceptionListener exceptionListener;
 
 	private Selector selector;
 
@@ -124,6 +201,10 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 	private final List<KeyEntry> keyList;
 	private final Timer keyListOutputPeriodKeeper;
 
+	private final String description;
+
+	private SocketIOThread thread;
+
 	private static final String logHeader;
 
 	@Getter(AccessLevel.PROTECTED)
@@ -134,12 +215,15 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 	}
 
 	public SocketIO(
-		ThreadUncaughtExceptionListener exceptionListener,
-		@NonNull ExecutorService workerExecutor
+		final ThreadUncaughtExceptionListener exceptionListener,
+		@NonNull final ExecutorService workerExecutor,
+		final String description
 	) {
-		super(exceptionListener, SocketIO.class.getSimpleName(), -1);
+		super();
 
+		this.exceptionListener = exceptionListener;
 		this.workerExecutor = workerExecutor;
+		this.description = description != null ? description : "";
 
 		channelRegistrationQueue = new LinkedList<ChannelRegistrationEntry>();
 		taskQueue = new HashMap<>(10);
@@ -155,65 +239,48 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 		keyListOutputPeriodKeeper.updateTimestamp();
 	}
 
-	@Override
+	public SocketIO(
+		final ThreadUncaughtExceptionListener exceptionListener,
+		@NonNull final ExecutorService workerExecutor
+	){
+		this(exceptionListener, workerExecutor, "None");
+	}
+
 	public boolean start() {
 		if(isRunning()){
 			if(log.isDebugEnabled()) {log.debug(logHeader + "Already running.");}
 
-			return true;
+			return false;
 		}
 
-		if(!super.start()) {return false;}
+		thread = new SocketIOThread(exceptionListener);
+
+		if(!thread.start()){
+			stop();
+
+			return false;
+		}
 
 		return true;
 	}
 
-	@Override
 	public boolean isRunning() {
-		if(
-			super.isRunning() &&
-			selector != null && selector.isOpen()
-		)
-			return true;
-		else
-			return false;
+		return thread != null && thread.isRunning();
 	}
 
-	@Override
-	public void stop() {
-		super.stop();
+	public void stop(){
+		if(thread != null){thread.stop();}
+
+		thread = null;
+	}
+
+	public boolean waitThreadInitialize(final long timeoutMillis) {
+		return thread != null && thread.waitThreadInitialize(timeoutMillis);
 	}
 
 	@Override
 	public void close() {
 		stop();
-	}
-
-	@Override
-	protected ThreadProcessResult threadInitialize(){
-		try {
-			selector = Selector.open();
-		}catch(IOException ex) {
-			if(log.isErrorEnabled())
-				log.error(logHeader + "Could not open selector.",ex);
-
-			return super.threadFatalError("", ex);
-		}
-
-		return ThreadProcessResult.NoErrors;
-	}
-
-	@Override
-	protected void threadFinalize() {
-		//全てのチャンネルをクローズ
-		closeAllChannelRegistrationQueue();
-
-		try {
-			if(selector != null && selector.isOpen()) {selector.close();}
-		}catch(IOException ex) {
-			if(log.isDebugEnabled())
-				log.debug(logHeader + "Error occurred at selector close()",ex);
-		}
 	}
 
 	@SuppressLint("NewAPI")
@@ -353,7 +420,21 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 		return interestOps(key, ops, null);
 	}
 
-	public ThreadProcessResult process() {
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Description=");
+		sb.append(description);
+
+		sb.append("/");
+
+		sb.append("KeyList=\n");
+		sb.append(dumpKeyList());
+
+		return sb.toString();
+	}
+
+	private ThreadProcessResult process() {
 
 		ThreadProcessResult result;
 
@@ -482,7 +563,7 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 			if(log.isErrorEnabled())
 				log.error(logHeader + "Could not select() selector.",ex);
 
-			return super.threadFatalError("", ex);
+			return thread.threadFatalError("", ex);
 		}
 
 		final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -902,7 +983,7 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 					operationRequest.processRequests(key);
 				}finally {locker.unlock();}
 
-				if(super.getWorkerThread() != Thread.currentThread()) {
+				if(thread.getThreadId() != Thread.currentThread().getId()) {
 					selector.wakeup();
 
 					if(log.isTraceEnabled()) { log.trace(logHeader + "Selector wakeup.");}
@@ -936,95 +1017,97 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 		if(keyListOutputPeriodKeeper.isTimeout(5, TimeUnit.MINUTES)) {
 			keyListOutputPeriodKeeper.updateTimestamp();
 
-			if(log.isDebugEnabled()) {
-				StringBuilder sb = new StringBuilder(logHeader);
-				sb.append("Output active key list...\n");
-
-				final String indent = "    ";
-
-				sb.append(indent);
-				sb.append("=== Active key list ===\n");
-				for(Iterator<KeyEntry> it = keyList.iterator(); it.hasNext();) {
-					final KeyEntry keyEntry = it.next();
-					final SelectionKey key = keyEntry.key.get();
-
-					if(key == null) {
-						it.remove();
-
-						continue;
-					}
-
-					final boolean validKey = key.isValid();
-
-					int ops = 0;
-					if(!validKey) {
-						it.remove();
-					}
-					else {
-						try {
-							ops = key.interestOps();
-						}catch(final CancelledKeyException ex) {
-							if(log.isWarnEnabled())
-								log.warn(logHeader + "Key is cancelled.", ex);
-
-							getEntry(key)
-							.ifPresent(new Consumer<SocketIOEntry<? extends SelectableChannel>>() {
-								@Override
-								public void accept(SocketIOEntry<? extends SelectableChannel> entry) {
-									entry.getHandler().socketIOErrorEvent(entry, ex);
-								}
-							});
-						}
-					}
-
-					sb.append(indent);
-
-					if(!validKey) {sb.append("[REMOVE]");}
-
-					@SuppressWarnings("unchecked")
-					final SocketIOEntry<? extends SelectableChannel> entry =
-						(SocketIOEntry<? extends SelectableChannel>)key.attachment();
-
-					sb.append("Type:");
-					sb.append(entry.getChannelType());
-					sb.append("/");
-					sb.append("LocalAddress:");
-					sb.append(entry.getLocalAddress());
-					sb.append("/");
-					sb.append("RemoteAddress:");
-					if(
-						entry.getChannelType() == ChannelType.TCPClient ||
-						entry.getChannelType() == ChannelType.TCPServerClient
-					) {
-						sb.append(entry.getRemoteAddress());
-					}
-					else {
-						sb.append("-");
-					}
-					sb.append("/");
-					sb.append(String.format("interestOps=0x%08X", ops));
-					sb.append("/");
-					sb.append("A:");
-					sb.append((ops & SelectionKey.OP_ACCEPT) != 0 ? "1" : "0");
-					sb.append("/");
-					sb.append("C:");
-					sb.append((ops & SelectionKey.OP_CONNECT) != 0 ? "1" : "0");
-					sb.append("/");
-					sb.append("R:");
-					sb.append((ops & SelectionKey.OP_READ) != 0 ? "1" : "0");
-					sb.append("/");
-					sb.append("W:");
-					sb.append((ops & SelectionKey.OP_WRITE) != 0 ? "1" : "0");
-					sb.append("/");
-					sb.append("Description:");
-					sb.append(keyEntry.description);
-
-					if(it.hasNext()) {sb.append("\n");}
-				}
-
-				log.debug(sb.toString());
-			}
+			if(log.isDebugEnabled())
+				log.debug("Output active key list...\n" + dumpKeyList());
 		}
+	}
+
+	private String dumpKeyList() {
+		final StringBuilder sb = new StringBuilder(logHeader);
+
+		final String indent = "    ";
+
+		sb.append(indent);
+		sb.append("=== Active key list ===\n");
+		for(Iterator<KeyEntry> it = keyList.iterator(); it.hasNext();) {
+			final KeyEntry keyEntry = it.next();
+			final SelectionKey key = keyEntry.key.get();
+
+			if(key == null) {
+				it.remove();
+
+				continue;
+			}
+
+			final boolean validKey = key.isValid();
+
+			int ops = 0;
+			if(!validKey) {
+				it.remove();
+			}
+			else {
+				try {
+					ops = key.interestOps();
+				}catch(final CancelledKeyException ex) {
+					if(log.isWarnEnabled())
+						log.warn(logHeader + "Key is cancelled.", ex);
+
+					getEntry(key)
+						.ifPresent(new Consumer<SocketIOEntry<? extends SelectableChannel>>() {
+							@Override
+							public void accept(SocketIOEntry<? extends SelectableChannel> entry) {
+								entry.getHandler().socketIOErrorEvent(entry, ex);
+							}
+						});
+				}
+			}
+
+			sb.append(indent);
+
+			if(!validKey) {sb.append("[REMOVE]");}
+
+			@SuppressWarnings("unchecked")
+			final SocketIOEntry<? extends SelectableChannel> entry =
+				(SocketIOEntry<? extends SelectableChannel>)key.attachment();
+
+			sb.append("Type:");
+			sb.append(entry.getChannelType());
+			sb.append("/");
+			sb.append("LocalAddress:");
+			sb.append(entry.getLocalAddress());
+			sb.append("/");
+			sb.append("RemoteAddress:");
+			if(
+				entry.getChannelType() == ChannelType.TCPClient ||
+					entry.getChannelType() == ChannelType.TCPServerClient
+			) {
+				sb.append(entry.getRemoteAddress());
+			}
+			else {
+				sb.append("-");
+			}
+			sb.append("/");
+			sb.append(String.format("interestOps=0x%08X", ops));
+			sb.append("/");
+			sb.append("A:");
+			sb.append((ops & SelectionKey.OP_ACCEPT) != 0 ? "1" : "0");
+			sb.append("/");
+			sb.append("C:");
+			sb.append((ops & SelectionKey.OP_CONNECT) != 0 ? "1" : "0");
+			sb.append("/");
+			sb.append("R:");
+			sb.append((ops & SelectionKey.OP_READ) != 0 ? "1" : "0");
+			sb.append("/");
+			sb.append("W:");
+			sb.append((ops & SelectionKey.OP_WRITE) != 0 ? "1" : "0");
+			sb.append("/");
+			sb.append("Description:");
+			sb.append(keyEntry.description);
+
+			if(it.hasNext()) {sb.append("\n");}
+		}
+
+		return sb.toString();
 	}
 
 	private boolean processTaskQueue() {
@@ -1103,7 +1186,7 @@ public class SocketIO extends ThreadBase implements AutoCloseable{
 
 	private boolean executeTask(final SelectionKey key, final Runnable task) {
 		final Future<?> r =
-			workerExecutor.submit(new SocketIOTask(key, getExceptionListener()) {
+			workerExecutor.submit(new SocketIOTask(key, exceptionListener) {
 				@Override
 				public void task() {
 					try {

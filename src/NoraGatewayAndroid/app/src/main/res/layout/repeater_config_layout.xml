@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/noraBackgroundColor"
+    android:padding="8dp"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textViewRepeaterConfigRepeaterModule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/buttonRepeaterConfigSave"
+            android:layout_alignBottom="@+id/buttonRepeaterConfigSave"
+            android:gravity="center_vertical"
+            android:text="RepeaterModule:"
+            android:textSize="18sp"
+            android:textColor="?attr/noraTextColor" />
+
+        <Spinner
+            android:id="@+id/spinnerRepeaterModule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+	        android:layout_alignTop="@+id/buttonRepeaterConfigSave"
+	        android:layout_alignBottom="@+id/buttonRepeaterConfigSave"
+            android:layout_toEndOf="@+id/textViewRepeaterConfigRepeaterModule"
+	        android:layout_toStartOf="@+id/buttonRepeaterConfigSave"
+            android:spinnerMode="dropdown" />
+
+	    <Button
+		    android:id="@+id/buttonRepeaterConfigSave"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+
+		    android:layout_alignParentEnd="true"
+		    android:text="Save" />
+
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/darker_gray" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Enable"
+            android:textSize="18sp"
+            android:textColor="?attr/noraTextColor" />
+
+        <Switch
+            android:id="@+id/switchRepeaterModuleEnabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textViewRepeaterConfigRepeaterType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/spinnerRepeaterType"
+            android:layout_alignBottom="@+id/spinnerRepeaterType"
+            android:gravity="center_vertical"
+            android:text="Type:"
+            android:textSize="18sp"
+            android:textColor="?attr/noraTextColor" />
+
+        <Spinner
+            android:id="@+id/spinnerRepeaterType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/textViewRepeaterConfigRepeaterType"
+            android:layout_alignParentEnd="true"
+            android:spinnerMode="dropdown" />
+
+    </RelativeLayout>
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/darker_gray" />
+
+	<org.jp.illg.util.android.view.IgnoreSwipeViewPager
+		android:id="@+id/viewPagerRepeaterConfig"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+	/>
+</LinearLayout>

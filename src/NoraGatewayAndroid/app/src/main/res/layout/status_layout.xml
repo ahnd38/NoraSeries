@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/status_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+	android:background="?attr/noraBackgroundColor"
+	>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/buttonStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:text="Start" />
+
+        <Button
+            android:id="@+id/buttonStop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:text="Stop" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:background="@android:color/darker_gray" />
+
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical">
+
+		<TextView
+		android:id="@+id/textViewStatusMyCallLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:text="MY"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusMyCall"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignStart="@id/textViewStatusYourCall"
+			android:layout_toEndOf="@+id/textViewStatusMyCallLabel"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusYourCallLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_below="@+id/textViewStatusMyCallLabel"
+			android:text="YOUR"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusYourCall"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_below="@+id/textViewStatusMyCall"
+			android:layout_toRightOf="@+id/textViewStatusYourCallLabel"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusRPT1CallLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_below="@+id/textViewStatusYourCallLabel"
+			android:text="RPT1"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusRPT1Call"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignStart="@id/textViewStatusYourCall"
+			android:layout_below="@+id/textViewStatusYourCall"
+			android:layout_toRightOf="@+id/textViewStatusRPT1CallLabel"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusRPT2CallLabel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="10dp"
+			android:layout_below="@+id/textViewStatusRPT1CallLabel"
+			android:text="RPT2"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusRPT2Call"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignStart="@id/textViewStatusYourCall"
+			android:layout_below="@+id/textViewStatusRPT1Call"
+			android:layout_toRightOf="@+id/textViewStatusRPT1CallLabel"
+			android:textSize="22sp" />
+
+	</RelativeLayout>
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:layout_marginBottom="5dp"
+		android:layout_marginTop="5dp"
+		android:background="@android:color/darker_gray" />
+
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentStart="true"
+			android:layout_alignParentTop="true"
+			android:layout_marginStart="0dp"
+			android:layout_marginTop="0dp"
+			android:text="Status:"
+			android:textSize="22sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusTransmit"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentTop="true"
+			android:layout_alignParentEnd="true"
+			android:layout_marginEnd="0dp"
+			android:text=""
+			android:textSize="30sp" />
+	</RelativeLayout>
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="none"
+	    android:layout_weight="1"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:background="@android:color/darker_gray" />
+
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal">
+
+		<Switch
+			android:id="@+id/checkboxDisableDisplaySleep"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/textViewStatusDisableDisplaySleep"
+			android:layout_alignBottom="@+id/textViewStatusDisableDisplaySleep"
+			android:gravity="center_vertical"
+			android:textColor="?attr/noraTextColor"
+			android:textSize="16sp" />
+
+		<TextView
+			android:id="@+id/textViewStatusDisableDisplaySleep"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_toEndOf="@+id/checkboxDisableDisplaySleep"
+			android:text="Disable display sleep"
+			/>
+
+		<TextView
+			android:id="@+id/textviewApplicationVersion"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignStart="@id/checkboxDisableDisplaySleep"
+			android:layout_below="@id/checkboxDisableDisplaySleep"
+			android:text="Ver" />
+
+		<Button
+			android:id="@+id/buttonViewLog"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="10dp"
+			android:layout_marginEnd="10dp"
+			android:layout_toRightOf="@+id/textViewStatusDisableDisplaySleep"
+			android:text="View Log" />
+	</RelativeLayout>
+
+
+</LinearLayout>

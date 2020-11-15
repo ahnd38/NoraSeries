@@ -10,6 +10,8 @@
 	<properties>
 		<java.source.version>1.8</java.source.version>
 		<java.target.version>1.8</java.target.version>
+		
+		<project.releasebuild>false</project.releasebuild>
 	</properties>
 	
 	<groupId>org.jp.illg.nora</groupId>
@@ -29,6 +31,7 @@
 			
 			<modules>
 				<module>src/NoraCommon</module>
+				<module>src/NoraGatewayCommon</module>
 				<module>src/NoraVRClient</module>
 			</modules> 
 		</profile>

@@ -33,17 +33,11 @@ public class DSTARRepeaterManager {
 	private static final Map<UUID, Map<String, DSTARRepeater>> dstarRepeaters;
 	private static final Lock dstarRepeatersLocker;
 
-	private static SocketIO localSocketIO;
-	private static final Lock localSocketIOLocker;
-
 	static{
 		logHeader = DSTARRepeaterManager.class.getSimpleName() + " : ";
 
 		dstarRepeaters = new HashMap<>();
 		dstarRepeatersLocker = new ReentrantLock();
-
-		localSocketIO = null;
-		localSocketIOLocker = new ReentrantLock();
 	}
 
 	private DSTARRepeaterManager() {
@@ -71,43 +65,12 @@ public class DSTARRepeaterManager {
 
 	public static DSTARRepeater createRepeater(
 		@NonNull final UUID systemID,
-		@NonNull final ExecutorService workerExecutor,
-		@NonNull final DSTARGateway gateway,
-		final EventListener<DStarRepeaterEvent> eventListener,
-		@NonNull final String repeaterTypeString, @NonNull final String repeaterCallsign,
-		@NonNull final RepeaterProperties repeaterProperties
-	) {
-		return createRepeater(
-			systemID,
-			gateway, eventListener, repeaterTypeString, repeaterCallsign, repeaterProperties,
-			null, null, workerExecutor
-		);
-	}
-
-	public static DSTARRepeater createRepeater(
-		@NonNull final UUID systemID,
-		@NonNull final DSTARGateway gateway,
-		final EventListener<DStarRepeaterEvent> eventListener,
-		@NonNull final String repeaterTypeString, @NonNull final String repeaterCallsign,
-		@NonNull final RepeaterProperties repeaterProperties,
-		final SocketIO socketIO,
-		@NonNull final ExecutorService workerExecutor
-	) {
-		return createRepeater(
-			systemID,
-			gateway, eventListener, repeaterTypeString, repeaterCallsign, repeaterProperties,
-			null, socketIO, workerExecutor
-		);
-	}
-
-	public static DSTARRepeater createRepeater(
-		@NonNull final UUID systemID,
 		@NonNull final DSTARGateway gateway,
 		final EventListener<DStarRepeaterEvent> eventListener,
 		@NonNull final String repeaterTypeString, @NonNull final String repeaterCallsign,
 		@NonNull final RepeaterProperties repeaterProperties,
 		final WebRemoteControlService webRemoteControlService,
-		final SocketIO socketIO,
+		@NonNull final SocketIO socketIO,
 		@NonNull final ExecutorService workerExecutor
 	) {
 
@@ -131,31 +94,10 @@ public class DSTARRepeaterManager {
 
 		dstarRepeatersLocker.lock();
 		try {
-			SocketIO useSocketIO = null;
-			localSocketIOLocker.lock();
-			try {
-				if(socketIO != null)
-					useSocketIO = socketIO;
-				else if(localSocketIO == null) {
-					localSocketIO = new SocketIO(gateway, workerExecutor);
-
-					if(!localSocketIO.start() || !localSocketIO.waitThreadInitialize(TimeUnit.SECONDS.toMillis(2))) {
-						if(log.isErrorEnabled())
-							log.error(logHeader + "Could not start SocketI/O thread.");
-
-						stopLocalSocketIO();
-
-						return null;
-					}
-					useSocketIO = localSocketIO;
-				}
-				else {useSocketIO = localSocketIO;}
-			}finally {localSocketIOLocker.unlock();}
-
-			DSTARRepeater repeater =
+			final DSTARRepeater repeater =
 				DSTARRepeaterFactory.createRepeater(
 					systemID,
-					gateway, repeaterType, repeaterCallsign, workerExecutor, eventListener, useSocketIO
+					gateway, repeaterType, repeaterCallsign, workerExecutor, eventListener, socketIO
 				);
 			if(repeater == null) {
 				if(log.isWarnEnabled())
@@ -165,17 +107,6 @@ public class DSTARRepeaterManager {
 			}
 
 			repeater.setWebRemoteControlService(webRemoteControlService);
-
-			//設定流し込み
-			if(!repeater.setProperties(repeaterProperties)) {
-				if(log.isErrorEnabled()) {
-					log.error(
-						logHeader + "Failed configuration set to repeater " + repeaterCallsign + "."
-					);
-				}
-
-				return null;
-			}
 
 			addRepeater(systemID, repeater);
 
@@ -230,19 +161,23 @@ public class DSTARRepeaterManager {
 		if(!DSTARUtils.isValidCallsignFullLength(repeaterCallsign)) {return false;}
 
 		Map<String, DSTARRepeater> repeaters = getRepeatersInt(systemID);
+		if (repeaters == null) {
+			return false;
+		}
 
 		dstarRepeatersLocker.lock();
 		try {
 			if(!repeaters.containsKey(repeaterCallsign)) {return false;}
 
-			DSTARRepeater repeater = repeaters.remove(repeaterCallsign);
-			if (repeater != null) {
-				if(stopRepeater && repeater.isRunning()){repeater.stop();}
+			final DSTARRepeater repeater = repeaters.remove(repeaterCallsign);
 
-				return true;
-			}
-			else
-				return false;
+			boolean removeSuccess = repeater != null;
+			if(removeSuccess && repeater.isRunning()){repeater.stop();}
+
+			if(repeaters.isEmpty())
+				repeaters.remove(systemID);
+
+			return removeSuccess;
 		}finally {dstarRepeatersLocker.unlock();}
 	}
 
@@ -285,10 +220,12 @@ public class DSTARRepeaterManager {
 		return success;
 	}
 
+	public static void finalizeSystem(@NonNull final UUID systemID) {
+		removeRepeaters(systemID, true);
+	}
+
 	public static void finalizeManager() {
 		removeAllRepeaters();
-
-		stopLocalSocketIO();
 	}
 
 	private static Map<String, DSTARRepeater> getRepeatersInt(final UUID systemID){
@@ -313,22 +250,5 @@ public class DSTARRepeaterManager {
 		}finally {
 			dstarRepeatersLocker.unlock();
 		}
-	}
-
-	private static void stopLocalSocketIO() {
-		dstarRepeatersLocker.lock();
-		try {
-			localSocketIOLocker.lock();
-			try {
-				if(localSocketIO != null) {
-					synchronized(localSocketIO) {
-						if(localSocketIO.isRunning()) {localSocketIO.stop();}
-					}
-				}
-
-				localSocketIO = null;
-
-			}finally {localSocketIOLocker.unlock();}
-		}finally {dstarRepeatersLocker.unlock();}
 	}
 }

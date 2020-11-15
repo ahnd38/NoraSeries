@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NoraGateway>
+	<Gateway callsign="JQ1ZYC G" port="40000">
+		<RoutingServices>
+			<RoutingService type="JapanTrust">
+				<ConfigurationProperties>
+					<ServerAddress>trust.d-star.info</ServerAddress>
+					<ServerPort>30001</ServerPort>
+				</ConfigurationProperties>
+			</RoutingService>
+		</RoutingServices>
+		<Reflectors hostsFile="hosts.txt">
+			<Reflector type="DExtra">
+				<ConfigurationProperties>
+					<MaxReflectors>8</MaxReflectors>
+				</ConfigurationProperties>
+			</Reflector>
+		</Reflectors>
+	</Gateway>
+
+	<Repeaters>
+		<Repeater type="Internal" callsign="JQ1ZYC B">
+			<Modems>
+				<Modem type="AccessPoint">
+					<ConfigurationProperties>
+						<PortName></PortName>
+					</ConfigurationProperties>
+				</Modem>
+			</Modems>
+		</Repeater>
+<!--
+		<Repeater type="ExternalHomebrew" callsign="JQ1ZYC D">
+			<ConfigurationProperties>
+				<RemoteRepeaterAddress>192.168.248.129</RemoteRepeaterAddress>
+				<RemoteRepeaterPort>20014</RemoteRepeaterPort>
+				<LocalPort>20010</LocalPort>
+			</ConfigurationProperties>
+		</Repeater>
+-->
+<!--
+		<Repeater type="VoiceroidAutoReply" callsign="JQ1ZYC E">
+			<ConfigurationProperties>
+				<AutoReplyOperatorCallsign>JJ0TPX E</AutoReplyOperatorCallsign>
+				<AutoReplyVoiceCharactorName>Akari</AutoReplyVoiceCharactorName>
+			</ConfigurationProperties>
+		</Repeater>
+
+		<Repeater type="EchoAutoReply" callsign="JQ1ZYC Z">
+			<ConfigurationProperties>
+				<AutoReplyOperatorCallsign>JJ0TPX F</AutoReplyOperatorCallsign>
+			</ConfigurationProperties>
+		</Repeater>
+-->
+<!--
+		<Repeater type="Internal" callsign="JQ1ZYC C">
+			<Modem type="AccessPoint">
+				<ConfigurationProperties>
+					<PortName>COM8</PortName>
+					<EnableCodeSquelch>false</EnableCodeSquelch>
+					<CodeSquelchCode>00</CodeSquelchCode>
+					<EnablePacketSlip>true</EnablePacketSlip>
+					<PacketSlipLimit>50</PacketSlipLimit>
+				</ConfigurationProperties>
+			</Modem>
+		</Repeater>
+-->
+	</Repeaters>
+</NoraGateway>

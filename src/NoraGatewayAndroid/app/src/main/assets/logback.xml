@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration debug="false">
+
+	<appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="notify" class="org.jp.illg.util.logback.appender.NotifyAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS}, %-6p, %m%n</pattern>
+		</encoder>
+	</appender>
+
+
+	<logger name="org.jp.illg.nora" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.noragateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.gateway" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.routing" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.repeater" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.repeater.modem" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.reflector" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+	<logger name="org.jp.illg.dstar.g2route" level="INFO">
+		<appender-ref ref="notify" />
+	</logger>
+
+
+	<root level="INFO">
+		<appender-ref ref="logcat" />
+	</root>
+
+</configuration>

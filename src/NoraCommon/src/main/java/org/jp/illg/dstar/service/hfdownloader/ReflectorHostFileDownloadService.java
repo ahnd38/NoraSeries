@@ -16,11 +16,13 @@ import org.jp.illg.dstar.model.config.ReflectorHostFileDownloadServiceProperties
 import org.jp.illg.dstar.model.config.ReflectorHostFileDownloadURLEntry;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfo;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfoKey;
+import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.hfdownloader.model.URLEntry;
 import org.jp.illg.dstar.service.reflectorhosts.ReflectorHostsFileReaderWriter;
-import org.jp.illg.dstar.util.DSTARSystemManager;
+import org.jp.illg.dstar.DSTARSystemManager;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.thread.RunnableTask;
+import org.jp.illg.util.thread.ThreadProcessResult;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
 
 import lombok.Getter;
@@ -28,7 +30,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ReflectorHostFileDownloadService {
+public class ReflectorHostFileDownloadService implements Service {
 
 	public static class DownloadHostsData{
 		@Getter
@@ -63,6 +65,7 @@ public class ReflectorHostFileDownloadService {
 
 	private final EventListener<DownloadHostsData> onLoadEventListener;
 
+	private boolean isRunning;
 
 	public ReflectorHostFileDownloadService(
 		@NonNull final UUID systemID,
@@ -83,6 +86,8 @@ public class ReflectorHostFileDownloadService {
 		isEnable = false;
 
 		urlEntries = new ArrayList<>(8);
+
+		isRunning = false;
 	}
 
 
@@ -96,7 +101,7 @@ public class ReflectorHostFileDownloadService {
 			final URLEntry urlEntry = new URLEntry();
 			urlEntry.setEnable(urlProperties.isEnable());
 			final int intervalMinutes = urlProperties.getIntervalMinutes();
-			urlEntry.setIntervalMinutes(intervalMinutes >= 1 ? intervalMinutes : 1);
+			urlEntry.setIntervalMinutes(Math.max(intervalMinutes, 1));
 			urlEntry.setUrl(urlProperties.getUrl());
 
 			// Initial delay(60sec - 300sec)
@@ -113,7 +118,30 @@ public class ReflectorHostFileDownloadService {
 		return true;
 	}
 
-	public void processService() {
+	@Override
+	public boolean start() {
+		isRunning = true;
+
+		return true;
+	}
+
+	@Override
+	public void stop() {
+		isRunning = false;
+	}
+
+	@Override
+	public void close() {
+		stop();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return isRunning;
+	}
+
+	@Override
+	public ThreadProcessResult processService() {
 		if(isEnable) {
 			locker.lock();
 			try {
@@ -123,6 +151,8 @@ public class ReflectorHostFileDownloadService {
 				locker.unlock();
 			}
 		}
+
+		return ThreadProcessResult.NoErrors;
 	}
 
 	private static void processURLEntry(

@@ -143,7 +143,7 @@ public class G123CommunicationService extends SocketIOHandlerWithThread<BufferEn
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
 		final ThreadUncaughtExceptionListener exceptionListener,
-		final SocketIO socketIO
+		@NonNull final SocketIO socketIO
 	) {
 		super(
 			exceptionListener,
@@ -181,14 +181,6 @@ public class G123CommunicationService extends SocketIOHandlerWithThread<BufferEn
 
 		setTrustAddress(defaultTrustAddress);
 		setTrustPort(defaultTrustPort);
-	}
-
-	public G123CommunicationService(
-		@NonNull final DSTARGateway gateway,
-		@NonNull final ExecutorService workerExecutor,
-		final ThreadUncaughtExceptionListener exceptionListener
-	) {
-		this(gateway, workerExecutor, exceptionListener, null);
 	}
 
 	@Override

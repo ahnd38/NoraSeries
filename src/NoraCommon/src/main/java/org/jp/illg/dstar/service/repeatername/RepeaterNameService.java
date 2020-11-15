@@ -15,9 +15,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jp.illg.dstar.model.config.RepeaterListImporterProperties;
 import org.jp.illg.dstar.model.config.RepeaterNameServiceProperties;
 import org.jp.illg.dstar.model.defines.RepeaterListImporterType;
+import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.repeatername.model.RepeaterData;
-import org.jp.illg.dstar.util.DSTARSystemManager;
+import org.jp.illg.dstar.DSTARSystemManager;
 import org.jp.illg.util.Timer;
+import org.jp.illg.util.thread.ThreadProcessResult;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
 import org.jp.illg.util.thread.task.TaskQueue;
 
@@ -27,7 +29,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class RepeaterNameService {
+public class RepeaterNameService implements Service {
 
 	private static final String logTag = RepeaterNameService.class.getSimpleName() + " : ";
 
@@ -46,6 +48,8 @@ public class RepeaterNameService {
 	private final Timer processIntervalTimer;
 
 	private final TaskQueue<RepeaterListImporter, Boolean> importTaskQueue;
+
+	private boolean isRunning;
 
 	private final Consumer<RepeaterListImporter> repeaterListImportTask =
 		new Consumer<RepeaterListImporter>() {
@@ -91,6 +95,8 @@ public class RepeaterNameService {
 		processIntervalTimer = new Timer();
 
 		importTaskQueue = new TaskQueue<>(executorService);
+
+		isRunning = false;
 	}
 
 	public boolean initialize(@NonNull final RepeaterNameServiceProperties properties) {
@@ -151,24 +157,36 @@ public class RepeaterNameService {
 		return true;
 	}
 
-	public String findRepeaterName(@NonNull final String repeaterCallsign) {
-		locker.lock();
-		try {
-			final RepeaterData repeater = repeaters.get(repeaterCallsign);
+	@Override
+	public boolean start() {
+		isRunning = true;
 
-			return repeater != null ? repeater.getName() : "";
-		}finally {
-			locker.unlock();
-		}
+		return true;
 	}
 
-	public void processService() {
+	@Override
+	public void stop() {
+		isRunning = false;
+	}
+
+	@Override
+	public void close() {
+		stop();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return isRunning;
+	}
+
+	@Override
+	public ThreadProcessResult processService() {
 		locker.lock();
 		try {
 			if(
 				!processIntervalTimer.isTimeout(60, TimeUnit.SECONDS) ||
 				!DSTARSystemManager.isIdleSystem(systemID, 3, TimeUnit.MINUTES)
-			) {return;}
+			) {return ThreadProcessResult.NoErrors;}
 
 			processIntervalTimer.updateTimestamp();
 
@@ -177,6 +195,19 @@ public class RepeaterNameService {
 
 				importTaskQueue.addEventQueue(repeaterListImportTask, importer, exceptionListener);
 			}
+		}finally {
+			locker.unlock();
+		}
+
+		return ThreadProcessResult.NoErrors;
+	}
+
+	public String findRepeaterName(@NonNull final String repeaterCallsign) {
+		locker.lock();
+		try {
+			final RepeaterData repeater = repeaters.get(repeaterCallsign);
+
+			return repeater != null ? repeater.getName() : "";
 		}finally {
 			locker.unlock();
 		}

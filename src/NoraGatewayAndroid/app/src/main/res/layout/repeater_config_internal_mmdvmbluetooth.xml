@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	android:background="?attr/noraBackgroundColor"
+	>
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothPort"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:gravity="center_vertical"
+			android:text="Device:"
+			android:textSize="18sp"
+			android:textColor="?attr/noraTextColor" />
+
+		<Spinner
+			android:id="@+id/spinnerRepeaterConfigModemMMDVMBluetoothPort"
+			android:layout_width="200dp"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:layout_alignBottom="@+id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:layout_toEndOf="@id/textViewRepeaterConfigModemMMDVMBluetoothPort"
+			android:spinnerMode="dropdown" />
+		<Button
+			android:id="@+id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentEnd="true"
+			android:gravity="center_vertical"
+			android:text="Refresh" />
+
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothAllowDIRECT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMBluetoothAllowDIRECT"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMBluetoothAllowDIRECT"
+			android:gravity="center_vertical"
+			android:text="Allow DV Simplex Mode"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMBluetoothAllowDIRECT"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/buttonRepeaterConfigModemMMDVMBluetoothRefresh"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothDuplex"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMBluetoothDuplex"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMBluetoothDuplex"
+			android:gravity="center_vertical"
+			android:text="Duplex"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMBluetoothDuplex"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMBluetoothAllowDIRECT"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMBluetoothRxInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMBluetoothRxInvert"
+			android:gravity="center_vertical"
+			android:text="RxInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMBluetoothRxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMBluetoothDuplex"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMBluetoothTxInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMBluetoothTxInvert"
+			android:gravity="center_vertical"
+			android:text="TxInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMBluetoothTxInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMBluetoothRxInvert"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothPTTInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/switchRepeaterConfigModemMMDVMBluetoothPTTInvert"
+			android:layout_alignBottom="@+id/switchRepeaterConfigModemMMDVMBluetoothPTTInvert"
+			android:gravity="center_vertical"
+			android:text="PTTInvert"
+			android:textColor="?attr/noraTextColor" />
+		<Switch
+			android:id="@+id/switchRepeaterConfigModemMMDVMBluetoothPTTInvert"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@id/switchRepeaterConfigModemMMDVMBluetoothTxInvert"
+			android:layout_alignParentEnd="true"
+			android:textColor="?attr/noraTextColor"
+			/>
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxDelay"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDelay"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDelay"
+			android:gravity="center_vertical"
+			android:text="TxDelay"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDelay"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/switchRepeaterConfigModemMMDVMBluetoothPTTInvert"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRxFrequency"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequency"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequency"
+			android:gravity="center_vertical"
+			android:text="RxFrequency"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequency"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDelay"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRxFrequencyOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequencyOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequencyOffset"
+			android:gravity="center_vertical"
+			android:text="RxFrequencyOffset"
+			android:textColor="?attr/noraTextColor" />
+
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequencyOffset"
+			android:layout_width="100dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequency"
+			android:layout_alignParentEnd="true"
+			android:layout_marginTop="10dp"
+			android:ems="10"
+			android:inputType="numberSigned|numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxFrequency"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequency"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequency"
+			android:gravity="center_vertical"
+			android:text="TxFrequency"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequency"
+			android:layout_width="150dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxFrequencyOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxFrequencyOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequencyOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequencyOffset"
+			android:gravity="center_vertical"
+			android:text="TxFrequencyOffset"
+			android:textColor="?attr/noraTextColor" />
+
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequencyOffset"
+			android:layout_width="100dp"
+			android:layout_height="wrap_content"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequency"
+			android:layout_alignParentEnd="true"
+			android:layout_marginTop="10dp"
+			android:ems="10"
+			android:inputType="numberSigned|numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRxDCOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxDCOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxDCOffset"
+			android:gravity="center_vertical"
+			android:text="RxDCOffset"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxDCOffset"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxFrequencyOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxDCOffset"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDCOffset"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDCOffset"
+			android:gravity="center_vertical"
+			android:text="TxDCOffset"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDCOffset"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxDCOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRfLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothRfLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothRfLevel"
+			android:gravity="center_vertical"
+			android:text="RfLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothRfLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxDCOffset"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothRxLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxLevel"
+			android:gravity="center_vertical"
+			android:text="RxLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothRfLevel"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+		<TextView
+			android:id="@+id/textViewRepeaterConfigModemMMDVMBluetoothTxLevel"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignTop="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxLevel"
+			android:layout_alignBottom="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxLevel"
+			android:gravity="center_vertical"
+			android:text="TxLevel"
+			android:textColor="?attr/noraTextColor" />
+		<EditText
+			android:id="@+id/editTextRepeaterConfigModemMMDVMBluetoothTxLevel"
+			android:layout_width="50dp"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="10dp"
+			android:layout_below="@+id/editTextRepeaterConfigModemMMDVMBluetoothRxLevel"
+			android:layout_alignParentEnd="true"
+			android:ems="10"
+			android:inputType="numberDecimal" />
+
+	</RelativeLayout>
+
+
+
+</ScrollView>

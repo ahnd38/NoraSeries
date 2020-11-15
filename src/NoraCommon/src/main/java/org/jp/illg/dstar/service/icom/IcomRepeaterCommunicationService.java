@@ -200,6 +200,11 @@ public class IcomRepeaterCommunicationService extends ThreadBase implements Serv
 	}
 
 	@Override
+	public void close() {
+		stop();
+	}
+
+	@Override
 	protected void threadFinalize() {
 		stop();
 	}
@@ -221,15 +226,6 @@ public class IcomRepeaterCommunicationService extends ThreadBase implements Serv
 	@Override
 	public ThreadProcessResult processService() {
 		return ThreadProcessResult.NoErrors;
-	}
-
-	@Override
-	public boolean initializeService() {
-		return true;
-	}
-
-	@Override
-	public void finalizeService() {
 	}
 
 	public ICOMRepeaterCommunicationServiceProperties getProperties() {

@@ -194,25 +194,6 @@ public class ReflectorCommunicationServiceManager {
 
 	public static ReflectorCommunicationService createService(
 		@NonNull final UUID systemID,
-		@NonNull final DSTARGateway gateway,
-		@NonNull final String reflectorProtocolType,
-		@NonNull final ReflectorProperties reflectorProperties,
-		@NonNull final ExecutorService workerExecutor,
-		@NonNull final ReflectorLinkManager reflectorLinkManager,
-		final EventListener<ReflectorCommunicationServiceEvent> eventListener,
-		final String applicationName, final String applicationVersion
-	) {
-		return createService(
-			systemID,
-			gateway,
-			reflectorProtocolType, reflectorProperties, workerExecutor, null, reflectorLinkManager,
-			eventListener,
-			applicationName, applicationVersion
-		);
-	}
-
-	public static ReflectorCommunicationService createService(
-		@NonNull final UUID systemID,
 		@NonNull DSTARGateway gateway,
 		@NonNull final String reflectorProtocolType,
 		@NonNull final ReflectorProperties reflectorProperties,

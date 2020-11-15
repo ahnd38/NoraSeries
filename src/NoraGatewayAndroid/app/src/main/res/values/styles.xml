@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<style name="NoraGatewayTheme.Default.TextViewStyle" parent="android:Widget.TextView">
+		<item name="android:textColor">@color/primaryTextColor</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Default.ButtonStyle" parent="Base.Widget.AppCompat.Button.Colored">
+		<item name="android:textColor">@color/primaryTextColor</item>
+
+		<item name="android:textSize">16sp</item>
+		<item name="android:paddingStart">20dp</item>
+		<item name="android:paddingEnd">20dp</item>
+		<item name="android:paddingTop">10dp</item>
+		<item name="android:paddingBottom">10dp</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Default.EditTextStyle" parent="android:Widget.EditText">
+		<item name="android:textColor">@color/primaryTextColor</item>
+		<item name="android:background">@drawable/edittext_default</item>
+		<item name="android:padding">5dp</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Spinner" parent="Base.Widget.AppCompat.Spinner.Underlined">
+		<item name="popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Default.SpinnerStyle" parent="NoraGatewayTheme.Spinner">
+		<item name="popupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
+	</style>
+
+	<style name="NoraGatewayTheme.CheckBoxStyle" parent="android:Widget.CompoundButton.CheckBox">
+	</style>
+
+	<style name="NoraGatewayTheme.Default.CheckBoxStyle" parent="NoraGatewayTheme.CheckBoxStyle">
+		<item name="colorControlNormal">@color/secondaryDarkColor</item>
+		<item name="colorControlActivated">@color/secondaryColor</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Default.TabLayoutStyle" parent="Widget.Design.TabLayout">
+		<item name="android:textColor">@color/secondaryDarkColor</item>
+		<item name="tabSelectedTextColor">@color/secondaryColor</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Default.AlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+		<item name="colorAccent">?attr/noraTextColor</item>
+		<item name="android:background">@color/indigo_900</item>
+		<item name="android:textColorPrimary">?attr/noraTextColor</item>
+	</style>
+
+
+	<style name="NoraGatewayTheme.Light.ButtonStyle" parent="android:Widget.Button">
+		<item name="android:textColor">@color/primaryTextColor</item>
+		<item name="android:background">@color/primaryLightColor</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Light.EditTextStyle" parent="android:Widget.EditText">
+		<item name="android:textColor">@color/secondaryTextColor</item>
+		<item name="android:background">@color/secondaryDarkColor</item>
+	</style>
+
+	<style name="NoraGatewayTheme.Light.TextViewStyle" parent="android:Widget.TextView">
+		<item name="android:textColor">@color/secondaryTextColor</item>
+	</style>
+
+</resources>

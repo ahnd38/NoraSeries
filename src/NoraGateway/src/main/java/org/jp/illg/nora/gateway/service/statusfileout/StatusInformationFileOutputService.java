@@ -12,6 +12,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ import org.jp.illg.dstar.reporter.model.RepeaterStatusReport;
 import org.jp.illg.dstar.reporter.model.RoutingServiceStatusReport;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.nora.gateway.reporter.NoraGatewayStatusReporter;
+import org.jp.illg.nora.gateway.reporter.NoraGatewayStatusReporterWinLinux;
 import org.jp.illg.nora.gateway.reporter.model.NoraGatewayStatusReportListener;
 import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.Timer;
@@ -46,11 +48,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StatusInformationFileOutputService
-implements NoraGatewayStatusReportListener, NotifyAppenderListener{
+implements NoraGatewayStatusReportListener, NotifyAppenderListener, AutoCloseable{
 
 	private static final long outputIntervalTimeMillis = 2000;
 
-	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+	private static final DateFormat dateFormat =
+		new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.US);
 
 	private class LogEntry{
 		@Getter
@@ -115,6 +118,11 @@ implements NoraGatewayStatusReportListener, NotifyAppenderListener{
 			NotifyAppender.addListener(this);
 
 		this.reporter.addListener(this);
+	}
+
+	@Override
+	public void close() {
+
 	}
 
 	@Override
