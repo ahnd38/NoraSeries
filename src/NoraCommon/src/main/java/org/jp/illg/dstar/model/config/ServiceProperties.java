@@ -9,8 +9,6 @@ public class ServiceProperties {
 
 	private WebRemoteControlServiceProperties webRemoteControlServiceProperties;
 
-	private ReflectorHostFileDownloadServiceProperties reflectorHostFileDownloadServiceProperties;
-
 	private HelperServiceProperties helperServiceProperties;
 
 	private CrashReportServiceProperties crashReportServiceProperties;
@@ -19,15 +17,14 @@ public class ServiceProperties {
 
 	private RepeaterNameServiceProperties repeaterNameServiceProperties;
 
+	private ReflectorNameServiceProperties reflectorNameServiceProperties;
+
 	public ServiceProperties() {
 		this.statusInformationFileOutputServiceProperties =
 			new StatusInformationFileOutputServiceProperties();
 
 		this.webRemoteControlServiceProperties =
 			new WebRemoteControlServiceProperties();
-
-		this.reflectorHostFileDownloadServiceProperties =
-			new ReflectorHostFileDownloadServiceProperties();
 
 		this.helperServiceProperties = new HelperServiceProperties();
 
@@ -36,6 +33,8 @@ public class ServiceProperties {
 		this.icomRepeaterCommunicationServiceProperties = new ICOMRepeaterCommunicationServiceProperties();
 
 		this.repeaterNameServiceProperties = new RepeaterNameServiceProperties();
+
+		this.reflectorNameServiceProperties = new ReflectorNameServiceProperties();
 	}
 
 }

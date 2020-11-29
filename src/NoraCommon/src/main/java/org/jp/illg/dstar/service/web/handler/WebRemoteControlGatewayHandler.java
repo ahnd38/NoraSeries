@@ -12,7 +12,7 @@ import org.jp.illg.dstar.model.defines.RoutingServiceTypes;
 import org.jp.illg.dstar.reflector.ReflectorCommunicationService;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfo;
 import org.jp.illg.dstar.routing.model.RoutingInfo;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.model.GatewayStatusData;
 import org.jp.illg.util.thread.Callback;

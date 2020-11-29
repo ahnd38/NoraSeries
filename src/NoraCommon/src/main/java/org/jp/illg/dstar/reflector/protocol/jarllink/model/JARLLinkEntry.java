@@ -25,7 +25,19 @@ public class JARLLinkEntry extends ReflectorConnectionEntry<JARLLinkTransmitPack
 
 	@Getter
 	@Setter
-	private JARLLinkInternalState connectionState;
+	private JARLLinkInternalState currentConnectionState;
+
+	@Getter
+	@Setter
+	private JARLLinkInternalState nextConnectionState;
+
+	@Getter
+	@Setter
+	private JARLLinkInternalState previousConnectionState;
+
+	@Getter
+	@Setter
+	private boolean connectionStateChanged;
 
 	@Getter
 	private Timer connectionStateTimeKeeper;
@@ -94,7 +106,11 @@ public class JARLLinkEntry extends ReflectorConnectionEntry<JARLLinkTransmitPack
 			connectionDirection
 		);
 
-		setConnectionState(JARLLinkInternalState.Unknown);
+		currentConnectionState = JARLLinkInternalState.Unknown;
+		nextConnectionState = JARLLinkInternalState.Unknown;
+		previousConnectionState = JARLLinkInternalState.Unknown;
+		connectionStateChanged = false;
+
 		connectionStateTimeKeeper = new Timer();
 
 		setTransmitLongSequence(0);
@@ -141,7 +157,8 @@ public class JARLLinkEntry extends ReflectorConnectionEntry<JARLLinkTransmitPack
 
 		sb.append(indent);
 		sb.append("[State]:");
-		sb.append(getConnectionState().toString());
+		sb.append("Current=");
+		sb.append(getCurrentConnectionState());
 
 		sb.append("\n");
 

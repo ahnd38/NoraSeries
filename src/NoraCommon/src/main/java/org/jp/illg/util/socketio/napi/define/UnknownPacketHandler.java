@@ -3,12 +3,12 @@ package org.jp.illg.util.socketio.napi.define;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-import org.jp.illg.util.object.FunctionTriple;
+import org.jp.illg.util.object.ConsumerTriple;
 
 public interface UnknownPacketHandler
-extends FunctionTriple<ByteBuffer, InetSocketAddress, InetSocketAddress, Boolean>{
+extends ConsumerTriple<ByteBuffer, InetSocketAddress, InetSocketAddress>{
 	@Override
-	Boolean apply(
+	void accept(
 		ByteBuffer buffer,
 		InetSocketAddress remoteAddress,
 		InetSocketAddress localAddress

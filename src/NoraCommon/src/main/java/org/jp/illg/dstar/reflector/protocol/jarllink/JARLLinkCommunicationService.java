@@ -3,7 +3,6 @@ package org.jp.illg.dstar.reflector.protocol.jarllink;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
@@ -13,14 +12,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jp.illg.dstar.DSTARDefines;
@@ -66,10 +63,9 @@ import org.jp.illg.dstar.util.CallSignValidator;
 import org.jp.illg.dstar.util.DSTARCRCCalculator;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.dstar.util.DataSegmentDecoder.DataSegmentDecoderResult;
-import org.jp.illg.dstar.util.NewDataSegmentEncoder;
 import org.jp.illg.dstar.util.dvpacket2.FrameSequenceType;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.ArrayUtil;
-import org.jp.illg.util.BufferState;
 import org.jp.illg.util.FormatUtil;
 import org.jp.illg.util.PropertyUtils;
 import org.jp.illg.util.Timer;
@@ -79,12 +75,15 @@ import org.jp.illg.util.socketio.SocketIO;
 import org.jp.illg.util.socketio.SocketIOEntryUDP;
 import org.jp.illg.util.socketio.model.OperationRequest;
 import org.jp.illg.util.socketio.napi.define.ChannelProtocol;
+import org.jp.illg.util.socketio.napi.define.PacketTracerFunction;
+import org.jp.illg.util.socketio.napi.define.ParserFunction;
+import org.jp.illg.util.socketio.napi.define.UnknownPacketHandler;
 import org.jp.illg.util.socketio.napi.model.BufferEntry;
-import org.jp.illg.util.socketio.napi.model.PacketInfo;
 import org.jp.illg.util.socketio.support.HostIdentType;
 import org.jp.illg.util.thread.ThreadProcessResult;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
 
+import com.annimon.stream.Collectors;
 import com.annimon.stream.ComparatorCompat;
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
@@ -104,6 +103,10 @@ public class JARLLinkCommunicationService
 extends ReflectorCommunicationServiceBase<BufferEntry, JARLLinkEntry>
 implements WebRemoteControlJARLLinkHandler{
 
+	//from dmonitor 1.64
+	private static final String currentAccessKey = "5ebe211107266a57b1af14a7fdcd8480";
+
+
 	@SuppressWarnings("unused")
 	private static final byte FlagGateway = (byte)0x80;
 	private static final byte FlagZoneRepeater = (byte)0x40;
@@ -111,11 +114,27 @@ implements WebRemoteControlJARLLinkHandler{
 	@SuppressWarnings("unused")
 	private static final byte FlagXChange = (byte)0x08;
 
-	private static final String logHeader;
+	private static enum DMModemType{
+		ICOM    ((byte)0x00),
+		DVAP    ((byte)0x01),
+		DVMEGA  ((byte)0x02),
+		NODE    ((byte)0x03),
+		;
 
+		@Getter
+		private final byte value;
+
+		private DMModemType(final byte value) {
+			this.value = value;
+		}
+	}
+
+	private static final String logTag;
+
+	@SuppressWarnings("unused")
 	private static final Pattern keepalivePattern =
 		Pattern.compile(
-			"^[H][P][C][H]" +
+			"^HPCH" +
 			"((?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))" +
 			"([:]([0-9]{1,5})).*"
 		);
@@ -157,7 +176,10 @@ implements WebRemoteControlJARLLinkHandler{
 			setCreatedTimestamp(System.currentTimeMillis());
 		}
 
-		public JARLLinkCachedHeader(int frameID, DSTARPacket headerPacket, InetAddress remoteAddress, int remotePort) {
+		public JARLLinkCachedHeader(
+			final int frameID, final DSTARPacket headerPacket,
+			final InetAddress remoteAddress, final int remotePort
+		) {
 			this();
 			setFrameID(frameID);
 			setHeader(headerPacket);
@@ -170,9 +192,6 @@ implements WebRemoteControlJARLLinkHandler{
 		}
 	}
 
-	private final Map<Integer, JARLLinkCachedHeader> cachedHeaders;
-	private final Lock cachedHeadersLocker = new ReentrantLock();
-
 	private enum ProcessState{
 		Initialize,
 		MainProcess,
@@ -180,28 +199,17 @@ implements WebRemoteControlJARLLinkHandler{
 		;
 	}
 
-	private ProcessState currentState;
-	private ProcessState nextState;
-	private ProcessState callbackState;
-
-	private final Timer stateTimeKeeper;
-
-	private final JARLLinkRepeaterHostnameService hostnameService;
-
-	private final byte[] keepaliveAppInformation;
-
-	private final Queue<JARLLinkPacket> receivePackets;
-
-	private final Queue<UUID> entryRemoveRequestQueue;
-	private final Lock entryRemoveRequestQueueLocker = new ReentrantLock();
-
-	private SocketIOEntryUDP incommingChannel;
-
-	@Getter(AccessLevel.PRIVATE)
+	@Getter
 	@Setter(AccessLevel.PRIVATE)
-	private boolean stateChanged;
+	private boolean outgoingLink;
+	private static final boolean outgoingLinkDefault = true;
+	public static final String outgoingLinkPropertyName = "OutgoingLink";
 
-	private final DNSRoundrobinUtil connectionObserverAddressResolver;
+	@Getter
+	@Setter(AccessLevel.PRIVATE)
+	private int maxOutgoingLink;
+	private static final int maxOutgoingLinkDefault = 8;
+	private static final String maxOutgoingLinkPropertyName = "MaxOutgoingLink";
 
 	@Getter
 	@Setter
@@ -209,6 +217,7 @@ implements WebRemoteControlJARLLinkHandler{
 	@Getter
 	private static final String connectionObserverAddressPropertyName = "ConnectionObserverAddress";
 	public static final String connectionObserverAddressDefault = "hole-punchd.d-star.info";
+//	public static final String connectionObserverAddressDefault = "127.0.0.1";
 
 	@Getter
 	@Setter
@@ -232,20 +241,6 @@ implements WebRemoteControlJARLLinkHandler{
 	public static final int repeaterHostnameServerPortDefault = 30011;
 
 	@Getter
-	@Setter
-	private boolean ignoreKeepalive;
-	@Getter
-	private static final String ignoreKeepalivePropertyName = "IgnoreKeepalive";
-	public static final boolean ignoreKeepaliveDefault = false;
-
-	@Getter
-	@Setter
-	private boolean ignoreLinkStateOnLinking;
-	@Getter
-	private static final String ignoreLinkStateOnLinkingPropertyName = "IgnoreLinkStateOnLinking";
-	public static final boolean ignoreLinkStateOnLinkingDefault = false;
-
-	@Getter
 	private int protocolVersion;
 	@Getter
 	private static final String protocolVersionPropertyName = "ProtocolVersion";
@@ -260,12 +255,87 @@ implements WebRemoteControlJARLLinkHandler{
 	private static final String loginCallsignPropertyName = "LoginCallsign";
 	private static final String loginCallsignDefault = DSTARDefines.EmptyLongCallsign;
 
+	@Getter
+	@Setter
+	private String accessKey;
+	@Getter
+	private static final String accessKeyPropertyName = "AccessKey";
+	private static final String accessKeyDefault = currentAccessKey.toLowerCase(Locale.ENGLISH);
+
+	@Getter
+	@Setter
+	private String applicationNameOverride;
+	@Getter
+	private static final String applicationNameOverridePropertyName = "ApplicationNameOverride";
+	private static final String applicationNameOverrideDefault = "";
+
+
+	private final PacketTracerFunction packetTracer = new PacketTracerFunction() {
+		@Override
+		public void accept(
+			final ByteBuffer buffer,
+			final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+		) {
+			if(log.isTraceEnabled()) {
+				log.trace(
+					logTag +
+					"Receive packet from " + remoteAddress + '\n' + FormatUtil.byteBufferToHexDump(buffer, 4)
+				);
+			}
+		}
+	};
+
+	private final ParserFunction packetParser = new ParserFunction() {
+		@Override
+		public Boolean apply(
+			final ByteBuffer buffer, final Integer packetSize,
+			final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+		) {
+			return processReceiveBuffer(buffer, packetSize, remoteAddress, localAddress);
+		}
+	};
+
+	private final UnknownPacketHandler unknownPacketHandler = new UnknownPacketHandler() {
+		@Override
+		public void accept(
+			final ByteBuffer buffer,
+			final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+		) {
+			if(log.isDebugEnabled()) {
+				log.debug(
+					logTag +
+					"Unknown packet received from remoteAddress...\n" +
+					FormatUtil.byteBufferToHexDump(buffer, 4)
+				);
+			}
+		}
+	};
+
+	private ProcessState currentState;
+	private ProcessState nextState;
+	private ProcessState callbackState;
+	private boolean stateChanged;
+
+	private final Timer stateTimeKeeper;
+
+	private final byte[] keepaliveAppInformation;
+
+	private final Queue<JARLLinkPacket> receivePackets;
+
+	private final Queue<UUID> entryRemoveRequestQueue;
+
+	private final Map<Integer, JARLLinkCachedHeader> cachedHeaders;
+
+
+	private final DNSRoundrobinUtil connectionObserverAddressResolver;
+
 	static {
-		logHeader = JARLLinkCommunicationService.class.getSimpleName() + " : ";
+		logTag = JARLLinkCommunicationService.class.getSimpleName() + " : ";
 	}
 
 	public JARLLinkCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
@@ -275,6 +345,7 @@ implements WebRemoteControlJARLLinkHandler{
 	) {
 		super(
 			systemID,
+			applicationInformation,
 			exceptionListener,
 			JARLLinkCommunicationService.class,
 			socketIO,
@@ -283,6 +354,7 @@ implements WebRemoteControlJARLLinkHandler{
 			eventListener
 		);
 
+		setManualControlThreadTerminateMode(true);
 		setBufferSizeUDP(1024 * 1024 * 4);
 
 		stateTimeKeeper = new Timer();
@@ -295,14 +367,6 @@ implements WebRemoteControlJARLLinkHandler{
 
 		connectionObserverAddressResolver = new DNSRoundrobinUtil();
 
-		hostnameService = new JARLLinkRepeaterHostnameService(
-			getExceptionListener(),
-			this, getSocketIO(), connectionObserverAddressResolver,
-			workerExecutor
-		);
-
-		incommingChannel = null;
-
 		keepaliveAppInformation = new byte[10];
 		Arrays.fill(keepaliveAppInformation, (byte)0x00);
 
@@ -310,28 +374,37 @@ implements WebRemoteControlJARLLinkHandler{
 		nextState = ProcessState.Initialize;
 		callbackState = ProcessState.Initialize;
 
+		setOutgoingLink(outgoingLinkDefault);
+		setMaxOutgoingLink(maxOutgoingLinkDefault);
 		setRepeaterHostnameServerAddress(repeaterHostnameServerAddressDefault);
 		setRepeaterHostnameServerPort(repeaterHostnameServerPortDefault);
 		setConnectionObserverAddress(connectionObserverAddressDefault);
 		setConnectionObserverPort(connectionObserverPortDefault);
-		setIgnoreKeepalive(ignoreKeepaliveDefault);
-		setIgnoreLinkStateOnLinking(ignoreLinkStateOnLinkingDefault);
 		setProtocolVersion(protocolVersionDefault);
 		setLoginCallsign(loginCallsignDefault);
-
-		hostnameService.setServerAddress(getRepeaterHostnameServerAddress());
-		hostnameService.setServerPort(getRepeaterHostnameServerPort());
+		setAccessKey(accessKeyDefault);
+		setApplicationNameOverride(applicationNameOverrideDefault);
 	}
 
 	public JARLLinkCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		this(systemID, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
+		this(
+			systemID,
+			applicationInformation,
+			exceptionListener,
+			gateway,
+			workerExecutor,
+			null,
+			reflectorLinkManager,
+			eventListener
+		);
 	}
 
 	public void setProtocolVersion(int protocolVersion) {
@@ -345,10 +418,6 @@ implements WebRemoteControlJARLLinkHandler{
 
 	@Override
 	public boolean start() {
-		if(isIgnoreKeepalive()) {
-			if(log.isWarnEnabled()) {log.warn(logHeader + "IgnoreKeepAlive is enabled.");}
-		}
-
 		return super.start();
 	}
 
@@ -369,7 +438,23 @@ implements WebRemoteControlJARLLinkHandler{
 
 	@Override
 	public boolean setProperties(ReflectorProperties properties) {
-/*
+
+		setOutgoingLink(
+			PropertyUtils.getBoolean(
+				properties.getConfigurationProperties(),
+				outgoingLinkPropertyName,
+				outgoingLinkDefault
+			)
+		);
+
+		setMaxOutgoingLink(
+			PropertyUtils.getInteger(
+				properties.getConfigurationProperties(),
+				maxOutgoingLinkPropertyName,
+				maxOutgoingLinkDefault
+			)
+		);
+
 		setConnectionObserverAddress(
 			PropertyUtils.getString(
 				properties.getConfigurationProperties(),
@@ -380,7 +465,7 @@ implements WebRemoteControlJARLLinkHandler{
 		if(getConnectionObserverAddress().equals("hole-punch.d-star.info")) {
 			if(log.isWarnEnabled()) {
 				log.warn(
-					logHeader +
+					logTag +
 					"Connection observer = " + getConnectionObserverAddress() +
 					" is not available, replaced with hole-punchd.d-star.info."
 				);
@@ -403,10 +488,10 @@ implements WebRemoteControlJARLLinkHandler{
 				repeaterHostnameServerAddressDefault
 			)
 		);
-		if(getRepeaterHostnameServerAddress().equals("hole-punch.d-star.info")) {
+		if(getRepeaterHostnameServerAddress().equals("hole-punchd.d-star.info")) {
 			if(log.isWarnEnabled()) {
 				log.warn(
-					logHeader +
+					logTag +
 					"Repeater host name server = " + getRepeaterHostnameServerAddress() +
 					" is not available, replaced with " + repeaterHostnameServerAddressDefault
 				);
@@ -421,22 +506,6 @@ implements WebRemoteControlJARLLinkHandler{
 				repeaterHostnameServerPortDefault
 			)
 		);
-*/
-		setIgnoreKeepalive(
-			PropertyUtils.getBoolean(
-				properties.getConfigurationProperties(),
-				ignoreKeepalivePropertyName,
-				ignoreKeepaliveDefault
-			)
-		);
-
-		setIgnoreLinkStateOnLinking(
-			PropertyUtils.getBoolean(
-				properties.getConfigurationProperties(),
-				ignoreLinkStateOnLinkingPropertyName,
-				ignoreLinkStateOnLinkingDefault
-			)
-		);
 
 		setProtocolVersion(
 			PropertyUtils.getInteger(
@@ -447,7 +516,7 @@ implements WebRemoteControlJARLLinkHandler{
 		);
 
 		setLoginCallsign(
-			DSTARUtils.formatFullLengthCallsign(
+			DSTARUtils.formatFullCallsign(
 				PropertyUtils.getString(
 					properties.getConfigurationProperties(),
 					loginCallsignPropertyName,
@@ -461,13 +530,21 @@ implements WebRemoteControlJARLLinkHandler{
 
 			if(log.isInfoEnabled()) {
 				log.info(
-					logHeader + "Property '" + loginCallsignPropertyName + "' = '" + getLoginCallsign() +
+					logTag + "Property '" + loginCallsignPropertyName + "' = '" + getLoginCallsign() +
 					"' is illegal callsign format, replaced by '" + gatewayCallsign + "'."
 				);
 			}
 
 			setLoginCallsign(gatewayCallsign);
 		}
+
+		setApplicationNameOverride(
+			PropertyUtils.getString(
+				properties.getConfigurationProperties(),
+				applicationNameOverridePropertyName,
+				applicationNameOverrideDefault
+			)
+		);
 
 		return true;
 	}
@@ -506,12 +583,34 @@ implements WebRemoteControlJARLLinkHandler{
 
 		entriesLocker.lock();
 		try {
-			for(final JARLLinkEntry entry : entries) {
-				if(
-					entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING &&
-					entry.getRepeaterCallsign().equals(repeater.getRepeaterCallsign())
-				) {return null;}
+			if(entries.size() >= getMaxOutgoingLink()) {
+				if(log.isWarnEnabled()) {
+					log.warn(
+						logTag +
+						"Reached outgoing link limit, ignore outgoing link request from repeater = " +
+						repeater.getRepeaterCallsign() + "."
+					);
+				}
+
+				return null;
 			}
+			else if(Stream.of(entries).anyMatch(new Predicate<JARLLinkEntry>() {
+				@Override
+				public boolean test(JARLLinkEntry entry) {
+					return entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING &&
+						entry.getRepeaterCallsign().equals(repeater.getRepeaterCallsign());
+				}
+			})) {
+				if(log.isWarnEnabled()) {
+					log.warn(
+						logTag + "Could not link to duplicate reflector,ignore link request from repeater = " +
+						repeater.getRepeaterCallsign() + " to reflector = " + reflectorCallsign + "."
+					);
+				}
+
+				return null;
+			}
+
 
 			final SocketIOEntryUDP channel =
 				getSocketIO().registUDP(
@@ -520,7 +619,7 @@ implements WebRemoteControlJARLLinkHandler{
 				);
 			if(channel == null) {
 				if(log.isErrorEnabled())
-					log.error(logHeader + "Could not register JARLLink outgoing udp channel.");
+					log.error(logTag + "Could not register JARLLink outgoing udp channel.");
 
 				return null;
 			}
@@ -529,7 +628,7 @@ implements WebRemoteControlJARLLinkHandler{
 				connectionObserverAddressResolver.getCurrentHostAddress();
 			if(!connectionObserver.isPresent()) {
 				if(log.isErrorEnabled())
-					log.error(logHeader + "Could not resolve connection observer address.");
+					log.error(logTag + "Could not resolve connection observer address.");
 
 				return null;
 			}
@@ -546,9 +645,8 @@ implements WebRemoteControlJARLLinkHandler{
 			newEntry.setOutgoingReflectorHostInfo(reflectorHostInfo);
 			newEntry.setModCode(getModCode());
 			newEntry.setProtocolVersion(getProtocolVersion());
-			newEntry.setConnectionState(JARLLinkInternalState.Linking);
-			newEntry.getConnectionStateTimeKeeper().setTimeoutTime(3, TimeUnit.SECONDS);
-			newEntry.getConnectionStateTimeKeeper().updateTimestamp();
+			newEntry.setNextConnectionState(JARLLinkInternalState.Initialize);
+			newEntry.setCurrentConnectionState(JARLLinkInternalState.Initialize);
 			newEntry.setOutgoingChannel(channel);
 			newEntry.setConnectionObserverAddressPort(
 				new InetSocketAddress(
@@ -559,15 +657,11 @@ implements WebRemoteControlJARLLinkHandler{
 			newEntry.setDestinationRepeater(repeater);
 			newEntry.setReflectorCallsign(reflectorCallsign);
 			newEntry.setRepeaterCallsign(repeater.getRepeaterCallsign());
-			newEntry.getReceiveRepeaterKeepAliveTimeKeeper().setTimeoutTime(20, TimeUnit.SECONDS);
-//			newEntry.getReceiveServerKeepAliveTimeKeeper().setTimeoutTime(1, TimeUnit.MINUTES);
-//			newEntry.setReceiveServerKeepAliveLastTime(0L);
-			newEntry.getTransmitKeepAliveTimeKeeper().setTimeoutTime(1, TimeUnit.SECONDS);
 
 			entries.add(newEntry);
 
 			if(log.isTraceEnabled())
-				log.trace(logHeader + "Added outgoing connection entry.\n" + newEntry.toString(4));
+				log.trace(logTag + "Added outgoing connection entry.\n" + newEntry.toString(4));
 
 			entryID = newEntry.getId();
 		}finally {
@@ -604,7 +698,7 @@ implements WebRemoteControlJARLLinkHandler{
 
 			if(unlinkEntry == null) {return null;}
 
-			switch(unlinkEntry.getConnectionState()) {
+			switch(unlinkEntry.getCurrentConnectionState()) {
 			case LinkEstablished:
 			case Linking:
 				unlinkEntry.setConnectionRequest(ConnectionRequest.UnlinkRequest);
@@ -691,7 +785,7 @@ implements WebRemoteControlJARLLinkHandler{
 		SelectionKey key, ChannelProtocol protocol, InetSocketAddress localAddress, InetSocketAddress remoteAddress
 	) {
 		if(log.isTraceEnabled())
-			log.trace(logHeader + "Connected event.");
+			log.trace(logTag + "Connected event.");
 
 		return null;
 	}
@@ -701,7 +795,7 @@ implements WebRemoteControlJARLLinkHandler{
 		SelectionKey key, ChannelProtocol protocol, InetSocketAddress localAddress, InetSocketAddress remoteAddress
 	) {
 		if(log.isTraceEnabled())
-			log.trace(logHeader + "Disconnected remote host " + remoteAddress.toString());
+			log.trace(logTag + "Disconnected remote host " + remoteAddress.toString());
 	}
 
 	@Override
@@ -710,7 +804,7 @@ implements WebRemoteControlJARLLinkHandler{
 		InetSocketAddress localAddress, InetSocketAddress remoteAddress, Exception ex
 	) {
 		if(log.isTraceEnabled())
-			log.trace(logHeader + "error event received from " + remoteAddress + ".", ex);
+			log.trace(logTag + "error event received from " + remoteAddress + ".", ex);
 	}
 
 	@Override
@@ -730,19 +824,20 @@ implements WebRemoteControlJARLLinkHandler{
 
 	@Override
 	protected ThreadProcessResult processReceivePacket() {
-		if(currentState == ProcessState.MainProcess) {
-			processReceiveData(receivePackets);
+		if(currentState != ProcessState.MainProcess)
+			return ThreadProcessResult.NoErrors;
 
-			for(Iterator<JARLLinkPacket> it = receivePackets.iterator(); it.hasNext();) {
-				final JARLLinkPacket packet = it.next();
-				it.remove();
+		processReceiveBuffer();
 
-				if(packet.getDVPacket().hasPacketType(PacketType.Header))
-					processHeader(packet);
+		for(final Iterator<JARLLinkPacket> it = receivePackets.iterator(); it.hasNext();) {
+			final JARLLinkPacket packet = it.next();
+			it.remove();
 
-				if(packet.getDVPacket().hasPacketType(PacketType.Voice))
-					processVoice(packet);
-			}
+			if(packet.getDVPacket().hasPacketType(PacketType.Header))
+				onReceiveHeader(packet);
+
+			if(packet.getDVPacket().hasPacketType(PacketType.Voice))
+				onReceiveVoice(packet);
 		}
 
 		return ThreadProcessResult.NoErrors;
@@ -753,11 +848,8 @@ implements WebRemoteControlJARLLinkHandler{
 
 		ThreadProcessResult processResult = ThreadProcessResult.NoErrors;
 
-		boolean reProcess;
 		do {
-			reProcess = false;
-
-			setStateChanged(currentState != nextState);
+			stateChanged = currentState != nextState;
 			currentState = nextState;
 
 			switch(currentState) {
@@ -774,14 +866,10 @@ implements WebRemoteControlJARLLinkHandler{
 				break;
 			}
 
-			if(
-				currentState != nextState &&
-				processResult == ThreadProcessResult.NoErrors
-			) {reProcess = true;}
-
-		}while(reProcess);
-
-		hostnameService.process();
+		}while(
+			currentState != nextState &&
+			processResult == ThreadProcessResult.NoErrors
+		);
 
 		return processResult;
 	}
@@ -802,7 +890,7 @@ implements WebRemoteControlJARLLinkHandler{
 				}
 				if(entry.getCacheTransmitter().isUnderflow() && !entry.isCacheTransmitterUndeflow()) {
 					if(log.isDebugEnabled())
-						log.debug(logHeader + "Transmitter cache underflow detected.\n" + entry.toString(4));
+						log.debug(logTag + "Transmitter cache underflow detected.\n" + entry.toString(4));
 				}
 				entry.setCacheTransmitterUndeflow(entry.getCacheTransmitter().isUnderflow());
 			}
@@ -817,7 +905,7 @@ implements WebRemoteControlJARLLinkHandler{
 	protected ProcessIntervalMode getProcessIntervalMode() {
 		entriesLocker.lock();
 		try {
-			if(entries.isEmpty() && !hostnameService.isActive())
+			if(entries.isEmpty())
 				return ProcessIntervalMode.Sleep;
 
 			for(final JARLLinkEntry entry : entries) {
@@ -845,10 +933,14 @@ implements WebRemoteControlJARLLinkHandler{
 		report.setConnectedIncomingLink(0);
 		entriesLocker.lock();
 		try {
-
 			report.setConnectedOutgoingLink(
 				(int)Stream.of(entries)
-				.filter(e -> e.getConnectionDirection() == ConnectionDirectionType.OUTGOING)
+				.filter(new Predicate<JARLLinkEntry>() {
+					@Override
+					public boolean test(JARLLinkEntry entry) {
+						return entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING;
+					}
+				})
 				.count()
 			);
 		}finally {
@@ -920,21 +1012,24 @@ implements WebRemoteControlJARLLinkHandler{
 
 		connectionObserverAddressResolver.setHostname(getConnectionObserverAddress());
 
-		hostnameService.setServerAddress(getRepeaterHostnameServerAddress());
-		hostnameService.setServerPort(getRepeaterHostnameServerPort());
-
 		nextState = ProcessState.MainProcess;
 
 		//ホールパンチキープアライブ用アプリケーション情報セット
-		String applicationName = getApplicationName().replaceAll("[^A-Z]", "");
-		applicationName = applicationName.substring(0, Math.min(applicationName.length(), 2));
-		String applicationVersion = getApplicationVersion().replaceAll("[^0-9ab-]", "");
+		String appInfo;	// ex. NoraGateway -> NG
+		if(getApplicationNameOverride() == null || "".equals(getApplicationNameOverride())) {
+			String tmp =
+				getApplicationName().replaceAll("[^A-Z]", "") + (!getApplicationInformation().isBuildRelease() ? "D" : " ");
+			tmp = tmp.substring(0, Math.min(tmp.length(), 3));
+
+			appInfo = tmp + getApplicationVersion().replaceAll("[^0-9ab-]", "");
+		}
+		else {
+			appInfo = getApplicationNameOverride();
+		}
 		Arrays.fill(keepaliveAppInformation, (byte)' ');
 		ArrayUtil.copyOf(
 			keepaliveAppInformation,
-			(
-				String.format("%-2s%-8s", applicationName, applicationVersion)
-			).getBytes(StandardCharsets.US_ASCII)
+			String.format("%-10s", appInfo).substring(0, 10).getBytes(StandardCharsets.US_ASCII)
 		);
 
 		return ThreadProcessResult.NoErrors;
@@ -942,177 +1037,38 @@ implements WebRemoteControlJARLLinkHandler{
 
 	private ThreadProcessResult onStateMainProcess() {
 
-		if(isStateChanged()) {
+		if(stateChanged) {
 
 		}
 		else {
-			boolean notifyWebRemote = false;
 			entriesLocker.lock();
 			try {
-				for(JARLLinkEntry entry : entries) {
-					switch(entry.getConnectionState()) {
-					case Linking:
-						if(entry.getConnectionStateTimeKeeper().isTimeout(5, TimeUnit.SECONDS)) {
+				for(final JARLLinkEntry entry : entries)
+					processConnectionEntry(entry);
 
-							addConnectionStateChangeEvent(
-								entry.getId(),
-								entry.getConnectionDirection(),
-								entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
-								ReflectorConnectionStates.LINKFAILED,
-								entry.getOutgoingReflectorHostInfo()
-							);
-
-							addEntryRemoveRequestQueue(entry.getId());
-
-							connectionObserverAddressResolver.notifyDeadHostAddress(
-								entry.getConnectionObserverAddressPort().getAddress()
-							);
-							connectionObserverAddressResolver.nextHostAddress();
-
-							notifyWebRemote = true;
+				if(!isWorkerThreadAvailable()) {
+					Stream.of(entries)
+					.filter(new Predicate<JARLLinkEntry>() {
+						@Override
+						public boolean test(JARLLinkEntry entry) {
+							return entry.getCurrentConnectionState() == JARLLinkInternalState.Linking ||
+								entry.getCurrentConnectionState() == JARLLinkInternalState.LinkEstablished;
 						}
-						else if(
-//							entry.getReceiveServerKeepAliveLastTime() > 0L ||
-							entry.isRepeaterKeepAliveReceived() ||
-							isIgnoreKeepalive() ||
-							isIgnoreLinkStateOnLinking()
-						) {
-							entry.setConnectionState(JARLLinkInternalState.LinkEstablished);
-
-							entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
-//							entry.getReceiveServerKeepAliveTimeKeeper().updateTimestamp();
-
-							addConnectionStateChangeEvent(
-								entry.getId(),
-								entry.getConnectionDirection(),
-								entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
-								ReflectorConnectionStates.LINKED,
-								entry.getOutgoingReflectorHostInfo()
-							);
-
-							notifyWebRemote = true;
-						}
-						else if(entry.getTransmitKeepAliveTimeKeeper().isTimeout(1, TimeUnit.SECONDS)) {
-							entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
-
-							sendKeepAlive(entry, true, true);
-						}
-						break;
-
-					case LinkEstablished:
-						if(entry.getConnectionRequest() == ConnectionRequest.UnlinkRequest) {
+					})
+					.forEach(new Consumer<JARLLinkEntry>() {
+						@Override
+						public void accept(JARLLinkEntry entry) {
 							sendDisconnect(entry);
-
-							entry.setConnectionState(JARLLinkInternalState.Unlinking);
 						}
-						else if(
-							!isIgnoreKeepalive() &&
-							(
-								entry.getReceiveRepeaterKeepAliveTimeKeeper().isTimeout(3, TimeUnit.MINUTES)
-//								entry.getReceiveServerKeepAliveTimeKeeper().isTimeout()
-							)
-						) {
-							if(!isIgnoreLinkStateOnLinking()) {
-								entry.setConnectionState(JARLLinkInternalState.Linking);
+					});
 
-								entry.getConnectionStateTimeKeeper().updateTimestamp();
-
-//								entry.setReceiveServerKeepAliveLastTime(0L);
-
-								entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
-
-								entry.setRepeaterKeepAliveReceived(false);
-							}
-							else {
-								addConnectionStateChangeEvent(
-									entry.getId(),
-									entry.getConnectionDirection(),
-									entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
-									ReflectorConnectionStates.LINKFAILED,
-									entry.getOutgoingReflectorHostInfo()
-								);
-
-								addEntryRemoveRequestQueue(entry.getId());
-/*
-								if(entry.getReceiveServerKeepAliveTimeKeeper().isTimeout()) {
-									connectionObserverAddressResolver.notifyDeadHostAddress(
-										entry.getConnectionObserverAddressPort().getAddress()
-									);
-									connectionObserverAddressResolver.nextHostAddress();
-								}
-*/
-								notifyWebRemote = true;
-							}
-						}
-						else if(entry.getTransmitKeepAliveTimeKeeper().isTimeout(20, TimeUnit.SECONDS)) {
-							entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
-
-							sendKeepAlive(entry, false, true);
-						}
-						else if(
-							entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING &&
-							(System.currentTimeMillis() -  entry.getCreateTime()) > TimeUnit.SECONDS.toMillis(15L) &&
-							entry.isRepeaterKeepAliveReceived() &&
-							!entry.isRepeaterConnectAnnounceOutputed() &&
-							entry.getCurrentFrameID() == 0x0000
-						) {
-							entry.setRepeaterConnectAnnounceOutputed(true);
-
-							announceRepeaterLinked(entry);
-						}
-
-						if(
-							entry.getCurrentFrameID() != 0x0 &&
-							entry.getFrameSequenceTimeKepper().isTimeout()
-						) {
-							if(log.isDebugEnabled()) {
-								log.debug(
-									logHeader +
-									String.format("Timeout frame id...0x%04X.\n%s", entry.getCurrentFrameID(), entry.toString(4))
-								);
-							}
-
-							entry.setCurrentFrameID(0x0);
-							entry.setCurrentFrameDirection(ConnectionDirectionType.Unknown);
-							entry.setCurrentFrameSequence((byte)0x0);
-						}
-
-						break;
-
-					case Unlinking:
-						entry.setConnectionState(JARLLinkInternalState.Unlinked);
-						break;
-
-					case Unlinked:
-						updateRemoteUsers(
-							entry.getDestinationRepeater(), entry.getReflectorCallsign(), entry.getConnectionDirection(),
-							Collections.emptyList()
-						);
-						addConnectionStateChangeEvent(
-							entry.getId(),
-							entry.getConnectionDirection(),
-							entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
-							ReflectorConnectionStates.UNLINKED,
-							entry.getOutgoingReflectorHostInfo()
-						);
-						addEntryRemoveRequestQueue(entry.getId());
-
-						notifyWebRemote = true;
-						break;
-
-					default:
-						addEntryRemoveRequestQueue(entry.getId());
-						break;
-					}
+					setWorkerThreadTerminateRequest(true);
 				}
 			}finally {
 				entriesLocker.unlock();
 			}
 
 			processEntryRemoveRequestQueue();
-
-			if(notifyWebRemote) {notifyStatusChanged();}
-
 		}
 
 		return ThreadProcessResult.NoErrors;
@@ -1125,287 +1081,586 @@ implements WebRemoteControlJARLLinkHandler{
 		return ThreadProcessResult.NoErrors;
 	}
 
-	private void processReceiveData(Queue<JARLLinkPacket> receivePackets) {
+/*
+	private void toWaitState(long waitTime, TimeUnit timeUnit, ProcessState callbackState) {
+		stateTimeKeeper.setTimeoutTime(waitTime, timeUnit);
 
-		Optional<BufferEntry> opEntry = null;
-		while((opEntry = getReceivedReadBuffer()).isPresent()) {
-			final BufferEntry buffer = opEntry.get();
+		nextState = ProcessState.Wait;
+		this.callbackState = callbackState;
+	}
+*/
 
-			buffer.getLocker().lock();
-			try {
-				if(!buffer.isUpdate()) {continue;}
+	private void processConnectionEntry(final JARLLinkEntry entry) {
+		entriesLocker.lock();
+		try {
+			do {
+				entry.setConnectionStateChanged(
+					entry.getCurrentConnectionState() != entry.getNextConnectionState()
+				);
+				entry.setPreviousConnectionState(entry.getCurrentConnectionState());
+				entry.setCurrentConnectionState(entry.getNextConnectionState());
 
-				buffer.setBufferState(BufferState.toREAD(buffer.getBuffer(), buffer.getBufferState()));
+				if(log.isTraceEnabled())
+					log.trace(logTag + "State changed " + entry.getCurrentConnectionState() + " <- " + entry.getPreviousConnectionState());
 
-				parseReceiveBuffer(buffer, receivePackets, buffer.getRemoteAddress());
+				switch(entry.getCurrentConnectionState()) {
+				case Initialize:
+					entry.setNextConnectionState(JARLLinkInternalState.Linking);
+					break;
 
-				buffer.setUpdate(false);
-			}finally {
-				buffer.getLocker().unlock();
-			}
+				case Linking:
+					onConnectionStateLinking(entry);
+					break;
+
+				case LinkEstablished:
+					onConnectionStateLinkEstablished(entry);
+					break;
+
+				case Unlinking:
+					onConnectionStateUnlinking(entry);
+					break;
+
+				case Unlinked:
+					onConnectionStateUnlinked(entry);
+					break;
+
+				default:
+					addEntryRemoveRequestQueue(entry.getId());
+					break;
+				}
+			}while(entry.getCurrentConnectionState() != entry.getNextConnectionState());
+		}finally {
+			entriesLocker.unlock();
 		}
 	}
 
-	private boolean parseReceiveBuffer(
-		final BufferEntry buffer, final Queue<JARLLinkPacket> packetDst, final InetSocketAddress remoteAddress
-	) {
-		assert buffer != null && packetDst != null;
+	private void onConnectionStateLinking(final JARLLinkEntry entry) {
+		if(entry.isConnectionStateChanged()) {
+			if(entry.getPreviousConnectionState() != JARLLinkInternalState.LinkEstablished) {
+				for(int c = 0; c < 2; c++) {
+					sendKeepAlive(entry);
 
-		for(Iterator<PacketInfo> it = buffer.getBufferPacketInfo().iterator(); it.hasNext();) {
-			final PacketInfo packetInfo = it.next();
-			final int receiveBytes = packetInfo.getPacketBytes();
-			it.remove();
-
-			byte[] data = new byte[receiveBytes];
-			for(int c = 0; c < data.length && buffer.getBuffer().hasRemaining(); c++) {
-				data[c] = buffer.getBuffer().get();
-			}
-
-			if(
-				receiveBytes == 25 ||
-				receiveBytes == 26
-			) {	// hole punch keepalive
-				char[] recvChar = new char[data.length];
-				ArrayUtil.copyOfRange(recvChar, 0, data);
-				String recvStr = String.valueOf(recvChar);
-
-				Matcher m = keepalivePattern.matcher(recvStr);
-				if(m.matches()) {
-					String ipStr = m.group(1);
-					String portStr = m.group(3);
-
-					InetAddress ip = null;
-					try{
-						ip = InetAddress.getByName(ipStr);
-					}catch(UnknownHostException ex) {
-						if(log.isDebugEnabled())
-							log.debug(logHeader + "Illegal ip address format.\n    " + recvStr);
+					if(c < 1) {
+						try {
+							Thread.sleep(10L);
+						} catch (InterruptedException e) {}
 					}
-
-					int port = -1;
-					try {
-						port = Integer.valueOf(portStr);
-					}catch(NumberFormatException ex) {
-						if(log.isDebugEnabled())
-							log.debug(logHeader + "Illegal port number format.\n    " + recvStr);
-					}
-
-					final InetAddress ipAddr = ip;
-					final int portNumber = port;
-
-					if(ip != null && port > 0) {
-						findEntry(
-							ip,	//Remote Address
-							-1,
-							-1
-						).ifPresent(new Consumer<JARLLinkEntry>() {
-							@Override
-							public void accept(final JARLLinkEntry entry) {
-								if(
-									portNumber > 0 &&
-									entry.getRemoteAddressPort().getAddress().equals(ipAddr) &&
-									entry.getRemoteAddressPort().getPort() != portNumber
-								) {
-									if(log.isDebugEnabled()) {
-										log.debug(
-											logHeader +
-											"Remote repeater port number changed " +
-											entry.getRemoteAddressPort().getAddress() + ":" +
-											entry.getRemoteAddressPort().getPort() + "->" + portNumber +
-											"."
-										);
-									}
-									entry.setRemoteAddressPort(
-										new InetSocketAddress(entry.getRemoteAddressPort().getAddress(), portNumber)
-									);
-								}
-
-//								entry.getReceiveServerKeepAliveTimeKeeper().updateTimestamp();
-//								entry.setReceiveServerKeepAliveLastTime(System.currentTimeMillis());
-							}
-						});
-					}
-
-					connectionObserverAddressResolver.notifyAliveHostAddress(remoteAddress.getAddress());
 				}
-
-				findEntry(
-					buffer.getRemoteAddress().getAddress(),
-					buffer.getRemoteAddress().getPort(),
-					buffer.getLocalAddress().getPort()
-				).ifPresent(new Consumer<JARLLinkEntry>() {
-					@Override
-					public void accept(final JARLLinkEntry entry) {
-						if(!entry.isRepeaterKeepAliveReceived()) {
-							entry.setRepeaterKeepAliveReceived(true);
-
-							if(log.isInfoEnabled()) {
-								log.info(
-									logHeader +
-									"Connected to " + entry.getReflectorCallsign() + " <-> " + entry.getRepeaterCallsign() + "."
-								);
-							}
-						}
-
-						entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
-					}
-				});
-
-				if(log.isTraceEnabled()) {
-					log.trace(
-						logHeader + "Hole punch keepalive received from " + remoteAddress + "\n" +
-						FormatUtil.bytesToHexDump(data, 4)
-					);
-				}
-
-				continue;
-			}
-			else if(
-				receiveBytes == 44 &&
-				data[0] == 'C' && data[1] == 'T' && data[2] == 'B' && data[3] == 'L'
-			) {
-				findEntry(
-					buffer.getRemoteAddress().getAddress(),
-					buffer.getRemoteAddress().getPort(),
-					buffer.getLocalAddress().getPort()
-				).ifPresent(new Consumer<JARLLinkEntry>() {
-					@Override
-					public void accept(final JARLLinkEntry entry) {
-						processCTBL(entry, data, getLoginCallsign());
-					}
-				});
-
-				if(log.isTraceEnabled()) {
-					log.trace(
-						logHeader + "CTBL received from " + remoteAddress + "\n" +
-						FormatUtil.bytesToHexDump(data, 4)
-					);
-				}
-
-				continue;
-			}
-			else if(
-				receiveBytes == 64 &&
-				data[0] == 'E' && data[1] == 'R' && data[2] == 'R' && data[3] == 'O' && data[4] == 'R'
-			) {
-				findEntry(
-					buffer.getRemoteAddress().getAddress(),
-					buffer.getRemoteAddress().getPort(),
-					buffer.getLocalAddress().getPort()
-				).ifPresent(new Consumer<JARLLinkEntry>() {
-					@Override
-					public void accept(final JARLLinkEntry entry) {
-						processERROR(entry, data, getLoginCallsign());
-					}
-				});
-
-				if(log.isTraceEnabled()) {
-					log.trace(
-						logHeader + "ERROR message received from " + remoteAddress + "\n" +
-						FormatUtil.bytesToHexDump(data, 4)
-					);
-				}
-
-				continue;
-			}
-
-			if(
-				data[0] != 'D' || data[1] != 'S' || data[2] != 'T' || data[3] != 'R'
-			) {
-				if(log.isDebugEnabled()) {
-					log.debug(
-						logHeader + "Illegal data received, unknown packet from" + remoteAddress + "\n" +
-						FormatUtil.bytesToHexDump(data, 4)
-					);
-				}
-
-				continue;
-			}
-
-			final JARLLinkTransmitType packetTransmitType =
-				JARLLinkTransmitType.getTypeByValue(data[6]);
-
-			final JARLLinkPacketType packetType =
-				JARLLinkPacketType.getTypeByValue((byte)data[7]);
-
-			JARLLinkPacket packet = null;
-
-			if(packetType == JARLLinkPacketType.DVPacket && receiveBytes == 58) {	// Header
-				final Header header = new Header();
-				ArrayUtil.copyOfRange(header.getFlags(), data, 17, 20);
-				ArrayUtil.copyOfRange(header.getRepeater2Callsign(), data, 20, 28);
-				ArrayUtil.copyOfRange(header.getRepeater1Callsign(), data, 28, 36);
-				ArrayUtil.copyOfRange(header.getYourCallsign(), data, 36, 44);
-				ArrayUtil.copyOfRange(header.getMyCallsign(), data, 44, 52);
-				ArrayUtil.copyOfRange(header.getMyCallsignAdd(), data, 52, 56);
-
-				header.saveRepeaterCallsign();
-
-				packet = new JARLLinkPacket(
-					header,
-					new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataHeader)
-				);
-				ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
-				packet.getBackBone().setManagementInformation((byte)0x80);
-			}
-			else if(packetType == JARLLinkPacketType.DVPacket && receiveBytes == 29) {	// Voice
-				final VoiceAMBE voice = new VoiceAMBE();
-				ArrayUtil.copyOfRange(voice.getVoiceSegment(), data, 17, 26);
-				ArrayUtil.copyOfRange(voice.getDataSegment(), data, 26, 29);
-
-				packet = new JARLLinkPacket(
-					voice,
-					new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceData)
-				);
-				ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
-				packet.getBackBone().setManagementInformation(data[16]);
-			}
-			else if(packetType == JARLLinkPacketType.DVPacket && receiveBytes == 32) {	// Voice
-				VoiceAMBE voice = new VoiceAMBE();
-				ArrayUtil.copyOfRange(voice.getVoiceSegment(), data, 17, 26);
-				ArrayUtil.copyOfRange(voice.getDataSegment(), data, 26, 29);
-
-				packet = new JARLLinkPacket(
-					voice,
-					new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataLastFrame)
-				);
-				ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
-				packet.getBackBone().setManagementInformation(data[16]);
-				packet.getBackBone().setEndSequence();
 			}
 			else {
-				if(log.isDebugEnabled()) {
-					log.debug(
-						logHeader + "Illegal data received, unknown packet size(" + receiveBytes +"bytes)\n" +
-						"    [ReceiveData]:" + FormatUtil.bytesToHex(data)
-					);
-				}
+				sendKeepAlive(entry);
 			}
 
-			if(packet != null) {
-				packet.setJARLLinkPacketType(packetType);
-				packet.setJARLLinkTransmitType(packetTransmitType);
+			entry.getConnectionStateTimeKeeper().updateTimestamp();
+			entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
+		}
+		else if(entry.getConnectionStateTimeKeeper().isTimeout(8, TimeUnit.SECONDS)) {
 
-				packet.setLocalAddress(buffer.getLocalAddress());
-				packet.setRemoteAddress(buffer.getRemoteAddress());
+			addConnectionStateChangeEvent(
+				entry.getId(),
+				entry.getConnectionDirection(),
+				entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
+				ReflectorConnectionStates.LINKFAILED,
+				entry.getOutgoingReflectorHostInfo()
+			);
 
-				packetDst.add(packet);
+			addEntryRemoveRequestQueue(entry.getId());
+
+			connectionObserverAddressResolver.notifyDeadHostAddress(
+				entry.getConnectionObserverAddressPort().getAddress()
+			);
+			connectionObserverAddressResolver.nextHostAddress();
+
+			notifyStatusChanged();
+		}
+		else if(entry.isRepeaterKeepAliveReceived()) {
+			entry.setNextConnectionState(JARLLinkInternalState.LinkEstablished);
+
+			entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
+
+			addConnectionStateChangeEvent(
+				entry.getId(),
+				entry.getConnectionDirection(),
+				entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
+				ReflectorConnectionStates.LINKED,
+				entry.getOutgoingReflectorHostInfo()
+			);
+
+			notifyStatusChanged();
+		}
+		else if(entry.getTransmitKeepAliveTimeKeeper().isTimeout(2, TimeUnit.SECONDS)) {
+			entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
+
+			sendKeepAliveToTargetRepeater(entry);
+		}
+	}
+
+	private void onConnectionStateLinkEstablished(final JARLLinkEntry entry) {
+		if(entry.isConnectionStateChanged()) {
+			entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
+			entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
+		}
+		else if(entry.getConnectionRequest() == ConnectionRequest.UnlinkRequest) {
+			sendDisconnect(entry);
+
+			entry.setNextConnectionState(JARLLinkInternalState.Unlinking);
+		}
+		else if(entry.getReceiveRepeaterKeepAliveTimeKeeper().isTimeout(30, TimeUnit.SECONDS)) {
+			if(log.isDebugEnabled()) {
+				log.debug(
+					logTag +
+					"Keep alive timeout, going link state..." +
+					entry.getReflectorCallsign() + " <-> " + entry.getRepeaterCallsign()
+				);
+			}
+
+			entry.setNextConnectionState(JARLLinkInternalState.Linking);
+
+			notifyStatusChanged();
+		}
+		else if(entry.getTransmitKeepAliveTimeKeeper().isTimeout(5, TimeUnit.SECONDS)) {
+			entry.getTransmitKeepAliveTimeKeeper().updateTimestamp();
+
+			sendKeepAliveToTargetRepeater(entry);
+		}
+
+		if(
+			entry.getCurrentFrameID() != 0x0 &&
+			entry.getFrameSequenceTimeKepper().isTimeout()
+		) {
+			if(log.isDebugEnabled()) {
+				log.debug(
+					logTag +
+					String.format("Timeout frame id...0x%04X.\n%s", entry.getCurrentFrameID(), entry.toString(4))
+				);
+			}
+
+			entry.setCurrentFrameID(0x0);
+			entry.setCurrentFrameDirection(ConnectionDirectionType.Unknown);
+			entry.setCurrentFrameSequence((byte)0x0);
+		}
+	}
+
+	private void onConnectionStateUnlinking(final JARLLinkEntry entry) {
+		if(entry.isConnectionStateChanged()) {
+			sendDisconnect(entry);
+
+			entry.setNextConnectionState(JARLLinkInternalState.Unlinked);
+		}
+	}
+
+	private void onConnectionStateUnlinked(final JARLLinkEntry entry) {
+		if(entry.isConnectionStateChanged()) {
+			updateRemoteUsers(
+				entry.getDestinationRepeater(), entry.getReflectorCallsign(), entry.getConnectionDirection(),
+				Collections.emptyList()
+			);
+			addConnectionStateChangeEvent(
+				entry.getId(),
+				entry.getConnectionDirection(),
+				entry.getRepeaterCallsign(), entry.getReflectorCallsign(),
+				ReflectorConnectionStates.UNLINKED,
+				entry.getOutgoingReflectorHostInfo()
+			);
+
+			addEntryRemoveRequestQueue(entry.getId());
+
+			notifyStatusChanged();
+		}
+	}
+
+	private void onReceiveKeepalive(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 24) {return;}
+
+		if(log.isTraceEnabled()) {
+			log.trace(
+				logTag + "Keep alive received from " + remoteAddress + "\n" +
+				FormatUtil.byteBufferToHexDump(buffer, 4)
+			);
+		}
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				final int savedPos = buffer.position();
+
+				entriesLocker.lock();
+				try {
+					entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
+				}finally {
+					entriesLocker.unlock();
+				}
+
+				buffer.position(savedPos + 24);
+			}
+		});
+
+		wakeupProcessThread();
+	}
+
+	private void onReceiveConnectRequest(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 25) {return;}
+
+		if(log.isTraceEnabled()) {
+			log.trace(
+				logTag + "Connect request received from " + remoteAddress + "\n" +
+				FormatUtil.byteBufferToHexDump(buffer, 4)
+			);
+		}
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				final int savedPos = buffer.position();
+
+				entriesLocker.lock();
+				try {
+					entry.getReceiveRepeaterKeepAliveTimeKeeper().updateTimestamp();
+
+					if(!entry.isRepeaterKeepAliveReceived()) {
+						entry.setRepeaterKeepAliveReceived(true);
+
+						if(log.isInfoEnabled()) {
+							log.info(
+								logTag +
+								"Connected to " + entry.getReflectorCallsign() + " <-> " + entry.getRepeaterCallsign() + "."
+							);
+						}
+					}
+				}finally {
+					entriesLocker.unlock();
+				}
+
+				sendConnectRequestResponse(entry, remoteAddress);
+
+				buffer.position(savedPos + 25);
+			}
+		});
+
+		wakeupProcessThread();
+	}
+
+	private void onReceiveCTBL(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 44) {return;}
+
+		if(log.isTraceEnabled()) {
+			log.trace(
+				logTag + "CTBL message received from " + remoteAddress + "\n" +
+				FormatUtil.byteBufferToHexDump(buffer, 4)
+			);
+		}
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				final int savedPos = buffer.position();
+
+				entriesLocker.lock();
+				try {
+					entry.getReceiveKeepAliveTimeKeeper().updateTimestamp();
+
+					if(log.isTraceEnabled()) {
+						log.trace(
+							logTag + "CTBL received from " + remoteAddress + "\n" +
+							FormatUtil.byteBufferToHexDump(buffer, 4)
+						);
+					}
+
+					processCTBL(entry, buffer, getLoginCallsign());
+				}finally {
+					entriesLocker.unlock();
+				}
+
+				buffer.position(savedPos + 44);
+			}
+		});
+	}
+
+	private void onReceiveERROR(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 64) {return;}
+
+		if(log.isTraceEnabled()) {
+			log.trace(
+				logTag + "ERROR message received from " + remoteAddress + "\n" +
+				FormatUtil.byteBufferToHexDump(buffer, 4)
+			);
+		}
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				final int savedPos = buffer.position();
+
+				final byte[] data = new byte[64];
+				buffer.get(data);
+				final String message =
+					new String(
+						data, 5, data.length - 5, StandardCharsets.UTF_8
+					).trim();
+
+				//TODO 内容によっては切断する
+				if(
+					log.isWarnEnabled() &&
+					errorMessagePattern.matcher(message).find()
+				) {
+					log.warn(
+						logTag +
+						"!!! WARNING !!! message received from " + entry.getReflectorCallsign() + ".\n    " + message
+					);
+				}
+				else if(log.isInfoEnabled()){
+					log.info(
+						logTag +
+						"Information message received from " + entry.getReflectorCallsign() + ".\n    " + message
+					);
+				}
+
+				buffer.position(savedPos + 64);
+			}
+		});
+	}
+
+	private void onReceiveMESSG(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 64) {return;}
+
+		if(log.isTraceEnabled()) {
+			log.trace(
+				logTag + "MESSG message received from " + remoteAddress + "\n" +
+				FormatUtil.byteBufferToHexDump(buffer, 4)
+			);
+		}
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				final int savedPos = buffer.position();
+
+				final byte[] data = new byte[64];
+				buffer.get(data);
+				final String message =
+					new String(
+						data, 5, data.length - 5, StandardCharsets.UTF_8
+					).trim();
+
+				if(log.isInfoEnabled()){
+					log.info(
+						logTag +
+						"Information message received from " + entry.getReflectorCallsign() + ".\n    " + message
+					);
+				}
+
+				buffer.position(savedPos + 64);
+			}
+		});
+	}
+
+	private void onReceiveDSTR(
+		final ByteBuffer buffer,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(buffer.remaining() < 29) {return;}
+
+		final int savedPos = buffer.position();
+		final byte[] data = new byte[buffer.remaining()];
+
+		final JARLLinkTransmitType packetTransmitType =
+			JARLLinkTransmitType.getTypeByValue(buffer.get(6));
+
+		final JARLLinkPacketType packetType =
+			JARLLinkPacketType.getTypeByValue((byte)buffer.get(7));
+
+		JARLLinkPacket packet = null;
+
+		if(packetType == JARLLinkPacketType.DVPacket && data.length == 58) {	// Header
+			final Header header = new Header();
+			ArrayUtil.copyOfRange(header.getFlags(), data, 17, 20);
+			ArrayUtil.copyOfRange(header.getRepeater2Callsign(), data, 20, 28);
+			ArrayUtil.copyOfRange(header.getRepeater1Callsign(), data, 28, 36);
+			ArrayUtil.copyOfRange(header.getYourCallsign(), data, 36, 44);
+			ArrayUtil.copyOfRange(header.getMyCallsign(), data, 44, 52);
+			ArrayUtil.copyOfRange(header.getMyCallsignAdd(), data, 52, 56);
+
+			header.saveRepeaterCallsign();
+
+			packet = new JARLLinkPacket(
+				header,
+				new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataHeader)
+			);
+			ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
+			packet.getBackBone().setManagementInformation((byte)0x80);
+
+			buffer.position(savedPos + 58);
+		}
+		else if(packetType == JARLLinkPacketType.DVPacket && data.length == 29) {	// Voice
+			final VoiceAMBE voice = new VoiceAMBE();
+			ArrayUtil.copyOfRange(voice.getVoiceSegment(), data, 17, 26);
+			ArrayUtil.copyOfRange(voice.getDataSegment(), data, 26, 29);
+
+			packet = new JARLLinkPacket(
+				voice,
+				new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceData)
+			);
+			ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
+			packet.getBackBone().setManagementInformation(data[16]);
+
+			buffer.position(savedPos + 29);
+		}
+		else if(packetType == JARLLinkPacketType.DVPacket && data.length == 32) {	// Voice
+			VoiceAMBE voice = new VoiceAMBE();
+			ArrayUtil.copyOfRange(voice.getVoiceSegment(), data, 17, 26);
+			ArrayUtil.copyOfRange(voice.getDataSegment(), data, 26, 29);
+
+			packet = new JARLLinkPacket(
+				voice,
+				new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataLastFrame)
+			);
+			ArrayUtil.copyOfRange(packet.getBackBone().getFrameID(), data, 14, 16);
+			packet.getBackBone().setManagementInformation(data[16]);
+			packet.getBackBone().setEndSequence();
+
+			buffer.position(savedPos + 32);
+		}
+		else {
+			if(log.isDebugEnabled()) {
+				log.debug(
+					logTag + "Illegal data received, unknown packet size(" + data.length +"bytes)\n" +
+					FormatUtil.bytesToHex(data, 4)
+				);
+			}
+
+			return;
+		}
+
+		final JARLLinkPacket receivePacket = packet;
+
+		findEntry(remoteAddress.getAddress(), remoteAddress.getPort(), localAddress.getPort())
+		.ifPresent(new Consumer<JARLLinkEntry>() {
+			@Override
+			public void accept(final JARLLinkEntry entry) {
+				receivePacket.setJARLLinkPacketType(packetType);
+				receivePacket.setJARLLinkTransmitType(packetTransmitType);
+
+				receivePacket.setLocalAddress(localAddress);
+				receivePacket.setRemoteAddress(remoteAddress);
+
+				receivePackets.add(receivePacket);
 
 				if(log.isTraceEnabled()) {
 					log.trace(
-						logHeader + "Receive JARLLink packet from repeater.\n" +
-						packet.toString(4) + "\n" +
+						logTag +
+						"Receive JARLLink packet from repeater = " + entry.getReflectorCallsign() + ".\n" +
+						receivePacket.toString(4) + "\n" +
 						FormatUtil.bytesToHexDump(data, 4)
 					);
 				}
-
 			}
+		});
+	}
+
+	private boolean sendConnectRequestResponse(
+		final JARLLinkEntry entry,
+		final InetSocketAddress destination
+	) {
+		final byte[] buffer = new byte[28];
+		Arrays.fill(buffer, (byte)0x00);
+
+		ArrayUtil.copyOfRange(
+			buffer,
+			0,
+			entry.getRemoteAddressPort().getAddress().getHostAddress().getBytes(StandardCharsets.US_ASCII)
+		);
+		ArrayUtil.copyOfRange(buffer, 16, getLoginCallsign().getBytes(StandardCharsets.US_ASCII));
+		ArrayUtil.copyOfRange(buffer, 24, "REQ ".getBytes(StandardCharsets.US_ASCII));
+
+		return writeUDPPacket(entry.getOutgoingChannel().getKey(), destination, ByteBuffer.wrap(buffer));
+	}
+
+	private boolean processReceiveBuffer() {
+		return parseReceivedReadBuffer(packetTracer, packetParser, unknownPacketHandler);
+	}
+
+	private boolean processReceiveBuffer(
+		final ByteBuffer buffer, final int receiveBytes,
+		final InetSocketAddress remoteAddress, final InetSocketAddress localAddress
+	) {
+		if(
+			receiveBytes >= 24 &&
+			buffer.get(0) == 'H' && buffer.get(1) == 'P' && buffer.get(2) == 'C' && buffer.get(3) == 'H'
+		) {
+			if(receiveBytes == 24)	//multi_forwardからのキープアライブの返り
+				onReceiveKeepalive(buffer, remoteAddress, localAddress);
+			else if(receiveBytes == 25)	//multi_forwardからの接続要求
+				onReceiveConnectRequest(buffer, remoteAddress, localAddress);
+			else
+				return false;
+		}
+		else if(
+			receiveBytes == 44 &&
+			buffer.get(0) == 'C' && buffer.get(1) == 'T' && buffer.get(2) == 'B' && buffer.get(3) == 'L'
+		) {
+			onReceiveCTBL(buffer, remoteAddress, localAddress);
+		}
+		else if(receiveBytes == 64) {
+			if(
+				buffer.get(0) == 'E' && buffer.get(1) == 'R' &&
+				buffer.get(2) == 'R' && buffer.get(3) == 'O' && buffer.get(4) == 'R'
+			) {
+				onReceiveERROR(buffer, remoteAddress, localAddress);
+			}
+			else if(
+				buffer.get(0) == 'M' && buffer.get(1) == 'E' &&
+				buffer.get(2) == 'S' && buffer.get(3) == 'S' && buffer.get(4) == 'G'
+			) {
+				onReceiveMESSG(buffer, remoteAddress, localAddress);
+			}
+		}
+		else if(
+			receiveBytes == 44 &&
+			buffer.get(0) == 'C' && buffer.get(1) == 'T' && buffer.get(2) == 'B' && buffer.get(3) == 'L'
+		) {
+			onReceiveCTBL(buffer, remoteAddress, localAddress);
+		}
+		else if(
+			receiveBytes >= 29 &&
+			buffer.get(0) == 'D' && buffer.get(1) == 'S' && buffer.get(2) == 'T' && buffer.get(3) == 'R'
+		) {
+			onReceiveDSTR(buffer, remoteAddress, localAddress);
+		}
+		else {
+			if(log.isDebugEnabled()) {
+				log.debug(
+					logTag + "Illegal data received, unknown packet from" + remoteAddress + "\n" +
+					FormatUtil.byteBufferToHex(buffer, 4)
+				);
+			}
+
+			return false;
 		}
 
 		return true;
 	}
 
-	private void processHeader(final JARLLinkPacket packet) {
+	private void onReceiveHeader(final JARLLinkPacket packet) {
 		entriesLocker.lock();
 		try {
 			findEntry(
@@ -1415,93 +1670,84 @@ implements WebRemoteControlJARLLinkHandler{
 			).ifPresent(new Consumer<JARLLinkEntry>() {
 				@Override
 				public void accept(JARLLinkEntry entry) {
-					processHeader(entry, packet, false);
+					onReceiveHeader(entry, packet, false);
 
 					entry.getActivityTimeKepper().updateTimestamp();
 				}
 			});
-/*
-			for(JARLLinkEntry entry : entries) {
-				if(
-						entry.getRemoteAddressPort().getAddress().equals(packet.getRemoteAddressPort().getAddress()) &&
-						entry.getRemoteAddressPort().getPort() == packet.getRemoteAddressPort().getPort() &&
-						entry.getLocalAddressPort().getPort() == packet.getLocalAddressPort().getPort()
-				) {
-					processHeader(entry, packet, false);
-
-					entry.getActivityTimeKepper().updateTimestamp();
-				}
-			}
-*/
 		}finally {
 			entriesLocker.unlock();
 		}
 	}
 
-	private void processHeader(JARLLinkEntry entry, JARLLinkPacket packet, boolean resync) {
+	private void onReceiveHeader(JARLLinkEntry entry, JARLLinkPacket packet, boolean resync) {
 		if(
-			entry.getConnectionState() != JARLLinkInternalState.LinkEstablished ||
+			entry.getCurrentConnectionState() != JARLLinkInternalState.LinkEstablished ||
 			packet.getJARLLinkTransmitType() != JARLLinkTransmitType.Send ||
 			packet.getJARLLinkPacketType() != JARLLinkPacketType.DVPacket
 		) {return;}
 
-		//フレームIDを変更する
-//		packet.getBackBone().setFrameIDint(packet.getBackBone().getFrameIDint() ^ entry.getModCode());
-		packet.getBackBone().modFrameID(entry.getModCode());
+		entriesLocker.lock();
+		try {
+			//フレームIDを変更する
+			packet.getBackBone().modFrameID(entry.getModCode());
 
-		packet.setConnectionDirection(entry.getConnectionDirection());
+			packet.setConnectionDirection(entry.getConnectionDirection());
 
-		packet.setLoopblockID(entry.getLoopBlockID());
+			packet.setLoopblockID(entry.getLoopBlockID());
 
-		//経路情報を保存
-		packet.getRfHeader().setSourceRepeater2Callsign(
-			entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING ?
-				entry.getReflectorCallsign() : entry.getRepeaterCallsign()
-		);
-
-		switch(entry.getConnectionDirection()) {
-		case OUTGOING:
-			if(entry.getCurrentFrameID() != 0x0) {return;}
-
-			//希望する該当レピータのヘッダのみ通過するようフィルタ
-			if(
-				!entry.getReflectorCallsign().equals(String.valueOf(packet.getRfHeader().getRepeater1Callsign())) &&
-				!entry.getReflectorCallsign().equals(String.valueOf(packet.getRfHeader().getRepeater2Callsign()))
-			){return;}
-
-			packet.getRfHeader().setYourCallsign(DSTARDefines.CQCQCQ.toCharArray());
-
-			entry.setCurrentFrameID(packet.getBackBone().getFrameIDNumber());
-			entry.setCurrentFrameSequence((byte)0x0);
-			entry.setCurrentFrameDirection(ConnectionDirectionType.INCOMING);
-			entry.getFrameSequenceTimeKepper().setTimeoutTime(1, TimeUnit.SECONDS);
-			entry.getFrameSequenceTimeKepper().updateTimestamp();
-			entry.setCurrentHeader(packet);
-
-			if(log.isDebugEnabled())
-				log.debug(logHeader + "Received JARLLink header packet.\n" + packet.toString());
-
-			addCacheHeader(
-				entry.getCurrentFrameID(),
-				packet,
-				entry.getRemoteAddressPort().getAddress(),
-				entry.getRemoteAddressPort().getPort()
+			//経路情報を保存
+			packet.getRfHeader().setSourceRepeater2Callsign(
+				entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING ?
+					entry.getReflectorCallsign() : entry.getRepeaterCallsign()
 			);
 
-			addReflectorReceivePacket(new ReflectorReceivePacket(entry.getRepeaterCallsign(), packet));
+			switch(entry.getConnectionDirection()) {
+			case OUTGOING:
+				if(entry.getCurrentFrameID() != 0x0) {return;}
 
-			break;
+				//希望する該当レピータのヘッダのみ通過するようフィルタ
+				if(
+					!entry.getReflectorCallsign().equals(String.valueOf(packet.getRfHeader().getRepeater1Callsign())) &&
+					!entry.getReflectorCallsign().equals(String.valueOf(packet.getRfHeader().getRepeater2Callsign()))
+				){return;}
 
-		case INCOMING:
+				packet.getRfHeader().setYourCallsign(DSTARDefines.CQCQCQ.toCharArray());
 
-			break;
+				entry.setCurrentFrameID(packet.getBackBone().getFrameIDNumber());
+				entry.setCurrentFrameSequence((byte)0x0);
+				entry.setCurrentFrameDirection(ConnectionDirectionType.INCOMING);
+				entry.getFrameSequenceTimeKepper().setTimeoutTime(1, TimeUnit.SECONDS);
+				entry.getFrameSequenceTimeKepper().updateTimestamp();
+				entry.setCurrentHeader(packet);
 
-		default:
-			break;
+				if(log.isDebugEnabled())
+					log.debug(logTag + "Received JARLLink header packet.\n" + packet.toString());
+
+				addCacheHeader(
+					entry.getCurrentFrameID(),
+					packet,
+					entry.getRemoteAddressPort().getAddress(),
+					entry.getRemoteAddressPort().getPort()
+				);
+
+				addReflectorReceivePacket(new ReflectorReceivePacket(entry.getRepeaterCallsign(), packet));
+
+				break;
+
+			case INCOMING:
+
+				break;
+
+			default:
+				break;
+			}
+		}finally {
+			entriesLocker.unlock();
 		}
 	}
 
-	private void processVoice(final JARLLinkPacket packet) {
+	private void onReceiveVoice(final JARLLinkPacket packet) {
 		entriesLocker.lock();
 		try {
 			findEntry(
@@ -1511,64 +1757,51 @@ implements WebRemoteControlJARLLinkHandler{
 			).ifPresent(new Consumer<JARLLinkEntry>() {
 				@Override
 				public void accept(JARLLinkEntry entry) {
-					processVoice(entry, packet);
+					onReceiveVoice(entry, packet);
 
 					entry.getActivityTimeKepper().updateTimestamp();
 				}
 			});
-/*
-			for(JARLLinkEntry entry : entries) {
-				if(
-						entry.getRemoteAddressPort().getAddress().equals(packet.getRemoteAddressPort().getAddress()) &&
-						entry.getRemoteAddressPort().getPort() == packet.getRemoteAddressPort().getPort() &&
-						entry.getLocalAddressPort().getPort() == packet.getLocalAddressPort().getPort()
-				) {
-					processVoice(entry, packet);
-
-					entry.getActivityTimeKepper().updateTimestamp();
-				}
-			}
-*/
 		}finally {
 			entriesLocker.unlock();
 		}
 	}
 
-	private void processVoice(JARLLinkEntry entry, JARLLinkPacket packet) {
+	private void onReceiveVoice(JARLLinkEntry entry, JARLLinkPacket packet) {
 		if(
-			entry.getConnectionState() != JARLLinkInternalState.LinkEstablished ||
+			entry.getCurrentConnectionState() != JARLLinkInternalState.LinkEstablished ||
 			packet.getJARLLinkTransmitType() != JARLLinkTransmitType.Send ||
 			packet.getJARLLinkPacketType() != JARLLinkPacketType.DVPacket
 		) {return;}
 
-		//再同期処理
-		if(	//ミニデータからの再同期
-			entry.getSlowdataDecoder().decode(packet.getVoiceData().getDataSegment()) ==
-				DataSegmentDecoderResult.Header
-			&& entry.getCurrentFrameID() == 0x0
-		) {
-			final Header slowdataHeader = entry.getSlowdataDecoder().getHeader();
-			if(slowdataHeader != null) {
-				JARLLinkPacket resyncHeaderPacket = new JARLLinkPacket(
-					slowdataHeader,
-					new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataHeader)
-				);
-				resyncHeaderPacket.setRemoteAddress(entry.getRemoteAddressPort());
+		entriesLocker.lock();
+		try {
+			//再同期処理
+			if(	//ミニデータからの再同期
+				entry.getSlowdataDecoder().decode(packet.getVoiceData().getDataSegment()) ==
+					DataSegmentDecoderResult.Header
+				&& entry.getCurrentFrameID() == 0x0
+			) {
+				final Header slowdataHeader = entry.getSlowdataDecoder().getHeader();
+				if(slowdataHeader != null) {
+					JARLLinkPacket resyncHeaderPacket = new JARLLinkPacket(
+						slowdataHeader,
+						new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataHeader)
+					);
+					resyncHeaderPacket.setRemoteAddress(entry.getRemoteAddressPort());
 
-				resyncHeaderPacket.getBackBone().setFrameIDNumber(packet.getBackBone().getFrameIDNumber());
+					resyncHeaderPacket.getBackBone().setFrameIDNumber(packet.getBackBone().getFrameIDNumber());
 
-				if(log.isDebugEnabled())
-					log.debug(logHeader + "JARLLink resyncing frame by slow data segment...\n" + resyncHeaderPacket.toString(4));
+					if(log.isDebugEnabled())
+						log.debug(logTag + "JARLLink resyncing frame by slow data segment...\n" + resyncHeaderPacket.toString(4));
 
-				processHeader(entry, resyncHeaderPacket, true);
+					onReceiveHeader(entry, resyncHeaderPacket, true);
+				}
 			}
-		}
-		else if(	//ヘッダキャッシュからの再同期
-			entry.getCurrentFrameID() == 0x0
-		) {
-			//resync
-			cachedHeadersLocker.lock();
-			try {
+			else if(	//ヘッダキャッシュからの再同期
+				entry.getCurrentFrameID() == 0x0
+			) {
+				//resync
 				JARLLinkCachedHeader cachedHeader =
 						this.cachedHeaders.get(packet.getBackBone().getFrameIDNumber() ^ entry.getModCode());
 				if(cachedHeader == null) {return;}
@@ -1583,149 +1816,125 @@ implements WebRemoteControlJARLLinkHandler{
 					resyncHeaderPacket.getBackBone().setFrameIDNumber(packet.getBackBone().getFrameIDNumber());
 
 					if(log.isDebugEnabled())
-						log.debug(logHeader + "JARLLink resyncing frame by header cache...\n" + resyncHeaderPacket.toString(4));
+						log.debug(logTag + "JARLLink resyncing frame by header cache...\n" + resyncHeaderPacket.toString(4));
 
-					processHeader(entry, resyncHeaderPacket, true);
+					onReceiveHeader(entry, resyncHeaderPacket, true);
 				}
-			}finally {
-				cachedHeadersLocker.unlock();
+
 			}
-		}
 
-		//フレームIDを変更する
-//		packet.getBackBone().setFrameIDint(packet.getBackBone().getFrameIDint() ^ entry.getModCode());
-		packet.getBackBone().modFrameID(entry.getModCode());
+			//フレームIDを変更する
+			packet.getBackBone().modFrameID(entry.getModCode());
 
-		//IDが異なるパケットは破棄
-		if(entry.getCurrentFrameID() != packet.getBackBone().getFrameIDNumber()) {return;}
+			//IDが異なるパケットは破棄
+			if(entry.getCurrentFrameID() != packet.getBackBone().getFrameIDNumber()) {return;}
 
-		packet.setConnectionDirection(entry.getConnectionDirection());
+			packet.setConnectionDirection(entry.getConnectionDirection());
 
-		packet.setLoopblockID(entry.getLoopBlockID());
+			packet.setLoopblockID(entry.getLoopBlockID());
 
-		packet.getDVPacket().setRfHeader(entry.getCurrentHeader().getRfHeader().clone());
+			packet.getDVPacket().setRfHeader(entry.getCurrentHeader().getRfHeader().clone());
 
-		entry.setCurrentFrameSequence(packet.getBackBone().getSequenceNumber());
+			entry.setCurrentFrameSequence(packet.getBackBone().getSequenceNumber());
 
-		entry.getFrameSequenceTimeKepper().updateTimestamp();
+			entry.getFrameSequenceTimeKepper().updateTimestamp();
 
-		if(log.isTraceEnabled())
-			log.trace(logHeader + "JARLLink received voice packet.\n" + packet.toString(4));
+			if(log.isTraceEnabled())
+				log.trace(logTag + "JARLLink received voice packet.\n" + packet.toString(4));
 
-		cachedHeadersLocker.lock();
-		try{
 			final JARLLinkCachedHeader cachedHeader = this.cachedHeaders.get(entry.getCurrentFrameID());
 			if(cachedHeader != null) {cachedHeader.updateLastActivatedTimestamp();}
+
+			addReflectorReceivePacket(new ReflectorReceivePacket(entry.getRepeaterCallsign(), packet));
+
+			if(
+				!packet.isEndVoicePacket() &&
+				packet.getBackBone().getSequenceNumber() == DSTARDefines.MaxSequenceNumber
+			) {
+				addReflectorReceivePacket(
+					new ReflectorReceivePacket(entry.getRepeaterCallsign(), entry.getCurrentHeader().clone())
+				);
+			}
+
+			if(packet.isEndVoicePacket()) {
+				entry.setCurrentFrameID(0x0);
+				entry.setCurrentFrameDirection(ConnectionDirectionType.Unknown);
+				entry.setCurrentFrameSequence((byte)0x0);
+			}
 		}finally {
-			cachedHeadersLocker.unlock();
-		}
-
-		addReflectorReceivePacket(new ReflectorReceivePacket(entry.getRepeaterCallsign(), packet));
-
-		if(
-			!packet.isEndVoicePacket() &&
-			packet.getBackBone().getSequenceNumber() == DSTARDefines.MaxSequenceNumber
-		) {
-			addReflectorReceivePacket(
-				new ReflectorReceivePacket(entry.getRepeaterCallsign(), entry.getCurrentHeader().clone())
-			);
-		}
-
-		if(packet.isEndVoicePacket()) {
-			entry.setCurrentFrameID(0x0);
-			entry.setCurrentFrameDirection(ConnectionDirectionType.Unknown);
-			entry.setCurrentFrameSequence((byte)0x0);
+			entriesLocker.unlock();
 		}
 	}
-/*
-	private void toWaitState(long waitTime, TimeUnit timeUnit, ProcessState callbackState) {
-		stateTimeKeeper.setTimeoutTime(waitTime, timeUnit);
 
-		nextState = ProcessState.Wait;
-		this.callbackState = callbackState;
-	}
-*/
 	private boolean addCacheHeader(
 		final int frameID,
 		final DSTARPacket headerPacket,
 		final InetAddress remoteAddress,
 		final int remotePort
 	) {
-		cachedHeadersLocker.lock();
-		try {
-			int overlimitHeaders = this.cachedHeaders.size() - 10;
-			if(overlimitHeaders >= 0) {
-				List<Integer> sortedFrameID =
-					Stream.of(this.cachedHeaders)
-					.sorted(
-						ComparatorCompat.comparingLong(
-							new ToLongFunction<Map.Entry<Integer, JARLLinkCachedHeader>>() {
-								@Override
-								public long applyAsLong(Map.Entry<Integer, JARLLinkCachedHeader> entry) {
-									return entry.getValue().getLastActivatedTimestamp();
-								}
-							}
-						)
-					)
-					.map(
-						new Function<Map.Entry<Integer,JARLLinkCachedHeader>, Integer>() {
+		final int overlimitHeaders = this.cachedHeaders.size() - 10;
+		if(overlimitHeaders >= 0) {
+			List<Integer> sortedFrameID =
+				Stream.of(this.cachedHeaders)
+				.sorted(
+					ComparatorCompat.comparingLong(
+						new ToLongFunction<Map.Entry<Integer, JARLLinkCachedHeader>>() {
 							@Override
-							public Integer apply(Map.Entry<Integer, JARLLinkCachedHeader> entry) {
-								return entry.getValue().getFrameID();
+							public long applyAsLong(Map.Entry<Integer, JARLLinkCachedHeader> entry) {
+								return entry.getValue().getLastActivatedTimestamp();
 							}
 						}
 					)
-					.collect(com.annimon.stream.Collectors.toList());
+				)
+				.map(
+					new Function<Map.Entry<Integer,JARLLinkCachedHeader>, Integer>() {
+						@Override
+						public Integer apply(Map.Entry<Integer, JARLLinkCachedHeader> entry) {
+							return entry.getValue().getFrameID();
+						}
+					}
+				)
+				.collect(Collectors.toList());
 
-				int c = 0;
-				do{
-					this.cachedHeaders.remove(sortedFrameID.get(c));
-				}while(overlimitHeaders > c++);
-			}
-
-			final JARLLinkCachedHeader cacheHeaderEntry =
-				new JARLLinkCachedHeader(frameID, headerPacket, remoteAddress, remotePort);
-			if(this.cachedHeaders.containsKey(frameID)) {this.cachedHeaders.remove(frameID);}
-			this.cachedHeaders.put(frameID, cacheHeaderEntry);
-		}finally {
-			cachedHeadersLocker.unlock();
+			int c = 0;
+			do{
+				this.cachedHeaders.remove(sortedFrameID.get(c));
+			}while(overlimitHeaders > c++);
 		}
+
+		final JARLLinkCachedHeader cacheHeaderEntry =
+			new JARLLinkCachedHeader(frameID, headerPacket, remoteAddress, remotePort);
+		if(this.cachedHeaders.containsKey(frameID)) {this.cachedHeaders.remove(frameID);}
+		this.cachedHeaders.put(frameID, cacheHeaderEntry);
 
 		return true;
 	}
 
 	private boolean addEntryRemoveRequestQueue(UUID id) {
-		assert id != null;
-
-		entryRemoveRequestQueueLocker.lock();
+		entriesLocker.lock();
 		try {
 			return entryRemoveRequestQueue.add(id);
 		}finally {
-			entryRemoveRequestQueueLocker.unlock();
+			entriesLocker.unlock();
 		}
 	}
 
 	private void processEntryRemoveRequestQueue() {
 		entriesLocker.lock();
 		try {
-			entryRemoveRequestQueueLocker.lock();
-			try {
-				for(Iterator<UUID> removeIt = entryRemoveRequestQueue.iterator(); removeIt.hasNext();) {
-					UUID removeID = removeIt.next();
-					removeIt.remove();
+			for(final Iterator<UUID> removeIt = entryRemoveRequestQueue.iterator(); removeIt.hasNext();) {
+				final UUID removeID = removeIt.next();
+				removeIt.remove();
 
-					for(Iterator<JARLLinkEntry> refEntryIt = entries.iterator(); refEntryIt.hasNext();) {
-						JARLLinkEntry refEntry = refEntryIt.next();
-						if(refEntry.getId().equals(removeID)) {
-							finalizeEntry(refEntry);
+				for(Iterator<JARLLinkEntry> refEntryIt = entries.iterator(); refEntryIt.hasNext();) {
+					final JARLLinkEntry refEntry = refEntryIt.next();
+					if(refEntry.getId().equals(removeID)) {
+						finalizeEntry(refEntry);
 
-							refEntryIt.remove();
-							break;
-						}
+						refEntryIt.remove();
+						break;
 					}
 				}
-			}finally {
-				entryRemoveRequestQueueLocker.unlock();
 			}
 		}finally {
 			entriesLocker.unlock();
@@ -1733,8 +1942,6 @@ implements WebRemoteControlJARLLinkHandler{
 	}
 
 	private void finalizeEntry(JARLLinkEntry refEntry){
-		assert refEntry != null;
-
 		try {
 			if (
 				refEntry.getOutgoingChannel() != null &&
@@ -1745,7 +1952,7 @@ implements WebRemoteControlJARLLinkHandler{
 			}
 		}catch(IOException ex){
 			if(log.isDebugEnabled())
-				log.debug(logHeader + "Error occurred at channel close.", ex);
+				log.debug(logTag + "Error occurred at channel close.", ex);
 		}
 	}
 
@@ -1753,7 +1960,7 @@ implements WebRemoteControlJARLLinkHandler{
 		final byte[] data = new byte[24];
 		Arrays.fill(data, (byte)0x00);
 		ArrayUtil.copyOfRange(data, 0, "DISCONNECT".getBytes(StandardCharsets.US_ASCII));
-		ArrayUtil.copyOfRange(data, 16, getLoginCallsign().getBytes(StandardCharsets.US_ASCII));
+//		ArrayUtil.copyOfRange(data, 16, getLoginCallsign().getBytes(StandardCharsets.US_ASCII));
 
 		return writeUDPPacket(
 			entry.getOutgoingChannel().getKey(),
@@ -1762,22 +1969,32 @@ implements WebRemoteControlJARLLinkHandler{
 		);
 	}
 
+	private boolean sendKeepAliveToTargetRepeater(
+		final JARLLinkEntry entry
+	) {
+		return sendKeepAlive(entry, false, true);
+	}
+
 	private boolean sendKeepAlive(
-		JARLLinkEntry entry,
+		final JARLLinkEntry entry
+	) {
+		return sendKeepAlive(entry, true, true);
+	}
+
+	private boolean sendKeepAlive(
+		final JARLLinkEntry entry,
 		final boolean isSendObserver, final boolean isSendRepeater
 	) {
-		assert entry != null;
-
 		boolean isSuccess = true;
 
-		final byte[] buffer = new byte[80];
-
 		if(isSendRepeater) {
-			// 0  .. 19 -> NULL
-			// 20 .. 27 -> Callsign
-			// 28 .. 79 -> NULL
+			final byte[] buffer = new byte[24];
+
+			// 4  .. 19 -> Destination IP Address
+			// 20 .. 27 -> Connect Callsign
 			Arrays.fill(buffer, (byte)0x00);
-			ArrayUtil.copyOfRange(buffer, 20, getLoginCallsign().getBytes(StandardCharsets.US_ASCII));
+			ArrayUtil.copyOfRange(buffer, 0, entry.getRemoteAddressPort().getAddress().getHostAddress().getBytes(StandardCharsets.US_ASCII));
+			ArrayUtil.copyOfRange(buffer, 16, getLoginCallsign().getBytes(StandardCharsets.US_ASCII));
 
 			//接続先レピータへ送信
 			if(
@@ -1786,31 +2003,55 @@ implements WebRemoteControlJARLLinkHandler{
 					entry.getRemoteAddressPort(),
 					ByteBuffer.wrap(buffer)
 				)
-			) {isSuccess = false;}
+			) {
+				isSuccess = false;
+			}
 
 			if(log.isTraceEnabled()) {
 				log.trace(
-					logHeader +
+					logTag +
 					"Send keepalive to repeater " + entry.getRemoteAddressPort() + ".\n" +
 					FormatUtil.bytesToHexDump(buffer, 4) + "\n"
 				);
 			}
 		}
 
-
 		if(isSendObserver) {
+			final byte[] buffer = new byte[88];
+			final long currentTime = System.currentTimeMillis() / 1000;
+
 			// 0  .. 3  -> Header(HPCH)
-			// 4  .. 19 -> NULL
+			// 4  .. 19 -> Repeater IP Address
 			// 20 .. 29 -> APP&Version
-			// 32 .. 63 -> MD5(Not supprted)
+			// 32 .. 63 -> dmonitor MD5
 			// 64 .. 71 -> Area Repeater Callsign
 			// 72 .. 79 -> Zone Repeater Callsign
+			// 80 .. 88 -> Connect Callsign
 			Arrays.fill(buffer, (byte)0x00);
 			ArrayUtil.copyOfRange(buffer, 0, "HPCH".getBytes(StandardCharsets.US_ASCII));
+			ArrayUtil.copyOfRange(buffer, 4, entry.getRemoteAddressPort().getAddress().getHostAddress().getBytes(StandardCharsets.US_ASCII));
+
 			ArrayUtil.copyOfRange(buffer, 20, keepaliveAppInformation);
+
+			buffer[31] = DMModemType.ICOM.getValue();
+			ArrayUtil.copyOfRange(buffer, 32, getAccessKey().getBytes(StandardCharsets.US_ASCII));
+			for(int a = 0; a < 32; a += 4) {
+				int b = 0;
+				for(int i = 0; i < 32; i += 8) {
+					final int offset = 32 + a + b;
+
+					buffer[offset] = (byte)((buffer[offset] ^ (currentTime >> i)) & 0xFF);
+
+					b++;
+				}
+			}
+
 			ArrayUtil.copyOfRange(buffer, 64, entry.getReflectorCallsign().getBytes(StandardCharsets.US_ASCII));
 			ArrayUtil.copyOfRange(buffer, 72,
 				DSTARUtils.formatFullCallsign(entry.getReflectorCallsign(), ' ').getBytes(StandardCharsets.US_ASCII)
+			);
+			ArrayUtil.copyOfRange(buffer, 80,
+				DSTARUtils.formatFullCallsign(getLoginCallsign(), ' ').getBytes(StandardCharsets.US_ASCII)
 			);
 
 			if(
@@ -1819,11 +2060,13 @@ implements WebRemoteControlJARLLinkHandler{
 					entry.getConnectionObserverAddressPort(),
 					ByteBuffer.wrap(buffer)
 				)
-			) {isSuccess = false;}
+			) {
+				isSuccess = false;
+			}
 
 			if(log.isTraceEnabled()) {
 				log.trace(
-					logHeader +
+					logTag +
 					"Send keepalive to observer " + entry.getConnectionObserverAddressPort() + ".\n" +
 					FormatUtil.bytesToHexDump(buffer, 4) + "\n"
 				);
@@ -1849,8 +2092,8 @@ implements WebRemoteControlJARLLinkHandler{
 							value.getDestinationRepeater() == repeater
 						) &&
 						(
-							value.getConnectionState() == JARLLinkInternalState.Linking ||
-							value.getConnectionState() == JARLLinkInternalState.LinkEstablished
+							value.getCurrentConnectionState() == JARLLinkInternalState.Linking ||
+							value.getCurrentConnectionState() == JARLLinkInternalState.LinkEstablished
 						) &&
 						(connectionDirection == null || value.getConnectionDirection() == connectionDirection);
 					return match;
@@ -1869,7 +2112,7 @@ implements WebRemoteControlJARLLinkHandler{
 						t.getDestinationRepeater(),
 						t.getConnectionDirection(),
 						false,
-						t.getConnectionState() == JARLLinkInternalState.LinkEstablished,
+						t.getCurrentConnectionState() == JARLLinkInternalState.LinkEstablished,
 						t.getRemoteAddressPort().getAddress(),
 						t.getRemoteAddressPort().getPort(),
 						t.getOutgoingReflectorHostInfo()
@@ -1888,7 +2131,7 @@ implements WebRemoteControlJARLLinkHandler{
 		final ConnectionDirectionType direction
 	) {
 		if(
-			entry.getConnectionState() != JARLLinkInternalState.LinkEstablished ||
+			entry.getCurrentConnectionState() != JARLLinkInternalState.LinkEstablished ||
 			entry.getConnectionDirection() != direction ||
 			entry.getCurrentFrameID() != 0x0 ||
 			!entry.getRepeaterCallsign().equals(repeaterCallsign)
@@ -1910,15 +2153,11 @@ implements WebRemoteControlJARLLinkHandler{
 		entry.getFrameSequenceTimeKepper().updateTimestamp();
 
 		if(log.isDebugEnabled())
-			log.debug(logHeader + String.format("Start transmit frame 0x%04X.", entry.getCurrentFrameID()));
+			log.debug(logTag + String.format("Start transmit frame 0x%04X.", entry.getCurrentFrameID()));
 
 
 		switch(entry.getConnectionDirection()) {
 		case OUTGOING:
-//			sendPacket(packet, entry);
-
-//			entry.getCacheTransmitter().reset();
-
 			entry.getCacheTransmitter().inputWrite(
 				new JARLLinkTransmitPacketEntry(
 					PacketType.Header,
@@ -1931,19 +2170,6 @@ implements WebRemoteControlJARLLinkHandler{
 			break;
 
 		case INCOMING:
-//			sendPacket(packet, entry);
-
-//			entry.getCacheTransmitter().reset();
-
-			entry.getCacheTransmitter().inputWrite(
-				new JARLLinkTransmitPacketEntry(
-					PacketType.Header,
-					packet, incommingChannel,
-					entry.getRemoteAddressPort().getAddress(),
-					entry.getRemoteAddressPort().getPort(),
-					FrameSequenceType.Start
-				)
-			);
 			break;
 
 		default:
@@ -1959,7 +2185,7 @@ implements WebRemoteControlJARLLinkHandler{
 		final ConnectionDirectionType direction
 	) {
 		if(
-			entry.getConnectionState() != JARLLinkInternalState.LinkEstablished ||
+			entry.getCurrentConnectionState() != JARLLinkInternalState.LinkEstablished ||
 			entry.getConnectionDirection() != direction ||
 			entry.getCurrentFrameID() != packet.getBackBone().getFrameIDNumber() ||
 			!entry.getRepeaterCallsign().equals(repeaterCallsign)
@@ -2000,33 +2226,6 @@ implements WebRemoteControlJARLLinkHandler{
 			break;
 
 		case INCOMING:
-			entry.getCacheTransmitter().inputWrite(
-				new JARLLinkTransmitPacketEntry(
-					PacketType.Voice,
-					packet,
-					incommingChannel,
-					entry.getRemoteAddressPort().getAddress(),
-					entry.getRemoteAddressPort().getPort(),
-					FrameSequenceType.None
-				)
-			);
-
-			if(
-				entry.getProtocolVersion() >= 2 &&
-				!packet.isLastFrame() &&
-				packet.getBackBone().getSequenceNumber() == DSTARDefines.MaxSequenceNumber &&
-				entry.getTransmitHeader() != null
-			) {
-				entry.getCacheTransmitter().inputWrite(
-					new JARLLinkTransmitPacketEntry(
-						PacketType.Voice,
-						entry.getTransmitHeader(), entry.getOutgoingChannel(),
-						entry.getRemoteAddressPort().getAddress(),
-						entry.getRemoteAddressPort().getPort(),
-						FrameSequenceType.None
-					)
-				);
-			}
 			break;
 
 		default:
@@ -2036,7 +2235,7 @@ implements WebRemoteControlJARLLinkHandler{
 
 		if(packet.isEndVoicePacket()) {
 			if(log.isDebugEnabled())
-				log.debug(logHeader + String.format("End transmit frame 0x%04X.", entry.getCurrentFrameID()));
+				log.debug(logTag + String.format("End transmit frame 0x%04X.", entry.getCurrentFrameID()));
 
 			entry.setCurrentFrameID(0x0000);
 			entry.setCurrentFrameDirection(ConnectionDirectionType.Unknown);
@@ -2126,12 +2325,12 @@ implements WebRemoteControlJARLLinkHandler{
 
 		final SocketIOEntryUDP dstChannel =
 			entry.getConnectionDirection() == ConnectionDirectionType.OUTGOING ?
-				entry.getOutgoingChannel() : incommingChannel;
+				entry.getOutgoingChannel() : null;
 		if(!dstChannel.getKey().isValid()){return false;}
 
 		if(log.isTraceEnabled()) {
 			log.trace(
-				logHeader + "JARLLink send packet.\n" +
+				logTag + "JARLLink send packet.\n" +
 				packet.toString(4) + "\n" +
 				FormatUtil.bytesToHexDump(buffer, 4)
 			);
@@ -2228,13 +2427,14 @@ implements WebRemoteControlJARLLinkHandler{
 	}
 
 	private void processCTBL(
-		final JARLLinkEntry entry, final byte[] data, final String myLoginCallsign
+		final JARLLinkEntry entry, final ByteBuffer data,
+		final String myLoginCallsign
 	) {
-		if(data.length != 44) {return;}
+		if(data.remaining() < 44) {return;}
 
-		final String ctbl = new String(data, 4, data.length - 4, StandardCharsets.US_ASCII);
-
-		boolean notifyWebRemote = false;
+		final byte[] buffer = new byte[44];
+		data.get(buffer);
+		final String ctbl = new String(buffer, 4, buffer.length - 4, StandardCharsets.US_ASCII);
 
 		if(ctbl.startsWith("START")) {
 			entry.getLoginUsersCache().clear();
@@ -2242,7 +2442,7 @@ implements WebRemoteControlJARLLinkHandler{
 			entry.setLoginUsersReceiving(true);
 
 			if(log.isTraceEnabled())
-				log.trace(logHeader + "Start CTBL receive.");
+				log.trace(logTag + "Start CTBL receive.");
 		}
 		else if(ctbl.startsWith("END")) {
 			entry.setLoginUsersReceiving(false);
@@ -2264,14 +2464,14 @@ implements WebRemoteControlJARLLinkHandler{
 					it.remove();
 
 					if(log.isInfoEnabled())
-						log.info(logHeader + "User " + user.getUserCallsign() + " logout from " + entry.getReflectorCallsign() + ".");
+						log.info(logTag + "User " + user.getUserCallsign() + " logout from " + entry.getReflectorCallsign() + ".");
 
-					notifyWebRemote = true;
+					notifyStatusChanged();
 				}
 			}
 			if(!entry.isLoginUsersReceived() && log.isInfoEnabled()) {
 				final StringBuilder sb = new StringBuilder();
-				sb.append(logHeader);
+				sb.append(logTag);
 				sb.append(' ');
 				sb.append("Login Users on ");
 				sb.append(entry.getReflectorCallsign());
@@ -2289,7 +2489,7 @@ implements WebRemoteControlJARLLinkHandler{
 
 				log.info(sb.toString());
 
-				notifyWebRemote = true;
+				notifyStatusChanged();
 			}
 			entry.getLoginUsersCache().clear();
 			entry.setLoginUsersReceived(true);
@@ -2300,12 +2500,13 @@ implements WebRemoteControlJARLLinkHandler{
 			);
 
 			if(log.isTraceEnabled())
-				log.trace(logHeader + "End CTBL receive.");
+				log.trace(logTag + "End CTBL receive.");
 
-		}else if(entry.getLoginUsersTimekeeper().isTimeout()) {
+		}
+		else if(entry.getLoginUsersTimekeeper().isTimeout()) {
 			entry.getLoginUsersCache().clear();
 			if(log.isDebugEnabled())
-				log.debug(logHeader + "CTBL receive timeout.");
+				log.debug(logTag + "CTBL receive timeout.");
 		}
 		else {
 			for(int i = 0; i < 5; i++) {
@@ -2339,100 +2540,14 @@ implements WebRemoteControlJARLLinkHandler{
 
 					if(entry.isLoginUsersReceived()) {
 						if(log.isInfoEnabled())
-							log.info(logHeader + "User " + callsign + " login to " + entry.getReflectorCallsign() + ".");
+							log.info(logTag + "User " + callsign + " login to " + entry.getReflectorCallsign() + ".");
 
-						notifyWebRemote = true;
+						notifyStatusChanged();
 					}
 				}
 			}
 
 			entry.getLoginUsersTimekeeper().updateTimestamp();
-		}
-
-		if(notifyWebRemote) {notifyStatusChanged();}
-	}
-
-	private static void processERROR(
-		final JARLLinkEntry entry, final byte[] data, final String myLoginCallsign
-	) {
-		final String message =
-			new String(
-				data, 5, data.length - 5, StandardCharsets.UTF_8
-			).trim();
-
-		if(
-			log.isWarnEnabled() &&
-			errorMessagePattern.matcher(message).find()
-		) {
-			log.warn(
-				logHeader +
-				"!!! WARNING !!! message received from " + entry.getReflectorCallsign() + ".\n    " + message
-			);
-		}
-		else if(log.isInfoEnabled()){
-			log.info(
-				logHeader +
-				"Information message received from " + entry.getReflectorCallsign() + ".\n    " + message
-			);
-		}
-	}
-
-	private void announceRepeaterLinked(final JARLLinkEntry entry) {
-
-		if(log.isInfoEnabled())
-			log.info(logHeader + "Link announce started to " + entry.getRepeaterCallsign());
-
-		final int frameID = DSTARUtils.generateFrameID();
-
-		final Header header = new Header(
-			DSTARDefines.CQCQCQ.toCharArray(),
-			entry.getRepeaterCallsign().toCharArray(),
-			entry.getRepeaterCallsign().toCharArray(),
-			entry.getReflectorCallsign().toCharArray(),
-			"INFO".toCharArray()
-		);
-
-		addReflectorReceivePacket(new ReflectorReceivePacket(
-			entry.getRepeaterCallsign(),
-			new JARLLinkPacket(
-				entry.getLoopBlockID(), entry.getConnectionDirection(), header,
-				new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceDataHeader, frameID)
-			)
-		));
-
-		final NewDataSegmentEncoder encoder = new NewDataSegmentEncoder();
-		encoder.setShortMessage("== REPEATER LIKED ==");
-		encoder.setEnableShortMessage(true);
-		encoder.setEnableEncode(true);
-
-		for(byte index = 0; index <= 0x14; index++) {
-			final VoiceAMBE voice = new VoiceAMBE();
-			final BackBoneHeader backbone =
-				new BackBoneHeader(BackBoneHeaderType.DV, BackBoneHeaderFrameType.VoiceData, frameID, index);
-
-			if(index <= 0x12) {
-				voice.setVoiceSegment(DSTARUtils.getNullAMBE());
-				encoder.encode(voice.getDataSegment());
-
-				backbone.setFrameType(BackBoneHeaderFrameType.VoiceData);
-			}
-			else if(index == 0x13) {
-				voice.setVoiceSegment(DSTARUtils.getNullAMBE());
-				voice.setDataSegment(DSTARUtils.getEndSlowdata());
-
-				backbone.setFrameType(BackBoneHeaderFrameType.VoiceData);
-			}
-			else {
-				voice.setVoiceSegment(DSTARUtils.getLastAMBE());
-				voice.setDataSegment(DSTARUtils.getLastSlowdata());
-
-				backbone.setFrameType(BackBoneHeaderFrameType.VoiceDataLastFrame);
-			}
-
-			addReflectorReceivePacket(new ReflectorReceivePacket(
-				entry.getRepeaterCallsign(),
-				new JARLLinkPacket(entry.getLoopBlockID(), entry.getConnectionDirection(), voice, backbone)
-			));
 		}
 	}
 }

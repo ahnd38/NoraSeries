@@ -16,10 +16,8 @@ import org.jp.illg.dstar.DSTARSystemManager;
 import org.jp.illg.dstar.DSTARSystemManager.DSTARSystem;
 import org.jp.illg.dstar.model.DSTARGateway;
 import org.jp.illg.dstar.reporter.model.BasicStatusInformation;
-import org.jp.illg.dstar.service.hfdownloader.ReflectorHostFileDownloadService;
-import org.jp.illg.dstar.service.hfdownloader.ReflectorHostFileDownloadService.DownloadHostsData;
 import org.jp.illg.dstar.service.icom.IcomRepeaterCommunicationService;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.dstar.service.web.model.WebRemoteControlServiceEvent;
@@ -149,7 +147,6 @@ public class NoraGatewayThread{
 	/**
 	 * デーモンモード
 	 */
-	@SuppressWarnings("unused")
 	private boolean isDaemonMode = false;
 
 	/**
@@ -383,6 +380,7 @@ public class NoraGatewayThread{
 				log.info(logTag + "Loading application configuration file = " + applicationConfigurationFilePath.toString());
 
 			if(!NoraGatewayConfigurator.readConfiguration(
+				applicationVersionInfo,
 				appProperties, applicationConfigurationFilePath.toFile()
 			)) {
 				return false;
@@ -424,7 +422,11 @@ public class NoraGatewayThread{
 		final FileUpdateMonitoringTool fileUpdateMonitoringTool
 	) {
 		try(
-			final ReflectorNameService reflectorNameService = new ReflectorNameService();
+			final ReflectorNameService reflectorNameService = new ReflectorNameService(
+				systemID,
+				exceptionListener,
+				workerExecutor
+			);
 
 			final RepeaterNameService repeaterNameService = new RepeaterNameService(
 				systemID,
@@ -466,23 +468,6 @@ public class NoraGatewayThread{
 					appProperties.getServiceProperties()
 						.getStatusInformationFileOutputServiceProperties().getOutputPath()
 				) : null;
-
-			final ReflectorHostFileDownloadService reflectorHostFileDownloadService =
-				new ReflectorHostFileDownloadService(
-					systemID,
-					exceptionListener,
-					workerExecutor,
-					new EventListener<ReflectorHostFileDownloadService.DownloadHostsData>() {
-						@Override
-						public void event(DownloadHostsData event, Object attachment) {
-							if(NoraGatewayThread.this.gateway != null) {
-								NoraGatewayThread.this.gateway.loadReflectorHosts(
-									event.getHosts(), event.getUrl().toExternalForm(), true
-								);
-							}
-						}
-					}
-				);
 
 			final DSTARSystem dstarSystem = DSTARSystemManager.createSystem(
 				systemID,
@@ -558,19 +543,19 @@ public class NoraGatewayThread{
 				});
 			}
 
+			if(!reflectorNameService.initialize(
+				appProperties.getServiceProperties().getReflectorNameServiceProperties())
+			) {
+				if(log.isErrorEnabled())
+					log.error(logTag + "Could not initialize ReflectorNameService.");
+
+				return false;
+			}
 			if(!repeaterNameService.initialize(
 				appProperties.getServiceProperties().getRepeaterNameServiceProperties()
 			)) {
 				if(log.isErrorEnabled())
 					log.error(logTag + "Failed to initialize RepeaterNameService.");
-
-				return false;
-			}
-			else if(!reflectorHostFileDownloadService.setProperties(
-				appProperties.getServiceProperties().getReflectorHostFileDownloadServiceProperties()
-			)) {
-				if(log.isErrorEnabled())
-					log.error(logTag + "Could not initialize ReflectorHostFileDownloadService.");
 
 				return false;
 			}
@@ -615,7 +600,6 @@ public class NoraGatewayThread{
 				reflectorNameService,
 				repeaterNameService,
 				webRemoteControlService,
-				reflectorHostFileDownloadService,
 				noraUsersAPIService,
 				statusReporter,
 				dstarSystem.getSocketIO(),
@@ -630,7 +614,6 @@ public class NoraGatewayThread{
 		final ReflectorNameService reflectorNameService,
 		final RepeaterNameService repeaterNameService,
 		final WebRemoteControlService webRemoteControlService,
-		final ReflectorHostFileDownloadService reflectorHostFileDownloadService,
 		final NoraUsersAPIService apiService,
 		final NoraGatewayStatusReporter reporter,
 		final SocketIO localSocketIO,
@@ -676,9 +659,6 @@ public class NoraGatewayThread{
 				if(webRemoteControlService != null)
 					webRemoteControlService.processService();
 
-				if(reflectorHostFileDownloadService != null)
-					reflectorHostFileDownloadService.processService();
-
 				fileUpdateMonitoringTool.process();
 
 				if(stdinReader.ready()) {break;}
@@ -716,7 +696,7 @@ public class NoraGatewayThread{
 			return true;
 		}catch(Exception ex) {
 			if(log.isErrorEnabled())
-				log.error(logTag + "Application uncaught error occured.", ex);
+				log.error(logTag + "Application uncaught error occurred.", ex);
 
 			if(
 				noraId != null &&

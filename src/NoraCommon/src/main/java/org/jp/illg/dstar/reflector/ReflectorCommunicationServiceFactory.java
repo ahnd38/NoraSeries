@@ -9,6 +9,7 @@ import org.jp.illg.dstar.gateway.tool.reflectorlink.ReflectorLinkManager;
 import org.jp.illg.dstar.model.DSTARGateway;
 import org.jp.illg.dstar.model.defines.ReflectorProtocolProcessorTypes;
 import org.jp.illg.dstar.reflector.model.ReflectorCommunicationServiceEvent;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.socketio.SocketIO;
 import org.jp.illg.util.thread.ThreadUncaughtExceptionListener;
@@ -27,6 +28,7 @@ public class ReflectorCommunicationServiceFactory {
 
 	public static ReflectorCommunicationService createService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ReflectorProtocolProcessorTypes reflectorProtocolType,
 		@NonNull final ExecutorService workerExecutor,
@@ -34,20 +36,15 @@ public class ReflectorCommunicationServiceFactory {
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		if(
-			gateway == null ||
-			reflectorProtocolType == null
-		) {return null;}
-
 		ReflectorCommunicationService service = null;
 
 		service = createServiceInstance(
-			systemID,
+			systemID, applicationInformation,
 			gateway, reflectorProtocolType, workerExecutor, socketIO, reflectorLinkManager, eventListener
 		);
 		if(service == null) {
 			service = createServiceInstance(
-				systemID,
+				systemID, applicationInformation,
 				gateway, reflectorProtocolType, workerExecutor, reflectorLinkManager, eventListener
 			);
 		}
@@ -64,18 +61,20 @@ public class ReflectorCommunicationServiceFactory {
 
 	private static ReflectorCommunicationService createServiceInstance(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		@NonNull DSTARGateway gateway,
 		@NonNull ReflectorProtocolProcessorTypes type,
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		return createServiceInstance(systemID, gateway, type, null, reflectorLinkManager, eventListener);
+		return createServiceInstance(systemID, applicationInformation, gateway, type, null, reflectorLinkManager, eventListener);
 	}
 
 	@SuppressWarnings("unchecked")
 	private static ReflectorCommunicationService createServiceInstance(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ReflectorProtocolProcessorTypes type,
 		@NonNull final ExecutorService workerExecutor,
@@ -91,25 +90,29 @@ public class ReflectorCommunicationServiceFactory {
 			final Class<? extends ReflectorCommunicationService> reflectorClass =
 				(Class<? extends ReflectorCommunicationService>)Class.forName(type.getClassName());
 
-			final Constructor<? extends ReflectorCommunicationService> constructor =
-				socketIO != null ?
-					reflectorClass.getConstructor(
-						UUID.class,
-						ThreadUncaughtExceptionListener.class, DSTARGateway.class,
-						ExecutorService.class, SocketIO.class, ReflectorLinkManager.class,
-						EventListener.class
-					):
-					reflectorClass.getConstructor(
-						UUID.class,
-						ThreadUncaughtExceptionListener.class, DSTARGateway.class,
-						ExecutorService.class, ReflectorLinkManager.class,
-						EventListener.class
-					);
+			final Constructor<? extends ReflectorCommunicationService> constructor = socketIO != null ?
+				reflectorClass.getConstructor(
+					UUID.class,
+					ApplicationInformation.class,
+					ThreadUncaughtExceptionListener.class, DSTARGateway.class,
+					ExecutorService.class, SocketIO.class, ReflectorLinkManager.class,
+					EventListener.class
+				):
+				reflectorClass.getConstructor(
+					UUID.class,
+					ApplicationInformation.class,
+					ThreadUncaughtExceptionListener.class, DSTARGateway.class,
+					ExecutorService.class, ReflectorLinkManager.class,
+					EventListener.class
+				);
 
-			instance =
-				socketIO != null ?
-					constructor.newInstance(systemID, gateway, gateway, workerExecutor, socketIO, reflectorLinkManager, eventListener):
-					constructor.newInstance(systemID, gateway, gateway, workerExecutor, reflectorLinkManager, eventListener);
+			instance = socketIO != null ?
+				constructor.newInstance(
+					systemID, applicationInformation, gateway, gateway, workerExecutor, socketIO, reflectorLinkManager, eventListener
+				):
+				constructor.newInstance(
+					systemID, applicationInformation, gateway, gateway, workerExecutor, reflectorLinkManager, eventListener
+				);
 
 		}catch(
 			ClassNotFoundException |

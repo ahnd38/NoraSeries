@@ -55,6 +55,7 @@ import org.jp.illg.dstar.service.web.model.ReflectorStatusData;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.dstar.util.DataSegmentDecoder.DataSegmentDecoderResult;
 import org.jp.illg.dstar.util.dvpacket2.FrameSequenceType;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.ArrayUtil;
 import org.jp.illg.util.BufferState;
 import org.jp.illg.util.FormatUtil;
@@ -147,6 +148,7 @@ implements WebRemoteControlDCSHandler
 
 	public DCSCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
@@ -156,6 +158,7 @@ implements WebRemoteControlDCSHandler
 	) {
 		super(
 			systemID,
+			applicationInformation,
 			exceptionListener,
 			DCSCommunicationService.class,
 			socketIO,
@@ -180,13 +183,14 @@ implements WebRemoteControlDCSHandler
 
 	public DCSCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		this(systemID, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
+		this(systemID, applicationInformation, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
 	}
 
 
@@ -325,13 +329,10 @@ implements WebRemoteControlDCSHandler
 
 		entriesLocker.lock();
 		try {
-			final Optional<DCSReflectorEntry> duplicateEntry =
-				findReflectorEntry(
-					null, -1, -1, ConnectionDirectionType.OUTGOING,
-					repeater.getRepeaterCallsign(), reflectorCallsign
-				)
-				.findFirst();
-			if(duplicateEntry.isPresent()) {
+			if(findReflectorEntry(
+				null, -1, -1, ConnectionDirectionType.OUTGOING,
+				repeater.getRepeaterCallsign(), reflectorCallsign
+			).findFirst().isPresent()) {
 				if(log.isWarnEnabled()) {
 					log.warn(
 						logHeader + "Could not link to duplicate reflector,ignore link request from " +
@@ -341,8 +342,7 @@ implements WebRemoteControlDCSHandler
 
 				return null;
 			}
-
-			if(getMaxOutgoingLink() <= countLinkEntry(ConnectionDirectionType.OUTGOING)) {
+			else if(getMaxOutgoingLink() <= countLinkEntry(ConnectionDirectionType.OUTGOING)) {
 				if(log.isWarnEnabled()) {
 					log.warn(
 						logHeader +

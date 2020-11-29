@@ -57,6 +57,7 @@ import org.jp.illg.dstar.service.web.model.ReflectorStatusData;
 import org.jp.illg.dstar.util.CallSignValidator;
 import org.jp.illg.dstar.util.DataSegmentDecoder.DataSegmentDecoderResult;
 import org.jp.illg.dstar.util.dvpacket2.FrameSequenceType;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.BufferState;
 import org.jp.illg.util.FormatUtil;
 import org.jp.illg.util.PropertyUtils;
@@ -200,6 +201,7 @@ implements WebRemoteControlDExtraHandler{
 
 	public DExtraCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
@@ -209,6 +211,7 @@ implements WebRemoteControlDExtraHandler{
 	) {
 		super(
 			systemID,
+			applicationInformation,
 			exceptionListener,
 			DExtraCommunicationService.class,
 			socketIO,
@@ -237,13 +240,14 @@ implements WebRemoteControlDExtraHandler{
 
 	public DExtraCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		this(systemID, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
+		this(systemID, applicationInformation, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
 	}
 
 	@Override

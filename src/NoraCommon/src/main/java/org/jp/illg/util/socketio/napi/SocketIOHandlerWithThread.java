@@ -11,6 +11,9 @@ import org.jp.illg.util.socketio.SocketIO.SocketIOProcessingHandlerInterface;
 import org.jp.illg.util.socketio.SocketIOEntry;
 import org.jp.illg.util.socketio.model.OperationRequest;
 import org.jp.illg.util.socketio.napi.define.ChannelProtocol;
+import org.jp.illg.util.socketio.napi.define.PacketTracerFunction;
+import org.jp.illg.util.socketio.napi.define.ParserFunction;
+import org.jp.illg.util.socketio.napi.define.UnknownPacketHandler;
 import org.jp.illg.util.socketio.napi.model.BufferEntry;
 import org.jp.illg.util.socketio.support.HostIdentType;
 import org.jp.illg.util.thread.ThreadBase;
@@ -174,6 +177,14 @@ implements SocketIOHandlerInterface {
 
 	protected Optional<BUFT> getReceivedReadBuffer() {
 		return handler.getReceivedReadBuffer();
+	}
+
+	protected boolean parseReceivedReadBuffer(
+		final PacketTracerFunction packetTracer,
+		@NonNull final ParserFunction parser,
+		final UnknownPacketHandler unknownPacketHandler
+	) {
+		return handler.parseReceivedReadBuffer(packetTracer, parser, unknownPacketHandler);
 	}
 
 	protected @NonNull Optional<BUFT> getReadBufferUDP(

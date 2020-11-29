@@ -71,7 +71,15 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 	/**
 	 * フレームタイムアウト時間(秒)
 	 */
-	private static final int frameTimeoutSeconds = 2;
+	private static final int frameTimeoutSeconds = 1;
+
+	/**
+	 * DVフレーム中にヘッダを挿入する
+	 *
+	 * ※2020年現在では仕様書通りに挿入すると,何故かレピータから正常なRF出力が得られないので、
+	 * falseとすること
+	 */
+	private static final boolean headerInsertDVFrameDefault = false;
 
 
 
@@ -93,7 +101,7 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 	@Setter(AccessLevel.PRIVATE)
 	private String controllerAddress;
 	@Getter
-	private static final String controllerAddressDefault = "localhost";
+	private static final String controllerAddressDefault = null;
 	private static final String controllerAddressPropertyName = "ControllerAddress";
 
 	@Getter
@@ -102,6 +110,11 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 	@Getter
 	private static final int controllerPortDefault = 20000;
 	private static final String controllerPortPropertyName = "ControllerPort";
+
+	@Getter
+	@Setter(AccessLevel.PRIVATE)
+	private boolean headerInsertDVFrame;
+	private static final String headerInsertDVFramePropertyName = "HeaderInsertDVFrame";
 
 
 	private String logTag = createLogTag();
@@ -201,7 +214,7 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 
 	private final PacketTracerFunction controllerPacketTracer = new PacketTracerFunction() {
 		@Override
-		public Boolean apply(
+		public void accept(
 			final ByteBuffer buffer,
 			final InetSocketAddress remoteAddress,
 			final InetSocketAddress localAddress
@@ -216,8 +229,6 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 
 				log.trace(sb.toString());
 			}
-
-			return true;
 		}
 	};
 
@@ -255,7 +266,7 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 
 	private final UnknownPacketHandler controllerUnknownPacketHandler = new UnknownPacketHandler() {
 		@Override
-		public Boolean apply(
+		public void accept(
 			final ByteBuffer buffer,
 			final InetSocketAddress remoteAddress,
 			final InetSocketAddress localAddress
@@ -267,8 +278,6 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 					FormatUtil.byteBufferToHexDump(buffer, 4)
 				);
 			}
-
-			return true;
 		}
 	};
 
@@ -302,6 +311,12 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 
 		downlinkFrameEntries = new ConcurrentHashMap<>();
 		uplinkFrameEntries = new ConcurrentHashMap<>();
+
+		setGatewayLocalPort(gatewayLocalPortDefault);
+		setMonitorLocalPort(monitorLocalPortDefault);
+		setControllerAddress(controllerAddressDefault);
+		setControllerPort(controllerPortDefault);
+		setHeaderInsertDVFrame(headerInsertDVFrameDefault);
 	}
 
 	@Override
@@ -423,8 +438,8 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 		setControllerPort(PropertyUtils.getInteger(
 			prop,
 			controllerPortPropertyName,
-			getControllerPortDefault())
-		);
+			getControllerPortDefault()
+		));
 
 		if(prop.contains(controllerAddressPropertyName)) {
 			try {
@@ -442,9 +457,18 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 			}
 
 			isControllerAddressPresent = true;
+
+			logTag = createLogTag(controllerAddressPort);
 		}
 		else
 			isControllerAddressPresent = false;
+
+
+		setHeaderInsertDVFrame(PropertyUtils.getBoolean(
+			prop,
+			headerInsertDVFramePropertyName,
+			headerInsertDVFrameDefault
+		));
 
 		return true;
 	}
@@ -488,11 +512,22 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 				if(log.isWarnEnabled())
 					log.warn(logTag + "Controller keep alive timeout! ID-RP2C(" + controllerAddressPort + ") is dead.");
 
-				controllerAddressPort = null;
+				if(!isControllerAddressPresent) {controllerAddressPort = null;}
 				magicNumber = 0;
 
 				logTag = createLogTag();
 			}
+			else if(
+				//コントローラのアドレスが外部から設定されている状態で、3分間無通信状態が続いた場合には
+				//初期化パケットを送信する
+				isControllerAddressPresent && controllerAddressPort != null &&
+				controllerKeepaliveTimekeeper.isTimeout(3, TimeUnit.MINUTES)
+			) {
+				sendINIT(controllerAddressPort);
+
+				magicNumber = 0;
+			}
+
 		}finally {
 			getLocker().unlock();
 		}
@@ -553,67 +588,18 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 
 				while(toControllerPackets.size() > 1000) {toControllerPackets.poll();}
 
-				BackBonePacket bbPacket = null;
+				final BackBonePacket bbPacket = convertDSTARPacketToBackBonePacket(packet, isNewFrame);
+				if(bbPacket != null) {toControllerPackets.add(bbPacket);}
 
 				if(
-					packet.getPacketType() == DSTARPacketType.DD &&
-					packet.getDDPacket() != null
-				) {
-					bbPacket = new BackBonePacket(
-						packet.getLoopblockID(),
-						null,
-						new BackBoneManagementData(
-							0,
-							BackBonePacketDirectionType.Send,
-							BackBonePacketType.DDPacket,
-							0
-						),
-						null,
-						null,
-						null,
-						packet.getDDPacket()
-					);
-				}
-				else if(
+					isHeaderInsertDVFrame() &&
 					packet.getPacketType() == DSTARPacketType.DV &&
-					packet.getDVPacket() != null
+					packet.getDVPacket() != null && packet.getDVPacket().hasPacketType(PacketType.Voice) &&
+					!packet.isLastFrame() &&
+					packet.getBackBoneHeader() != null && packet.getBackBoneHeader().getSequenceNumber() == DSTARDefines.MaxSequenceNumber
 				) {
-					if(isNewFrame && packet.getDVPacket().hasPacketType(PacketType.Header)) {
-						packet.getDVPacket().setPacketType(PacketType.Header);
-
-						bbPacket = new BackBonePacket(
-							packet.getLoopblockID(),
-							null,
-							new BackBoneManagementData(
-								0,
-								BackBonePacketDirectionType.Send,
-								BackBonePacketType.DVPacket,
-								0
-							),
-							null,
-							null,
-							null,
-							packet.getDVPacket()
-						);
-					}
-					else if(packet.getDVPacket().hasPacketType(PacketType.Voice)){
-						packet.getDVPacket().setPacketType(PacketType.Voice);
-
-						bbPacket = new BackBonePacket(
-							packet.getLoopblockID(),
-							null,
-							new BackBoneManagementData(
-								0,
-								BackBonePacketDirectionType.Send,
-								BackBonePacketType.DVPacket,
-								0
-							),
-							null,
-							null,
-							null,
-							packet.getDVPacket()
-						);
-					}
+					final BackBonePacket headerPacket = convertDSTARPacketToBackBonePacket(entry.getHeaderPacket(), true);
+					if(headerPacket != null) {toControllerPackets.add(headerPacket);}
 				}
 
 				if(packet.isLastFrame()) {
@@ -622,8 +608,6 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 					if(log.isDebugEnabled())
 						log.debug(logTag + "End downlink frame = " + String.format("0x%04X", packet.getFrameID()));
 				}
-
-				if(bbPacket != null) {toControllerPackets.add(bbPacket);}
 			}
 
 			//送信中であるか
@@ -660,6 +644,76 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 		}finally {
 			getLocker().unlock();
 		}
+	}
+
+	private BackBonePacket convertDSTARPacketToBackBonePacket(
+		final DSTARPacket packet,
+		final boolean isNewFrame
+	) {
+		BackBonePacket backbonePacket = null;
+
+		if(
+			packet.getPacketType() == DSTARPacketType.DD &&
+			packet.getDDPacket() != null
+		) {
+			backbonePacket = new BackBonePacket(
+				packet.getLoopblockID(),
+				null,
+				new BackBoneManagementData(
+					0,
+					BackBonePacketDirectionType.Send,
+					BackBonePacketType.DDPacket,
+					0
+				),
+				null,
+				null,
+				null,
+				packet.getDDPacket()
+			);
+		}
+		else if(
+			packet.getPacketType() == DSTARPacketType.DV &&
+			packet.getDVPacket() != null
+		) {
+			if(isNewFrame && packet.getDVPacket().hasPacketType(PacketType.Header)) {
+				packet.getDVPacket().setPacketType(PacketType.Header);
+
+				backbonePacket = new BackBonePacket(
+					packet.getLoopblockID(),
+					null,
+					new BackBoneManagementData(
+						0,
+						BackBonePacketDirectionType.Send,
+						BackBonePacketType.DVPacket,
+						0
+					),
+					null,
+					null,
+					null,
+					packet.getDVPacket()
+				);
+			}
+			else if(packet.getDVPacket().hasPacketType(PacketType.Voice)){
+				packet.getDVPacket().setPacketType(PacketType.Voice);
+
+				backbonePacket = new BackBonePacket(
+					packet.getLoopblockID(),
+					null,
+					new BackBoneManagementData(
+						0,
+						BackBonePacketDirectionType.Send,
+						BackBonePacketType.DVPacket,
+						0
+					),
+					null,
+					null,
+					null,
+					packet.getDVPacket()
+				);
+			}
+		}
+
+		return backbonePacket;
 	}
 
 	private void processControllerReceivePacket(final BackBonePacket packet) {
@@ -742,14 +796,8 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 				controllerKeepaliveTimekeeper.updateTimestamp();
 
 				//コントローラのアドレスが確定していない場合にはINITを送信
-				if(controllerAddressPort == null) {
-					final BackBonePacket initPacket = new BackBonePacket(new BackBoneManagementData(
-						magicNumber, BackBonePacketDirectionType.Send, BackBonePacketType.Check, 0
-					));
-					final byte[] buffer = IcomPacketTool.assembleInitPacket(initPacket);
-
-					sendPacket(initPacket, buffer, packet.getRemoteAddress());
-				}
+				if(controllerAddressPort == null)
+					sendINIT(packet.getRemoteAddress());
 
 				return;
 			}
@@ -979,6 +1027,15 @@ public class IDRP2CCommunicationService extends IcomRepeaterCommunicator{
 		}
 
 		return isSuccess;
+	}
+
+	private boolean sendINIT(final InetSocketAddress destinationAddress) {
+		final BackBonePacket initPacket = new BackBonePacket(new BackBoneManagementData(
+			magicNumber, BackBonePacketDirectionType.Send, BackBonePacketType.Check, 0
+		));
+		final byte[] buffer = IcomPacketTool.assembleInitPacket(initPacket);
+
+		return sendPacket(initPacket, buffer, destinationAddress);
 	}
 
 	private void incrementMagicNumber() {

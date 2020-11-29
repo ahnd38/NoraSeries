@@ -162,7 +162,7 @@ implements WebRemoteControlHomeblewHandler{
 
 		//アクセスホワイトリストを流し込み
 		accessWhiteList.addAll(
-			Stream.of(properties.getAccessWhiteList())
+			Stream.of(properties.getAccessAllowList())
 			.filter(new Predicate<CallsignEntry>() {
 				@Override
 				public boolean test(CallsignEntry e) {

@@ -46,6 +46,7 @@ import org.jp.illg.dstar.service.web.model.ReflectorStatusData;
 import org.jp.illg.dstar.service.web.util.WebSocketTool;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.dstar.util.dvpacket2.TransmitterPacket;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.Timer;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.socketio.SocketIO;
@@ -153,6 +154,9 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 	private final UUID systemID;
 
 	@Getter(AccessLevel.PROTECTED)
+	private final ApplicationInformation<?> applicationInformation;
+
+	@Getter(AccessLevel.PROTECTED)
 	private final DSTARGateway gateway;
 
 	@Getter(AccessLevel.PROTECTED)
@@ -165,14 +169,6 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 	@Getter(AccessLevel.PROTECTED)
 	@Setter(AccessLevel.PRIVATE)
 	private int receiveModCode;
-
-	@Getter
-	@Setter
-	private String applicationName;
-
-	@Getter
-	@Setter
-	private String applicationVersion;
 
 	@Getter(AccessLevel.PROTECTED)
 	@Setter(AccessLevel.PRIVATE)
@@ -233,6 +229,7 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 
 	public ReflectorCommunicationServiceBase(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final Class<?> processorClass,
 		final SocketIO socketIO,
@@ -246,7 +243,7 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 		super(exceptionListener, processorClass, socketIO, bufferEntryClass, hostIdentType);
 
 		this.systemID = systemID;
-
+		this.applicationInformation = applicationInformation;
 		this.reflectorLinkManager = reflectorLinkManager;
 		this.eventListener = eventListener;
 		this.gateway = gateway;
@@ -291,6 +288,7 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 
 	public ReflectorCommunicationServiceBase(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final Class<?> processorClass,
 		@NonNull final Class<BufferType> bufferEntryClass,
@@ -302,6 +300,7 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 	) {
 		this(
 			systemID,
+			applicationInformation,
 			exceptionListener, processorClass,
 			null,
 			bufferEntryClass, hostIdentType,
@@ -348,6 +347,16 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 
 			return false;
 		}
+	}
+
+	@Override
+	public String getApplicationName() {
+		return applicationInformation.getApplicationName();
+	}
+
+	@Override
+	public String getApplicationVersion() {
+		return applicationInformation.getApplicationVersion();
 	}
 
 	@Override
@@ -935,9 +944,9 @@ implements ReflectorCommunicationService, WebRemoteControlReflectorHandler{
 
 				final RemoteUsersUpdateEntry taskEntry = entry;
 
-				workerExecutor.submit(new Runnable() {
+				workerExecutor.submit(new RunnableTask(getExceptionListener()) {
 					@Override
-					public void run() {
+					public void task() {
 						getGateway().notifyReflectorLoginUsers(
 							getProcessorType(),
 							getProtocolType(),

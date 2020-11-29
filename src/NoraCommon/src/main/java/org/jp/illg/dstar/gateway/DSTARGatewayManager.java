@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.jp.illg.dstar.model.DSTARGateway;
 import org.jp.illg.dstar.routing.RoutingServiceManager;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.dstar.util.DSTARUtils;

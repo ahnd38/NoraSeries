@@ -722,7 +722,7 @@ public class SocketIOHandler<BUFT extends BufferEntry> implements SocketIOProces
 
 					if(packetTracer != null) {
 						try {
-							packetTracer.apply(
+							packetTracer.accept(
 								receiveBuffer,
 								buffer.getRemoteAddress(), buffer.getLocalAddress()
 							);
@@ -750,7 +750,7 @@ public class SocketIOHandler<BUFT extends BufferEntry> implements SocketIOProces
 					} while (match);
 
 					if(unknownPacketHandler != null && receiveBuffer.hasRemaining()) {
-						unknownPacketHandler.apply(
+						unknownPacketHandler.accept(
 							receiveBuffer,
 							buffer.getRemoteAddress(), buffer.getLocalAddress()
 						);

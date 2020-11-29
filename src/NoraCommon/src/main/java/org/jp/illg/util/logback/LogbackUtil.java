@@ -9,6 +9,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
@@ -19,6 +20,28 @@ import lombok.extern.slf4j.Slf4j;
 public class LogbackUtil {
 
 	private LogbackUtil() {}
+
+	public static boolean initializeMinimumStandardConsoleLogger() {
+		final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+		final PatternLayoutEncoder pl = new PatternLayoutEncoder();
+		pl.setContext(context);
+		pl.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+		pl.start();
+
+		final ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
+		consoleAppender.setContext(context);
+		consoleAppender.setName("STDCONSOLE");
+		consoleAppender.setEncoder(pl);
+		consoleAppender.start();
+
+		final ch.qos.logback.classic.Logger rootLogger =
+			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		rootLogger.detachAppender("STDCONSOLE");
+		rootLogger.addAppender(consoleAppender);
+
+		return true;
+	}
 
 	/**
 	 * XMLファイルからlogbackを設定する

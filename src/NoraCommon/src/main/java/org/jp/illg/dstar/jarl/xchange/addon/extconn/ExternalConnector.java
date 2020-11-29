@@ -88,7 +88,7 @@ import org.jp.illg.dstar.routing.define.RoutingServiceEvent;
 import org.jp.illg.dstar.routing.define.RoutingServiceResult;
 import org.jp.illg.dstar.routing.model.RoutingInfo;
 import org.jp.illg.dstar.routing.model.UserRoutingInfo;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.dstar.service.web.handler.WebRemoteControlGatewayHandler;
@@ -1422,15 +1422,14 @@ implements DSTARGateway, WebRemoteControlGatewayHandler
 	private boolean createReflectorProtocolProcessor(ReflectorProperties reflectorProperties){
 		return ReflectorCommunicationServiceManager.createService(
 			getSystemID(),
+			applicationVersion,
 			this,
 			reflectorProperties.getType(),
 			reflectorProperties,
 			workerExecutor,
 			getSocketIO(),
 			reflectorLinkManager,
-			reflectorEventListener,
-			getApplicationName() + "@" + applicationVersion.getRunningOperatingSystem(),
-			getApplicationVersion()
+			reflectorEventListener
 		) != null;
 	}
 

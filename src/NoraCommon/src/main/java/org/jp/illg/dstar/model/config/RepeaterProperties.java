@@ -108,7 +108,7 @@ public class RepeaterProperties {
 
 	private Properties configurationProperties;
 
-	private List<CallsignEntry> accessWhiteList;
+	private List<CallsignEntry> accessAllowList;
 
 	private List<ModemProperties> modemProperties;
 
@@ -148,11 +148,11 @@ public class RepeaterProperties {
 			return (this.configurationProperties = new Properties());
 	}
 
-	public synchronized List<CallsignEntry> getAccessWhiteList() {
-		if(accessWhiteList != null)
-			return accessWhiteList;
+	public synchronized List<CallsignEntry> getAccessAllowList() {
+		if(accessAllowList != null)
+			return accessAllowList;
 		else
-			return accessWhiteList = new ArrayList<>();
+			return accessAllowList = new ArrayList<>();
 	}
 
 	public synchronized List<String> getDirectMyCallsigns() {

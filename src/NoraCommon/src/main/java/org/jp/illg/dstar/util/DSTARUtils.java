@@ -170,17 +170,19 @@ public class DSTARUtils {
 	}
 
 	public static String formatFullLengthCallsign(String callsign) {
-		final String format = "%-" + DSTARDefines.CallsignFullLength + "S";
-
 		if(callsign == null) {callsign = "";}
-		return String.format(format, callsign);
+		final String formatedCallsign =
+			String.format("%-" + DSTARDefines.CallsignFullLength + "S", callsign);
+
+		return formatedCallsign.substring(0, DSTARDefines.CallsignFullLength);
 	}
 
 	public static String formatShortLengthCallsign(String callsign) {
-		final String format = "%-" + DSTARDefines.CallsignShortLength + "S";
-
 		if(callsign == null) {callsign = "";}
-		return String.format(format, callsign);
+		final String formatedCallsign =
+			String.format("%-" + DSTARDefines.CallsignShortLength + "S", callsign);
+
+		return formatedCallsign.substring(0, DSTARDefines.CallsignShortLength);
 	}
 
 	public static String formatLengthShortMessage(String shortMessage) {

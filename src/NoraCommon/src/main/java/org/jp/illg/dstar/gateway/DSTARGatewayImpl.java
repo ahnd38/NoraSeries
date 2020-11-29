@@ -59,7 +59,7 @@ import org.jp.illg.dstar.routing.model.RepeaterRoutingInfo;
 import org.jp.illg.dstar.routing.model.RoutingCompletedTaskInfo;
 import org.jp.illg.dstar.routing.model.RoutingInfo;
 import org.jp.illg.dstar.routing.model.UserRoutingInfo;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.remotecontrol.RemoteControlService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
@@ -1372,16 +1372,16 @@ public class DSTARGatewayImpl extends ThreadBase
 	}
 
 	private boolean createReflectorProtocolProcessor(
-		ReflectorProperties reflectorProperties) {
+		ReflectorProperties reflectorProperties
+	) {
 		return ReflectorCommunicationServiceManager.createService(
 			getSystemID(),
+			applicationVersion,
 			this, reflectorProperties.getType(), reflectorProperties,
 			getWorkerExecutor(),
 			getSocketIO(),
 			getReflectorLinkManager(),
-			reflectorEventListener,
-			getApplicationName() + "@" + applicationVersion.getRunningOperatingSystem(),
-			getApplicationVersion()
+			reflectorEventListener
 		) != null;
 	}
 

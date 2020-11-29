@@ -28,7 +28,7 @@ import org.jp.illg.dstar.reflector.model.ReflectorLinkInformation;
 import org.jp.illg.dstar.reflector.model.events.ReflectorEvent;
 import org.jp.illg.dstar.reflector.model.events.ReflectorEvent.ReflectorEventTypes;
 import org.jp.illg.dstar.reflector.protocol.model.ReflectorConnectionStates;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.util.Timer;
 
 import com.annimon.stream.ComparatorCompat;

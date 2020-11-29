@@ -64,10 +64,8 @@ public interface ReflectorCommunicationService {
 
 	public boolean isSupportTransparentMode();
 
-	public void setApplicationVersion(String applicationVersion);
 	public String getApplicationVersion();
 
-	public void setApplicationName(String applicationName);
 	public String getApplicationName();
 
 	public ReflectorStatusReport getStatusReport();

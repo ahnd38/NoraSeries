@@ -57,6 +57,7 @@ import org.jp.illg.dstar.util.CallSignValidator;
 import org.jp.illg.dstar.util.DSTARUtils;
 import org.jp.illg.dstar.util.dvpacket2.CacheTransmitter;
 import org.jp.illg.dstar.util.dvpacket2.FrameSequenceType;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.BufferState;
 import org.jp.illg.util.FormatUtil;
 import org.jp.illg.util.ProcessResult;
@@ -167,6 +168,7 @@ implements WebRemoteControlDPlusHandler
 
 	public DPlusCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
@@ -176,6 +178,7 @@ implements WebRemoteControlDPlusHandler
 	) {
 		super(
 			systemID,
+			applicationInformation,
 			exceptionListener,
 			DPlusCommunicationService.class,
 			socketIO,
@@ -207,13 +210,14 @@ implements WebRemoteControlDPlusHandler
 
 	public DPlusCommunicationService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		@NonNull final DSTARGateway gateway,
 		@NonNull final ExecutorService workerExecutor,
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
 		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
-		this(systemID, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
+		this(systemID, applicationInformation, exceptionListener, gateway, workerExecutor, null, reflectorLinkManager, eventListener);
 	}
 
 

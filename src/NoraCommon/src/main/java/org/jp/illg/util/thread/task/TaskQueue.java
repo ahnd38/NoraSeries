@@ -170,6 +170,14 @@ public class TaskQueue<T, R> {
 
 	public boolean addEventQueue(
 		@NonNull final Function<T, R> task,
+		final T attachment,
+		final Consumer<R> onResultHandler
+	) {
+		return addEventQueue(task, null, attachment, null, onResultHandler, null, null);
+	}
+
+	public boolean addEventQueue(
+		@NonNull final Function<T, R> task,
 		final ThreadUncaughtExceptionListener exceptionListener,
 		final Consumer<R> onResultHandler,
 		final Consumer<R> onSuccessHandler,

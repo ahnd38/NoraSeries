@@ -23,6 +23,7 @@ import org.jp.illg.dstar.model.defines.ReflectorProtocolProcessorTypes;
 import org.jp.illg.dstar.reflector.model.ReflectorCommunicationServiceEvent;
 import org.jp.illg.dstar.reflector.model.ReflectorLinkInformation;
 import org.jp.illg.dstar.util.CallSignValidator;
+import org.jp.illg.util.ApplicationInformation;
 import org.jp.illg.util.ObjectWrapper;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.socketio.SocketIO;
@@ -194,23 +195,20 @@ public class ReflectorCommunicationServiceManager {
 
 	public static ReflectorCommunicationService createService(
 		@NonNull final UUID systemID,
+		@NonNull final ApplicationInformation<?> applicationInformation,
 		@NonNull DSTARGateway gateway,
 		@NonNull final String reflectorProtocolType,
 		@NonNull final ReflectorProperties reflectorProperties,
 		@NonNull final ExecutorService workerExecutor,
 		final SocketIO socketIO,
 		@NonNull final ReflectorLinkManager reflectorLinkManager,
-		final EventListener<ReflectorCommunicationServiceEvent> eventListener,
-		String applicationName, String applicationVersion
+		final EventListener<ReflectorCommunicationServiceEvent> eventListener
 	) {
 		if(
 			gateway == null ||
 			reflectorProtocolType == null || "".equals(reflectorProtocolType) ||
 			reflectorProperties == null
 		) {return null;}
-
-		if(applicationName == null){applicationName = "";}
-		if(applicationVersion == null){applicationVersion = "";}
 
 		ReflectorProtocolProcessorTypes serviceType =
 			ReflectorProtocolProcessorTypes.getTypeByTypeName(reflectorProtocolType);
@@ -262,6 +260,7 @@ public class ReflectorCommunicationServiceManager {
 			final ReflectorCommunicationService service =
 				ReflectorCommunicationServiceFactory.createService(
 					systemID,
+					applicationInformation,
 					gateway, serviceType,
 					workerExecutor,
 					useSocketIO,
@@ -275,9 +274,6 @@ public class ReflectorCommunicationServiceManager {
 				);
 				return null;
 			}
-
-			service.setApplicationName(applicationName != null ? applicationName : "");
-			service.setApplicationVersion(applicationVersion != null ? applicationVersion : "");
 
 			//設定流し込み
 			if(!service.setProperties(reflectorProperties)) {

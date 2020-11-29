@@ -18,7 +18,7 @@ import org.jp.illg.dstar.reflector.model.ReflectorHostInfo;
 import org.jp.illg.dstar.reflector.model.ReflectorHostInfoKey;
 import org.jp.illg.dstar.service.Service;
 import org.jp.illg.dstar.service.hfdownloader.model.URLEntry;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorHostsFileReaderWriter;
+import org.jp.illg.dstar.service.reflectorname.util.ReflectorHostsFileReaderWriter;
 import org.jp.illg.dstar.DSTARSystemManager;
 import org.jp.illg.util.event.EventListener;
 import org.jp.illg.util.thread.RunnableTask;

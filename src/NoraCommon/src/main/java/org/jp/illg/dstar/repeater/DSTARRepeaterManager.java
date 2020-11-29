@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -175,7 +174,7 @@ public class DSTARRepeaterManager {
 			if(removeSuccess && repeater.isRunning()){repeater.stop();}
 
 			if(repeaters.isEmpty())
-				repeaters.remove(systemID);
+				removeRepeaters(systemID, stopRepeater);
 
 			return removeSuccess;
 		}finally {dstarRepeatersLocker.unlock();}

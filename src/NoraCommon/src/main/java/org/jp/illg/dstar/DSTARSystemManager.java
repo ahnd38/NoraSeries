@@ -19,7 +19,7 @@ import org.jp.illg.dstar.model.config.GatewayProperties;
 import org.jp.illg.dstar.model.config.RepeaterProperties;
 import org.jp.illg.dstar.repeater.DSTARRepeaterManager;
 import org.jp.illg.dstar.service.Service;
-import org.jp.illg.dstar.service.reflectorhosts.ReflectorNameService;
+import org.jp.illg.dstar.service.reflectorname.ReflectorNameService;
 import org.jp.illg.dstar.service.repeatername.RepeaterNameService;
 import org.jp.illg.dstar.service.web.WebRemoteControlService;
 import org.jp.illg.util.ApplicationInformation;

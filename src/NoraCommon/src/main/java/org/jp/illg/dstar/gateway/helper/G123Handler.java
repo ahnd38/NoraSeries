@@ -6,8 +6,8 @@ import java.util.concurrent.locks.Lock;
 import org.jp.illg.dstar.gateway.model.ProcessEntry;
 import org.jp.illg.dstar.gateway.model.ProcessModes;
 import org.jp.illg.dstar.gateway.model.ProcessStates;
-import org.jp.illg.dstar.model.DSTARPacket;
 import org.jp.illg.dstar.model.DSTARGateway;
+import org.jp.illg.dstar.model.DSTARPacket;
 import org.jp.illg.dstar.model.DSTARRepeater;
 import org.jp.illg.dstar.model.defines.ConnectionDirectionType;
 import org.jp.illg.dstar.model.defines.DSTARPacketType;
@@ -48,6 +48,7 @@ public class G123Handler extends GatewayHelperBase {
 			) {
 
 				if (
+					!packet.getRfHeader().isSetRepeaterControlFlag(RepeaterControlFlag.NOTHING_NULL) &&
 					!packet.getRFHeader().isSetRepeaterControlFlag(RepeaterControlFlag.CANT_REPEAT) &&
 					!packet.getRFHeader().isSetRepeaterControlFlag(RepeaterControlFlag.AUTO_REPLY)
 				) {
